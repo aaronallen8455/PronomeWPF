@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="Pronome" extensions=".cs" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <Color name="Seperator" foreground="#00a3d9" exampleText=",|"/>
+  <Color name="Operator" foreground="#cc6322" exampleText="*/+-"/>
+  <Color name="Repeat" foreground="#69ba1e" exampleText="[]()"/>
+  <Color name="Pitch" foreground="#d142eb" exampleText="@A#5"/>
+  <Color name="Reference" foreground="#9876aa" exampleText="$1"/>
+  <Color name="Multiply" foreground="#ccb96e" exampleText="{}3/4"/>
+  <Color name="Comment" foreground="Gray" exampleText="!comment!"/>
+
+  <RuleSet>
+    <Keywords color="Seperator">
+      <Word>,</Word>
+      <Word>|</Word>
+    </Keywords>
+    
+    <Keywords color="Operator">
+      <Word>+</Word>
+      <Word>-</Word>
+      <Word>*</Word>
+      <Word>/</Word>
+      <Word>x</Word>
+      <Word>X</Word>
+    </Keywords>
+
+    <Keywords color="Repeat">
+      <Word>[</Word>
+    </Keywords>
+    <Span color="Repeat">
+      <Begin>\]|\(</Begin>
+      <End>(?=[,}|])</End>
+    </Span>
+
+    <Keywords color="Multiply">
+      <Word>{</Word>
+    </Keywords>
+    <Span color="Multiply">
+      <Begin>\}</Begin>
+      <End>(?=[,|\]\[])</End>
+    </Span>
+
+    <Span color="Pitch">
+      <Begin>@</Begin>
+      <End>(?=[^\d.\w#])</End>
+    </Span>
+
+    <Span color="Reference">
+      <Begin>\$</Begin>
+      <End>(?=[^s\d])</End>
+    </Span>
+
+    <Span color="Comment">
+      <Begin>!</Begin>
+      <End>!</End>
+    </Span>
+  </RuleSet>
+  
+</SyntaxDefinition>

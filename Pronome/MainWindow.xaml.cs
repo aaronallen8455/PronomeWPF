@@ -12,6 +12,11 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Reflection;
+using System.IO;
+using System.Xml;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 
 namespace Pronome
 {
@@ -23,6 +28,13 @@ namespace Pronome
         public MainWindow()
         {
             InitializeComponent();
+
+            // import the syntax definition
+            Assembly myAssembly = Assembly.GetExecutingAssembly();
+            using (Stream s = myAssembly.GetManifestResourceStream("Pronome.pronome.xshd"))
+                using (XmlTextReader reader = new XmlTextReader(s))
+                    HighlightingManager.Instance.RegisterHighlighting("Pronome", new[] { ".cs" }, 
+                        HighlightingLoader.Load(reader, HighlightingManager.Instance));
         }
     }
 }

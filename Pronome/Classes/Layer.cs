@@ -34,7 +34,7 @@ namespace Pronome
         public double Offset = 0; // in BPM
         /** <summary>The name of the base source.</summary> */
         [DataMember]
-        protected string BaseSourceName;
+        public string BaseSourceName;
         /** <summary>True if the layer is muted.</summary> */
         public bool IsMuted = false;
         /** <summary>True if the layer is part of the soloed group.</summary> */
@@ -47,9 +47,9 @@ namespace Pronome
         public bool HasHiHatOpen = false;
 
         [DataMember]
-        protected float volume;
+        protected double volume;
         /** <summary>Set the volume of all sound sources in this layer.</summary> */
-        public float Volume
+        public double Volume
         {
             get { return volume; }
             set
@@ -247,7 +247,7 @@ namespace Pronome
             if (!IsPitch && BaseSourceName != null) AudioSources.Remove(BaseSourceName); // for pitch layers, base source is not in AudioSources.
 
             // is sample or pitch source?
-            if (baseSourceName.Count() <= 5)
+            if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
             {
                 if (BasePitchSource == default(PitchStream))
                 {
@@ -355,7 +355,7 @@ namespace Pronome
             for (int i = 0; i < beat.Count(); i++)
             {
                 beat[i].Layer = this;
-                if (beat[i].SourceName != string.Empty && beat[i].SourceName.Count() > 5)
+                if (beat[i].SourceName != string.Empty && !Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
                 {
                     // should cells of the same source use the same audiosource instead of creating new source each time? Yes
                     if (!AudioSources.ContainsKey(beat[i].SourceName))
@@ -373,7 +373,7 @@ namespace Pronome
                 }
                 else
                 {
-                    if (beat[i].SourceName != string.Empty && beat[i].SourceName.Count() <= 5)
+                    if (beat[i].SourceName != string.Empty && Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
                     {
                         // beat has a defined pitch
                         // check if basepitch source exists
