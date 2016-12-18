@@ -74,7 +74,7 @@
     <Compile Include="Classes\BeatCell.cs" />
     <Compile Include="Classes\IStreamProvider.cs" />
     <Compile Include="Classes\Layer.cs" />
-    <Compile Include="Classes\LayerPanel.cs" />
+    <Compile Include="Classes\LayerUI.cs" />
     <Compile Include="Classes\Metronome.cs" />
     <Compile Include="Classes\PitchStream.cs" />
     <Compile Include="Classes\SourceBeatCollection.cs" />

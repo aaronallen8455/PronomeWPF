@@ -5,13 +5,15 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Text.RegularExpressions;
 using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Highlighting;
 
 namespace Pronome
 {
-    class LayerPanel : Grid
+    /**<summary>Provides the user interface for a beat layer.</summary>*/
+    class LayerUI
     {
         public Layer Layer;
+
+        public Grid basePanel;
 
         public TextEditor textEditor;
 
@@ -35,31 +37,37 @@ namespace Pronome
 
         protected Button deleteButton;
 
-        public LayerPanel(Panel Parent) : base()
+        /**<summary>Constructor</summary>
+         * <param name="Parent">The list to add the UI to.</param>
+         */
+        public LayerUI(Panel Parent)
         {
-            // add to the layerlist panel
+            ResourceDictionary resources = Application.Current.Resources;
+
             layerList = Parent;
-            layerList.Children.Add(this);
+            // add base panel to parent layerlist panel
+            basePanel = resources["layerGrid"] as Grid;
+            layerList.Children.Add(basePanel);
 
             // add the panel that has the main controls
-            controlPanel = new WrapPanel();
-            this.Children.Add(controlPanel);
+            controlPanel = resources["layerWrap"] as WrapPanel;
+            basePanel.Children.Add(controlPanel);
 
             // create the layer
             Layer = new Layer("1");
 
             // init the text editor
-            textEditor = new TextEditor();
-            textEditor.FontFamily = new System.Windows.Media.FontFamily("Consolas");
-            textEditor.FontSize = 20;
-            textEditor.SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("Pronome");
+            textEditor = resources["textEditor"] as TextEditor;
             textEditor.LostFocus += new RoutedEventHandler(textEditor_LostFocus);
             controlPanel.Children.Add(textEditor);
+            MakeLabel("Beat", textEditor);
 
             // source selector control
-            baseSourceSelector = new ComboBox();
+            baseSourceSelector = resources["sourceSelector"] as ComboBox;
             controlPanel.Children.Add(baseSourceSelector);
+            MakeLabel("Source", baseSourceSelector);
             // get array of sources
+            // TODO: add index numbers to .wav items
             List<string> sources = WavFileStream.FileNameIndex.Cast<string>().ToList();
             sources = sources.Where((n, i) => i % 2 == 1).ToList(); // get the pretty names from the odd numbered indexes
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
@@ -68,60 +76,49 @@ namespace Pronome
             baseSourceSelector.SelectionChanged += new SelectionChangedEventHandler(baseSourceSelector_SelectionChanged);
 
             // pitch field (used if source is a pitch)
-            pitchInput = new TextBox();
+            pitchInput = resources["pitchInput"] as TextBox;
             controlPanel.Children.Add(pitchInput);
-            pitchInput.Width = 50;
+            MakeLabel("Note", pitchInput);
             if (baseSourceSelector.SelectedItem as string == "Pitch")
             {
                 pitchInput.Text = Layer.BaseSourceName;
             }
+            else pitchInput.Visibility = Visibility.Collapsed;
             pitchInput.TextChanged += new TextChangedEventHandler(pitchInput_TextChanged);
 
             // volume control
-            volumeSlider = new Slider();
+            volumeSlider = resources["volumeControl"] as Slider;
             controlPanel.Children.Add(volumeSlider);
-            volumeSlider.Minimum = 0;
-            volumeSlider.Maximum = 1;
-            volumeSlider.Value = 1;
+            MakeLabel("Vol.", volumeSlider);
             volumeSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(volumeSlider_ValueChanged);
 
             // pan control
-            panSlider = new Slider();
+            panSlider = resources["panControl"] as Slider;
             controlPanel.Children.Add(panSlider);
-            panSlider.Minimum = -1;
-            panSlider.Maximum = 1;
-            panSlider.Value = 0;
+            MakeLabel("Pan", panSlider);
             panSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(panSlider_ValueChanged);
 
             // offset control
-            offsetInput = new TextBox();
-            offsetInput.Width = 50;
+            offsetInput = resources["offsetInput"] as TextBox;
             controlPanel.Children.Add(offsetInput);
+            MakeLabel("Offset", offsetInput);
             offsetInput.TextChanged += new TextChangedEventHandler(offsetInput_TextChanged);
 
             // mute control
-            muteButton = new ToggleButton();
-            TextBlock muteText = new TextBlock();
-            muteText.Text = "Mute";
-            muteButton.Content = muteText;
+            muteButton = resources["muteButton"] as ToggleButton;
             controlPanel.Children.Add(muteButton);
             muteButton.Checked += new RoutedEventHandler(muteButton_Checked);
             muteButton.Unchecked += new RoutedEventHandler(muteButton_Checked);
 
             // solo control
-            soloButton = new ToggleButton();
-            TextBlock soloText = new TextBlock();
-            soloText.Text = "Solo";
-            soloButton.Content = soloText;
+            soloButton = resources["soloButton"] as ToggleButton;
             controlPanel.Children.Add(soloButton);
             soloButton.Checked += new RoutedEventHandler(soloButton_Checked);
             soloButton.Unchecked += new RoutedEventHandler(soloButton_Checked);
 
             // delete button
-            deleteButton = new Button();
-            TextBlock text = new TextBlock();
-            text.Text = "Remove";
-            deleteButton.Content = deleteButton;
+            deleteButton = resources["deleteButton"] as Button;
+            controlPanel.Children.Add(deleteButton);
             deleteButton.Click += new RoutedEventHandler(deleteButton_Click);
         }
 
@@ -143,11 +140,15 @@ namespace Pronome
             {
                 if (newSource == "Pitch")
                 {
+                    pitchInput.Visibility = Visibility.Visible;
                     // use contents of pitch field as source
                     Layer.SetBaseSource(pitchInput.Text);
                 }
                 else
+                {
+                    pitchInput.Visibility = Visibility.Collapsed;
                     Layer.SetBaseSource(newSource);
+                }
             }
         }
 
@@ -197,7 +198,18 @@ namespace Pronome
             // dispose the layer
             Layer.Dispose();
             // remove the panel
-            layerList.Children.Remove(this);
+            layerList.Children.Remove(basePanel);
+        }
+
+        /**<summary>Make a label for the given element</summary>*/
+        protected void MakeLabel(string labelText, UIElement element)
+        {
+            Label label = new Label();
+            var text = new TextBlock();
+            text.Text = labelText;
+            label.Content = text;
+            label.Target = element;
+            controlPanel.Children.Add(label);
         }
     }
 }
