@@ -332,9 +332,10 @@ namespace Pronome
          */
         public void SetOffset(double value)
         {
-            InitialOffset = (int)(value / 2);
+            InitialOffset = (int)value;
             OffsetRemainder = value - InitialOffset;
-            hasOffset = true;
+            
+            hasOffset = InitialOffset > 0;
         }
 
         /**<summary>Get the current amount of offset in samples.</summary>*/

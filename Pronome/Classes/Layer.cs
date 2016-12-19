@@ -302,12 +302,10 @@ namespace Pronome
          * <param name="offset">Quarter notes to offset by.</param> */
         public void SetOffset(double offset)
         {
-            Offset = offset;
-
             foreach (IStreamProvider src in AudioSources.Values)
             {
                 double current = src.GetOffset();
-                double add = BeatCell.ConvertFromBpm(offset, src);
+                double add = BeatCell.ConvertFromBpm(offset - Offset, src);
                 src.SetOffset(current + add);
             }
 
@@ -316,9 +314,11 @@ namespace Pronome
             if (BasePitchSource != default(PitchStream))
             {
                 double current3 = BasePitchSource.GetOffset();
-                double add3 = BeatCell.ConvertFromBpm(offset, BasePitchSource);
+                double add3 = BeatCell.ConvertFromBpm(offset - Offset, BasePitchSource);
                 BasePitchSource.SetOffset(current3 + add3);
             }
+
+            Offset = offset;
         }
 
         /** <summary>Set the offset for this layer.</summary>
@@ -487,9 +487,9 @@ namespace Pronome
                 // determine the octave
                 octave = Metronome.GetRandomNum() > 49 ? (byte)5 : (byte)4;
                 // 80% chance to make a sonorous interval with last pitch layer
-                if (Metronome.GetRandomNum() < 80)
+                if (Metronome.GetInstance().Layers.Exists(x => x.IsPitch) && Metronome.GetRandomNum() < 80)
                 {
-                    var last = Metronome.GetInstance().Layers.Last(x => IsPitch);
+                    var last = Metronome.GetInstance().Layers.Last(x => x.IsPitch);
                     int index = Array.IndexOf(noteNames, last.BaseSourceName.TakeWhile(x => !char.IsNumber(x)));
                     index += intervals[Metronome.GetRandomNum() / (100 / 6)];
                     if (index > 11) index -= 12;
@@ -521,7 +521,7 @@ namespace Pronome
                 src.Reset();
             }
             //BaseAudioSource.Reset();
-            if (!IsPitch && BasePitchSource != default(PitchStream))
+            if (BasePitchSource != default(PitchStream))
                 BasePitchSource.Reset();
         }
 

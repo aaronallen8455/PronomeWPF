@@ -8,12 +8,21 @@
         <!--The base panel of the beat layer-->
         <Grid
             x:Key="layerGrid"
-            x:Shared="False"/>
+            x:Shared="False">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+        </Grid>
         
         <!--The panel that holds the inner contents of beat layer controls-->
         <WrapPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
             x:Key="layerWrap"
-            x:Shared="False"/>
+            x:Shared="False"
+            Grid.Column="1"/>
         
         <!--The beat code input control-->
         <avalonEdit:TextEditor 
@@ -26,10 +35,12 @@
             HorizontalScrollBarVisibility="Auto"
             Background="Black"
             Foreground="White"
-            Margin="8"/>
+            Margin="4"
+            MinWidth="100"/>
         
         <!--Source selector dropdown-->
         <ComboBox
+            Width="100"
             x:Key="sourceSelector"
             x:Shared="False"/>
         
@@ -56,6 +67,7 @@
         <!--Volume control-->
         <Slider
             x:Key="volumeControl"
+            Width="80"
             Maximum="1"
             Minimum="0"
             Value="1"
@@ -64,6 +76,7 @@
         <!--Pan control-->
         <Slider
             x:Key="panControl"
+            Width="80"
             Maximum="1"
             Minimum="-1"
             Value="0"
@@ -83,10 +96,22 @@
             S
         </ToggleButton>
         
+        <!--Mute and solo stack panel-->
+        <StackPanel 
+            x:Key="layerLeftStackPanel"
+            x:Shared="False"
+            Grid.Column="0" 
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Center"
+            Orientation="Vertical"/>
+
         <!--Delete button-->
         <Button
             x:Key="deleteButton"
-            x:Shared="False">
+            x:Shared="False"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Grid.Column="2">
             X
         </Button>
 

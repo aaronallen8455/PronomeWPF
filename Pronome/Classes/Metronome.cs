@@ -39,7 +39,6 @@ namespace Pronome
         {
             Recorder = new StreamToWavFile(Mixer);
             Player.Init(Recorder);
-            //Player.Init(Mixer);
         }
 
         /** <summary>Get the singleton instance.</summary> */
@@ -65,6 +64,18 @@ namespace Pronome
             foreach (Layer l in reparse)
             {
                 l.Parse(l.ParsedString);
+            }
+
+            // transfer silent interval if exists
+            if (IsSilentInterval)
+            {
+                foreach (IStreamProvider src in layer.AudioSources.Values)
+                {
+                    src.SetSilentInterval(AudibleInterval, SilentInterval);
+                }
+
+                if (layer.BasePitchSource != default(PitchStream))
+                    layer.BasePitchSource.SetSilentInterval(AudibleInterval, SilentInterval);
             }
         }
 
@@ -106,16 +117,19 @@ namespace Pronome
         public void RemoveLayer(Layer layer)
         {
             Layers.Remove(layer);
-            // remove from mixer
-            // have to remove all, then add back in
+
+            // have to remove ALL sources from mixer
+            // then add everything back in
             Mixer.RemoveAllMixerInputs();
-            foreach (Layer item in Layers.ToArray())
+
+            Layer[] _layers = new Layer[Layers.Count];
+            Layers.CopyTo(_layers);
+            Layers.Clear();
+
+            foreach (Layer item in _layers)
             {
-                Layers.Remove(item);
                 AddLayer(item);
             }
-
-            layer.Dispose();
         }
 
         /** <summary>Play all layers in sync.</summary> */
@@ -128,6 +142,7 @@ namespace Pronome
         public void Stop()
         {
             Player.Pause();
+
             // reset components
             foreach (Layer layer in Layers)
             {
@@ -419,7 +434,11 @@ namespace Pronome
         {
             Player.Stop();
             Recorder.Dispose();
-            Layers.ForEach((x) => x.Dispose());
+            Layer[] _layers = Layers.ToArray();
+            for (int i=0; i<_layers.Length; i++)
+            {
+                _layers[i].Dispose();
+            }
             Player.Dispose();
             Mixer = null;
             //Writer.Dispose();

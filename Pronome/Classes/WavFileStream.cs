@@ -301,10 +301,10 @@ namespace Pronome
 
         public void SetOffset(double value)
         {
-            offsetRemainder = ((int)value) - value;
             initialOffset = ((int)value) * 4;
-            hasOffset = true;
-
+            offsetRemainder = value - (int)value;
+            
+            hasOffset = initialOffset > 0;
             // is first sound muted?
             //SetInitialMuting();
         }

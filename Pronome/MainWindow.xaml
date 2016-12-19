@@ -5,8 +5,45 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Height="400" Width="800"
+        AllowsTransparency="True" WindowStyle="None" Background="Transparent"
+        Title="MainWindow">
     <Grid>
-        
+        <!--The background element-->
+        <Rectangle Fill="DarkBlue" Opacity=".7"/>
+        <!--The base panel-->
+        <DockPanel>
+            <!--Header element. Draggable-->
+            <Grid DockPanel.Dock="Top" MouseLeftButtonDown="window_MouseLeftButtonDown">
+                <Rectangle Fill="Black" Opacity=".5"/>
+                <!--Title Element-->
+                <TextBlock Foreground="White" FontSize="20pt" HorizontalAlignment="Center">ProNome</TextBlock>
+                <!--Close Window button-->
+                <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="windowCloseButton_Click">
+                    X
+                </Button>
+            </Grid>
+            
+            <!--Main controls-->
+            <WrapPanel DockPanel.Dock="Bottom" HorizontalAlignment="Center">
+                <!--Add layer button-->
+                <Button Click="addLayerButton_Click">Add Layer</Button>
+                <!--Play button-->
+                <Button Click="playButton_Click">Play</Button>
+                <!--Pause button-->
+                <Button Click="pauseButton_Click">Pause</Button>
+                <!--Stop button-->
+                <Button Click="stopButton_Click">Stop</Button>
+                <!--Tempo tap button-->
+                <Button Click="tempoTap_Click">Tempo</Button>
+                <!--Tempo input field-->
+                <TextBox Name="tempoInput" TextChanged="tempoInput_TextChanged"/>
+            </WrapPanel>
+
+            <!--Layer UI container-->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Name="layerStack"/>
+            </ScrollViewer>
+        </DockPanel>
     </Grid>
 </Window>
