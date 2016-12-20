@@ -37,6 +37,7 @@ namespace Pronome
                         HighlightingLoader.Load(reader, HighlightingManager.Instance));
 
             Metronome.GetInstance().Tempo = 120f;
+            tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
         }
 
         /**<summary>Make top of window draggable</summary>*/
@@ -85,7 +86,7 @@ namespace Pronome
             // calculate new tempo based on tapping
         }
 
-        private void tempoInput_TextChanged(object sender, TextChangedEventArgs e)
+        private void tempoInput_LostFocus(object sender, RoutedEventArgs e)
         {
             float newTempo = 0f;
             float.TryParse(tempoInput.Text, out newTempo);
@@ -93,6 +94,25 @@ namespace Pronome
             if (newTempo > 0)
             {
                 Metronome.GetInstance().ChangeTempo(newTempo);
+            }
+        }
+
+        private void tempoUp_Click(object sender, RoutedEventArgs e)
+        {
+            float current = Metronome.GetInstance().Tempo;
+            current++;
+            tempoInput.Text = current.ToString();
+            Metronome.GetInstance().ChangeTempo(current);
+        }
+
+        private void tempoDown_Click(object sender, RoutedEventArgs e)
+        {
+            float tempo = Metronome.GetInstance().Tempo;
+            if (tempo > 1)
+            {
+                tempo--;
+                tempoInput.Text = tempo.ToString();
+                Metronome.GetInstance().ChangeTempo(tempo);
             }
         }
     }

@@ -115,12 +115,8 @@ namespace Pronome
                 randomMuteCountdown = null;
                 currentlyMuted = false;
             }
-            if (Layer.Offset > 0)
-            {
-                SetOffset(
-                    BeatCell.ConvertFromBpm(Layer.Offset, this)
-                );
-            }
+            if (initialOffset > 0)
+                SetOffset(initialOffset);
         }
 
         /**<summary>Get the next frequency in the sequence.</summary>*/
@@ -170,10 +166,14 @@ namespace Pronome
                     // multiply the offset aswell
                     if (hasOffset)
                     {
-                        mult = intervalMultiplyFactor * InitialOffset;
-                        InitialOffset = (int)mult;
+                        mult = intervalMultiplyFactor * totalOffset;
+                        totalOffset = (int)mult;
                         OffsetRemainder *= intervalMultiplyFactor;
-                        OffsetRemainder += mult - InitialOffset;
+                        OffsetRemainder += mult - totalOffset;
+                    }
+                    if (initialOffset > 0)
+                    {
+                        initialOffset *= intervalMultiplyFactor;
                     }
 
                     intervalMultiplyCued = false;
@@ -261,7 +261,7 @@ namespace Pronome
         {
             AudibleInterval = BeatCell.ConvertFromBpm(audible, this);
             SilentInterval = BeatCell.ConvertFromBpm(silent, this);
-            currentSlntIntvl = (int)AudibleInterval - InitialOffset;
+            currentSlntIntvl = (int)AudibleInterval - totalOffset;
             SilentIntervalRemainder = audible - currentSlntIntvl + OffsetRemainder;
         }
 
@@ -281,7 +281,7 @@ namespace Pronome
             // init countdown
             if (randomMuteCountdown == null && Metronome.GetInstance().RandomMuteSeconds > 0)
             {
-                randomMuteCountdown = randomMuteCountdownTotal = Metronome.GetInstance().RandomMuteSeconds * BytesPerSec - InitialOffset;
+                randomMuteCountdown = randomMuteCountdownTotal = Metronome.GetInstance().RandomMuteSeconds * BytesPerSec - totalOffset;
             }
 
             int rand = Metronome.GetRandomNum();
@@ -332,19 +332,21 @@ namespace Pronome
          */
         public void SetOffset(double value)
         {
-            InitialOffset = (int)value;
-            OffsetRemainder = value - InitialOffset;
+            initialOffset = value;
+            totalOffset = (int)value;
+            OffsetRemainder = value - totalOffset;
             
-            hasOffset = InitialOffset > 0;
+            hasOffset = totalOffset > 0;
         }
 
         /**<summary>Get the current amount of offset in samples.</summary>*/
         public double GetOffset()
         {
-            return InitialOffset + OffsetRemainder;
+            return totalOffset + OffsetRemainder;
         }
 
-        protected int InitialOffset = 0; // time to wait before reading source.
+        protected double initialOffset = 0; // the offset value to reset to.
+        protected int totalOffset = 0; // time to wait before reading source.
         protected double OffsetRemainder = 0;
         protected bool hasOffset = false;
         protected bool lastIntervalMuted = false; // used to cycle pitch if the last interval was randomly muted.
@@ -377,12 +379,12 @@ namespace Pronome
                 // account for offset
                 if (hasOffset)
                 {
-                    InitialOffset -= 1;
+                    totalOffset -= 1;
 
                     buffer[outIndex++] = 0;
                     buffer[outIndex++] = 0;
 
-                    if (InitialOffset == 0)
+                    if (totalOffset == 0)
                     {
                         hasOffset = false;
                         Layer.Remainder += OffsetRemainder;

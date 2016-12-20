@@ -8,18 +8,25 @@ namespace Pronome
     {
         /**<summary>The time length in number of bytes.</summary>*/
         public double ByteInterval;
+
         /**<summary>The time length in quarter notes</summary>*/
         public double Bpm; // value expressed in BPM time.
+
         /**<summary>The name of the audio source. Could be a wav file or a pitch.</summary>*/
         public string SourceName;
+
         /**<summary>The layer that this cell belongs to.</summary>*/
         public Layer Layer;
+
         /**<summary>The audio source used for this cell.</summary>*/
         public IStreamProvider AudioSource;
+
         /**<summary>True for HiHat pedal down sounds.</summary>*/
         public bool IsHiHatClosed = false;
+
         /**<summary>True for HiHat open sounds.</summary>*/
         public bool IsHiHatOpen = false;
+
         /**<summary>If using hihat sounds, how long in BPM the open hihat sound should last.</summary>*/
         public double hhDuration = 0;
 

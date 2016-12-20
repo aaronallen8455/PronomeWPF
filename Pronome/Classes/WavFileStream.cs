@@ -82,13 +82,7 @@ namespace Pronome
                 randomMuteCountdown = null;
                 currentlyMuted = false;
             }
-            if (Layer.Offset > 0)
-            {
-                SetOffset(
-                    BeatCell.ConvertFromBpm(Layer.Offset, this)
-                );
-            }
-            // TODO: hihat open settings
+
             HiHatOpenIsMuted = false;
             //HiHatMuteInitiated = false;
             HiHatCycleToMute = 0;
@@ -99,6 +93,9 @@ namespace Pronome
 
             // set stream back to start.
             Position = 0;
+
+            if (initialOffset > 0)
+                SetOffset(initialOffset);
         }
 
         /**<summary>Get the length of the source file in bytes.</summary>*/
@@ -161,11 +158,15 @@ namespace Pronome
                     // multiply the offset aswell
                     if (hasOffset)
                     {
-                        div = initialOffset / 4;
+                        div = totalOffset / 4;
                         div *= intervalMultiplyFactor;
                         offsetRemainder *= intervalMultiplyFactor;
                         offsetRemainder += div - (int)div;
-                        initialOffset = (int)div * 4;
+                        totalOffset = (int)div * 4;
+                    }
+                    if (initialOffset > 0)
+                    {
+                        initialOffset *= intervalMultiplyFactor;
                     }
 
                     //// do the hihat cutoff interval
@@ -223,7 +224,7 @@ namespace Pronome
                 // if this is a hihat down, pass it's time position to all hihat opens in this layer
                 if (IsHiHatClose && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
                 {
-                    int total = initialOffset;
+                    int total = totalOffset;
                     int cycles = total / 2560;
                     int bytes = total % 2560;
 
@@ -278,7 +279,7 @@ namespace Pronome
             // init countdown
             if (randomMuteCountdown == null && Metronome.GetInstance().RandomMuteSeconds > 0)
             {
-                randomMuteCountdown = randomMuteCountdownTotal = Metronome.GetInstance().RandomMuteSeconds * BytesPerSec - initialOffset;
+                randomMuteCountdown = randomMuteCountdownTotal = Metronome.GetInstance().RandomMuteSeconds * BytesPerSec - totalOffset;
             }
 
             int rand = Metronome.GetRandomNum();
@@ -301,10 +302,11 @@ namespace Pronome
 
         public void SetOffset(double value)
         {
-            initialOffset = ((int)value) * 4;
+            initialOffset = value;
+            totalOffset = ((int)value) * 4;
             offsetRemainder = value - (int)value;
             
-            hasOffset = initialOffset > 0;
+            hasOffset = totalOffset > 0;
             // is first sound muted?
             //SetInitialMuting();
         }
@@ -314,7 +316,8 @@ namespace Pronome
             return initialOffset + offsetRemainder;
         }
 
-        protected int initialOffset = 0;
+        protected double initialOffset = 0; // the offset to reset to.
+        protected int totalOffset = 0;
         protected double offsetRemainder = 0;
         protected bool hasOffset = false;
 
@@ -331,7 +334,7 @@ namespace Pronome
         {
             AudibleInterval = BeatCell.ConvertFromBpm(audible, this) * 4;
             SilentInterval = BeatCell.ConvertFromBpm(silent, this) * 4;
-            currentSlntIntvl = (int)AudibleInterval - initialOffset - 4;
+            currentSlntIntvl = (int)AudibleInterval - totalOffset - 4;
             SilentIntervalRemainder = audible - currentSlntIntvl + offsetRemainder;
 
             SetInitialMuting();
@@ -370,12 +373,12 @@ namespace Pronome
 
                 if (hasOffset)
                 {
-                    int subtract = initialOffset > count - bytesCopied ? count - bytesCopied : initialOffset;
-                    initialOffset -= subtract;
+                    int subtract = totalOffset > count - bytesCopied ? count - bytesCopied : totalOffset;
+                    totalOffset -= subtract;
                     Array.Copy(new byte[subtract], 0, buffer, bytesCopied + offset, subtract);
                     bytesCopied += subtract;
 
-                    if (initialOffset == 0)
+                    if (totalOffset == 0)
                     {
                         Layer.Remainder += offsetRemainder;
                         hasOffset = false;

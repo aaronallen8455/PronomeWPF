@@ -23,7 +23,13 @@
             VerticalAlignment="Center"
             x:Key="layerWrap"
             x:Shared="False"
-            Grid.Column="1"/>
+            Grid.Column="1">
+            <WrapPanel.Resources>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Margin" Value="10, 0"/>
+                </Style>
+            </WrapPanel.Resources>
+        </WrapPanel>
         
         <!--The beat code input control-->
         <avalonEdit:TextEditor 
@@ -63,7 +69,8 @@
             Foreground="White"
             FontFamily="Consolas"
             FontSize="12pt"
-            x:Shared="False"/>
+            x:Shared="False"
+            Text="0"/>
         
         <!--Volume control-->
         <Slider
@@ -115,6 +122,20 @@
             Grid.Column="2">
             X
         </Button>
+        
+        <!--Labels-->
+        <Label
+            x:Key="label"
+            x:Shared="False"
+            Foreground="White"
+            FontSize="7pt"
+            Margin="0"/>
+        
+        <!--Label - controller stack panel-->
+        <StackPanel
+            x:Key="labelControlPanel"
+            x:Shared="False"
+            Orientation="Vertical"/>
 
     </Application.Resources>
 </Application>

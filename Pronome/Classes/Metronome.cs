@@ -17,7 +17,7 @@ namespace Pronome
     public class Metronome : IDisposable
     {
         /** <sumarry>Mix the output from all audio sources.</sumarry> */
-        public MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(16000, 2));
+        protected MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(16000, 2));
         /** <summary>Access the sound output device.</summary> */
         protected DirectSoundOut Player = new DirectSoundOut();
 
@@ -80,7 +80,7 @@ namespace Pronome
         }
 
         /**<summary>Used to hold a reference to the ISampleProvider so we can easily remove it from the mixer when needed.</summary>*/
-        public Dictionary<IStreamProvider, ISampleProvider> SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
+        protected Dictionary<IStreamProvider, ISampleProvider> SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
 
         /** <summary>Add all the audio sources from each layer.</summary>
          * <param name="layer">Layer to add sources from.</param> */
@@ -89,20 +89,15 @@ namespace Pronome
             // add sources to mixer
             foreach (IStreamProvider src in layer.AudioSources.Values)
             {
-                if (src.IsPitch)
+                if (!SampleDictionary.Keys.Contains(src))
                 {
-                    SampleDictionary.Add(src, (ISampleProvider)src);
-                    //Mixer.AddMixerInput((ISampleProvider)src);
-                }
-                else
-                {
-                    SampleDictionary.Add(src, 
+                    SampleDictionary.Add(src,
                         SampleConverter.ConvertWaveProviderIntoSampleProvider(
                             ((WavFileStream)src).Channel)
                             );
-                    //Mixer.AddMixerInput(((WavFileStream)src).Channel);
+
+                    Mixer.AddMixerInput(SampleDictionary[src]);
                 }
-                Mixer.AddMixerInput(SampleDictionary[src]);
             }
 
             if (layer.BasePitchSource != null && !SampleDictionary.Values.Contains(layer.BasePitchSource)) // if base source is a pitch stream.
@@ -110,7 +105,7 @@ namespace Pronome
                 Mixer.AddMixerInput(layer.BasePitchSource);
                 SampleDictionary.Add(layer.BasePitchSource, layer.BasePitchSource);
             }
-            
+
             // transfer silent interval if exists
             if (IsSilentInterval)
             {
@@ -132,33 +127,29 @@ namespace Pronome
 
             foreach (IStreamProvider src in layer.AudioSources.Values)
             {
-                Mixer.RemoveMixerInput(SampleDictionary[src]);
+                RemoveAudioSource(src);
             }
             if (layer.BasePitchSource != default(PitchStream))
-                Mixer.RemoveMixerInput(SampleDictionary[layer.BasePitchSource]);
-            //RedoMixerInputs();
+            {
+                RemoveAudioSource(layer.BasePitchSource);
+            }
         }
 
-        //public void RedoMixerInputs()
-        //{
-        //    // have to remove ALL sources from mixer
-        //    // then add everything back in
-        //    Mixer.RemoveAllMixerInputs();
-        //
-        //    Layer[] _layers = new Layer[Layers.Count];
-        //    Layers.CopyTo(_layers);
-        //    Layers.Clear();
-        //
-        //    foreach (Layer item in _layers)
-        //    {
-        //        AddLayer(item);
-        //    }
-        //}
+        public void RemoveAudioSource(IStreamProvider src)
+        {
+            Mixer.RemoveMixerInput(SampleDictionary[src]);
+            SampleDictionary.Remove(src);
+        }
+
+        public enum State { Playing, Paused, Stopped };
+        /**<summary>Current play state of the metronome.</summary>*/
+        public State PlayState = State.Stopped;
 
         /** <summary>Play all layers in sync.</summary> */
         public void Play()
         {
             Player.Play();
+            PlayState = State.Playing;
         }
 
         /** <summary>Stop playing and reset positions.</summary> */
@@ -173,12 +164,16 @@ namespace Pronome
             }
 
             Recorder.Stop();
+
+            PlayState = State.Stopped;
         }
 
         /** <summary>Pause at current playback point.</summary> */
         public void Pause()
         {
             Player.Pause();
+
+            PlayState = State.Paused;
         }
 
         /** <summary>Playback and record to wav.</summary>
@@ -280,7 +275,7 @@ namespace Pronome
         /** <summary>Change the tempo. Can be during play.</summary> */
         public void ChangeTempo(float newTempo)
         {
-            if (Player.PlaybackState != PlaybackState.Stopped)
+            if (PlayState != State.Stopped)
             {
                 // modify the beat values and current byte intervals for all layers and audio sources.
                 float ratio = Tempo / newTempo;
@@ -294,7 +289,13 @@ namespace Pronome
                     }
                 });
             }
+            
             tempo = newTempo;
+
+            if (PlayState == State.Stopped) // set new tempo by recalculating all the beatCollections
+            {
+                Layers.ForEach(x => x.SetBeatCollectionOnSources());
+            }
         }
 
         /** <summary>The master volume.</summary> */
@@ -306,11 +307,17 @@ namespace Pronome
         }
 
         /** <summary>Used for random muting.</summary> */
-        protected static ThreadLocal<Random> Rand = new ThreadLocal<Random>(() => new Random(new Guid().GetHashCode()));
+        protected static ThreadLocal<Random> Rand;
         /**<summary>Get random number btwn 0 and 99.</summary>*/
         public static int GetRandomNum()
         {
-            return Rand.Value.Next(99);
+            if (Rand == null)
+            {
+                Rand = new ThreadLocal<Random>(() => new Random());
+            }
+
+            int r = Rand.Value.Next(0, 99);
+            return r;
         }
 
         /** <summary>Is a random muting value set?</summary> */

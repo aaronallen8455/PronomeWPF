@@ -61,14 +61,13 @@ namespace Pronome
 
             // init the text editor
             textEditor = resources["textEditor"] as TextEditor;
+            textEditor.Text = "1";
             textEditor.LostFocus += new RoutedEventHandler(textEditor_LostFocus);
             MakeLabel("Beat", textEditor);
-            controlPanel.Children.Add(textEditor);
 
             // source selector control
             baseSourceSelector = resources["sourceSelector"] as ComboBox;
             MakeLabel("Source", baseSourceSelector);
-            controlPanel.Children.Add(baseSourceSelector);
             // get array of sources
             // TODO: add index numbers to .wav items
             List<string> sources = WavFileStream.FileNameIndex.Cast<string>().ToList();
@@ -81,7 +80,6 @@ namespace Pronome
             // pitch field (used if source is a pitch)
             pitchInput = resources["pitchInput"] as TextBox;
             MakeLabel("Note", pitchInput);
-            controlPanel.Children.Add(pitchInput);
             if (baseSourceSelector.SelectedItem as string == "Pitch")
             {
                 pitchInput.Text = Layer.BaseSourceName;
@@ -92,19 +90,16 @@ namespace Pronome
             // volume control
             volumeSlider = resources["volumeControl"] as Slider;
             MakeLabel("Vol.", volumeSlider);
-            controlPanel.Children.Add(volumeSlider);
             volumeSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(volumeSlider_ValueChanged);
 
             // pan control
             panSlider = resources["panControl"] as Slider;
             MakeLabel("Pan", panSlider);
-            controlPanel.Children.Add(panSlider);
             panSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(panSlider_ValueChanged);
 
             // offset control
             offsetInput = resources["offsetInput"] as TextBox;
             MakeLabel("Offset", offsetInput);
-            controlPanel.Children.Add(offsetInput);
             offsetInput.LostFocus += new RoutedEventHandler(offsetInput_LostFocus);
 
             // side panel
@@ -132,6 +127,10 @@ namespace Pronome
         protected void textEditor_LostFocus(object sender, RoutedEventArgs e)
         {
             // TODO: validate the beat string
+            if (textEditor.Text == "")
+            {
+                textEditor.Text = "1";
+            }
 
             if (Layer.ParsedString != textEditor.Text)
             {
@@ -143,7 +142,7 @@ namespace Pronome
         {
             if (baseSourceSelector.SelectedItem as string == "Pitch")
             {
-                pitchInput.Visibility = Visibility.Visible;
+                (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
                 // use contents of pitch field as source
                 Layer.SetBaseSource(pitchInput.Text);
             }
@@ -153,9 +152,30 @@ namespace Pronome
                 // set new base source
                 if (newSource != Layer.BaseSourceName)
                 {
-                    pitchInput.Visibility = Visibility.Collapsed;
+                    (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
                     Layer.SetBaseSource(newSource);
                 }
+            }
+            // if there is a ex. @23 we need to reparse to set it correctly to pitch or wav sound
+            if (Regex.IsMatch(Layer.ParsedString, @"@[\d.]+"))
+            {
+                //// remove pitch mod sources
+                //if (!Layer.IsPitch && Layer.BasePitchSource != null)
+                //{
+                //    // remove pitch
+                //    Metronome.GetInstance().RemoveAudioSource(Layer.BasePitchSource);
+                //    Layer.BasePitchSource.Dispose();
+                //    Layer.BasePitchSource = null;
+                //    // remove non-base wavs
+                //    foreach (IStreamProvider src in Layer.AudioSources.Values.Where(x => x != Layer.BaseAudioSource))
+                //    {
+                //        Metronome.GetInstance().RemoveAudioSource(src);
+                //    }
+                //    Layer.AudioSources.Clear();
+                //    Layer.AudioSources.Add("", Layer.BaseAudioSource);
+                //}
+
+                Layer.Parse(Layer.ParsedString);
             }
         }
 
@@ -211,13 +231,16 @@ namespace Pronome
         /**<summary>Make a label for the given element</summary>*/
         protected void MakeLabel(string labelText, UIElement element)
         {
-            Label label = new Label();
+            Label label = Application.Current.Resources["label"] as Label;
             var text = new TextBlock();
             text.Text = labelText;
-            text.Foreground = Brushes.White;
             label.Content = text;
             label.Target = element;
-            controlPanel.Children.Add(label);
+
+            StackPanel panel = Application.Current.Resources["labelControlPanel"] as StackPanel;
+            panel.Children.Add(label);
+            panel.Children.Add(element);
+            controlPanel.Children.Add(panel);
         }
     }
 }

@@ -257,13 +257,14 @@ namespace Pronome
          * <param name="baseSourceName">Name of source to use.</param> */
         public void SetBaseSource(string baseSourceName)
         {
-            // remove base source from AudioSources if exists
-            if (!IsPitch && BaseSourceName != null)
-            {
-                // remove the old base wav source from mixer
-                Metronome.GetInstance().Mixer.RemoveMixerInput(Metronome.GetInstance().SampleDictionary[BaseAudioSource]);
-                AudioSources.Remove(BaseSourceName); // for pitch layers, base source is not in AudioSources.
-            } 
+            //// remove base source from AudioSources if exists
+            //if (!IsPitch && BaseSourceName != null)
+            //{
+            //    // remove the old base wav source from mixer
+            //    Metronome.GetInstance().RemoveAudioSource(BaseAudioSource);
+            //    AudioSources.Remove(BaseSourceName); // for pitch layers, base source is not in AudioSources.
+            //    BaseAudioSource.Dispose();
+            //} 
 
             // is sample or pitch source?
             if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
@@ -288,16 +289,17 @@ namespace Pronome
             else
             {
                 // remove pitch source if this was formerly a pitch based layer
-                if (IsPitch)
-                {
-                    // remove from mixer
-                    Metronome.GetInstance().Mixer.RemoveMixerInput(Metronome.GetInstance().SampleDictionary[BasePitchSource]);
-                    BasePitchSource.Dispose();
-                    BasePitchSource = null;
-                }
+                //if (IsPitch)
+                //{
+                //    // remove from mixer
+                //    Metronome.GetInstance().RemoveAudioSource(BasePitchSource);
+                //    BasePitchSource.Dispose();
+                //    BasePitchSource = null;
+                //}
                 BaseAudioSource = new WavFileStream(baseSourceName)
                 {
-                    Layer = this
+                    Layer = this,
+                    Volume = Volume
                 };
                 AudioSources.Add(baseSourceName, BaseAudioSource);
                 IsPitch = false;
@@ -366,21 +368,33 @@ namespace Pronome
          * <param name="beat">Array of beat cells.</param> */
         public void SetBeat(BeatCell[] beat)
         {
-            //float tempo = Metronome.GetInstance().Tempo;
-            //List<string> sources = new List<string>();
-
             // deal with the old audio sources.
             if (Beat != null)
             {
                 // dispose wav audio sources if not the base
-                foreach (BeatCell b in Beat.Where(x => !x.AudioSource.IsPitch && x.SourceName != ""))
+                foreach (IStreamProvider src in AudioSources.Values.Where(x => x != BaseAudioSource))
                 {
-                    b.AudioSource?.Dispose();
+                    Metronome.GetInstance().RemoveAudioSource(src);
+                    src.Dispose();
                 }
-                // need to rebuild the pitch source
-                BasePitchSource?.Frequencies.Clear();
-                if (IsPitch)
+                AudioSources.Clear();
+
+                if (IsPitch) // need to rebuild the pitch source
+                {
+                    BasePitchSource?.Frequencies.Clear();
                     BasePitchSource.BaseFrequency = PitchStream.ConvertFromSymbol(BaseSourceName);
+                }
+                else
+                {
+                    if (BasePitchSource != null)
+                    {
+                        Metronome.GetInstance().RemoveAudioSource(BasePitchSource);
+                        BasePitchSource.Dispose();
+                        BasePitchSource = null;
+                    }
+
+                    AudioSources.Add("", BaseAudioSource);
+                }
             }
 
             // refresh the hashihatxxx bools
@@ -414,10 +428,13 @@ namespace Pronome
                         // check if basepitch source exists
                         if (BasePitchSource == default(PitchStream))
                         {
-                            BasePitchSource = new PitchStream();
+                            BasePitchSource = new PitchStream()
+                            {
+                                Layer = this,
+                                Volume = Volume,
+                                BaseFrequency = PitchStream.ConvertFromSymbol(beat[i].SourceName)
+                            };
                             BasePitchSource.AddFrequency(beat[i].SourceName, beat[i]);
-                            BasePitchSource.BaseFrequency = PitchStream.ConvertFromSymbol(beat[i].SourceName); // make the base freq
-                            BasePitchSource.Layer = this;
                         }
                         else BasePitchSource.AddFrequency(beat[i].SourceName, beat[i]);
                         beat[i].AudioSource = BasePitchSource;
@@ -444,13 +461,13 @@ namespace Pronome
 
             Beat = beat.ToList();
 
-            SetBeatCollectionOnSources(Beat);
+            SetBeatCollectionOnSources();
         }
 
         /** <summary>Set the beat collections for each sound source.</summary> 
          * <param name="Beat">The cells to process</param>
          */
-        public void SetBeatCollectionOnSources(List<BeatCell> Beat)
+        public void SetBeatCollectionOnSources()
         {
             List<IStreamProvider> completed = new List<IStreamProvider>();
 
@@ -531,14 +548,14 @@ namespace Pronome
                 {
                     var last = Metronome.GetInstance().Layers.Last(x => x.IsPitch);
                     int index = Array.IndexOf(noteNames, last.BaseSourceName.TakeWhile(x => !char.IsNumber(x)));
-                    index += intervals[Metronome.GetRandomNum() / (100 / 6)];
+                    index += intervals[(int)(Metronome.GetRandomNum() / 16.6667)];
                     if (index > 11) index -= 12;
                     note = noteNames[index];
                 }
                 else
                 {
                     // randomly pick note
-                    note = noteNames[Metronome.GetRandomNum() / (100 / 12)];
+                    note = noteNames[(int)(Metronome.GetRandomNum() / 8.3333)];
                 }
             }
             while (Metronome.GetInstance().Layers.Where(x => x.IsPitch).Any(x => x.BaseSourceName == note + octave));
