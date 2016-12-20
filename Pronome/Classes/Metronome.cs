@@ -17,7 +17,7 @@ namespace Pronome
     public class Metronome : IDisposable
     {
         /** <sumarry>Mix the output from all audio sources.</sumarry> */
-        protected MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(16000, 2));
+        public MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(16000, 2));
         /** <summary>Access the sound output device.</summary> */
         protected DirectSoundOut Player = new DirectSoundOut();
 
@@ -54,7 +54,7 @@ namespace Pronome
         public void AddLayer(Layer layer)
         {
             // add sources to mixer
-            AddSourcesFromLayer(layer);
+            //AddSourcesFromLayer(layer);
 
             Layers.Add(layer);
 
@@ -79,25 +79,37 @@ namespace Pronome
             }
         }
 
+        /**<summary>Used to hold a reference to the ISampleProvider so we can easily remove it from the mixer when needed.</summary>*/
+        public Dictionary<IStreamProvider, ISampleProvider> SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
+
         /** <summary>Add all the audio sources from each layer.</summary>
          * <param name="layer">Layer to add sources from.</param> */
-        protected void AddSourcesFromLayer(Layer layer)
+        public void AddSourcesFromLayer(Layer layer)
         {
             // add sources to mixer
             foreach (IStreamProvider src in layer.AudioSources.Values)
             {
                 if (src.IsPitch)
                 {
-                    Mixer.AddMixerInput((ISampleProvider)src);
+                    SampleDictionary.Add(src, (ISampleProvider)src);
+                    //Mixer.AddMixerInput((ISampleProvider)src);
                 }
                 else
                 {
-                    Mixer.AddMixerInput(((WavFileStream)src).Channel);
+                    SampleDictionary.Add(src, 
+                        SampleConverter.ConvertWaveProviderIntoSampleProvider(
+                            ((WavFileStream)src).Channel)
+                            );
+                    //Mixer.AddMixerInput(((WavFileStream)src).Channel);
                 }
+                Mixer.AddMixerInput(SampleDictionary[src]);
             }
 
-            if (layer.BasePitchSource != null) // if base source is a pitch stream.
+            if (layer.BasePitchSource != null && !SampleDictionary.Values.Contains(layer.BasePitchSource)) // if base source is a pitch stream.
+            {
                 Mixer.AddMixerInput(layer.BasePitchSource);
+                SampleDictionary.Add(layer.BasePitchSource, layer.BasePitchSource);
+            }
             
             // transfer silent interval if exists
             if (IsSilentInterval)
@@ -118,19 +130,30 @@ namespace Pronome
         {
             Layers.Remove(layer);
 
-            // have to remove ALL sources from mixer
-            // then add everything back in
-            Mixer.RemoveAllMixerInputs();
-
-            Layer[] _layers = new Layer[Layers.Count];
-            Layers.CopyTo(_layers);
-            Layers.Clear();
-
-            foreach (Layer item in _layers)
+            foreach (IStreamProvider src in layer.AudioSources.Values)
             {
-                AddLayer(item);
+                Mixer.RemoveMixerInput(SampleDictionary[src]);
             }
+            if (layer.BasePitchSource != default(PitchStream))
+                Mixer.RemoveMixerInput(SampleDictionary[layer.BasePitchSource]);
+            //RedoMixerInputs();
         }
+
+        //public void RedoMixerInputs()
+        //{
+        //    // have to remove ALL sources from mixer
+        //    // then add everything back in
+        //    Mixer.RemoveAllMixerInputs();
+        //
+        //    Layer[] _layers = new Layer[Layers.Count];
+        //    Layers.CopyTo(_layers);
+        //    Layers.Clear();
+        //
+        //    foreach (Layer item in _layers)
+        //    {
+        //        AddLayer(item);
+        //    }
+        //}
 
         /** <summary>Play all layers in sync.</summary> */
         public void Play()

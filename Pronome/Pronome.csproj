@@ -77,6 +77,7 @@
     <Compile Include="Classes\LayerUI.cs" />
     <Compile Include="Classes\Metronome.cs" />
     <Compile Include="Classes\PitchStream.cs" />
+    <Compile Include="Classes\SampleConverter.cs" />
     <Compile Include="Classes\SourceBeatCollection.cs" />
     <Compile Include="Classes\StreamToWavFile.cs" />
     <Compile Include="Classes\WavFileStream.cs" />

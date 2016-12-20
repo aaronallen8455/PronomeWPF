@@ -87,7 +87,7 @@ namespace Pronome
                 pitchInput.Text = Layer.BaseSourceName;
             }
             else pitchInput.Visibility = Visibility.Collapsed;
-            pitchInput.TextChanged += new TextChangedEventHandler(pitchInput_TextChanged);
+            pitchInput.LostFocus += new RoutedEventHandler(pitchInput_LostFocus);
 
             // volume control
             volumeSlider = resources["volumeControl"] as Slider;
@@ -141,17 +141,17 @@ namespace Pronome
 
         protected void baseSourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            string newSource = WavFileStream.GetFileByName(baseSourceSelector.SelectedItem as string);
-            // set new base source
-            if (newSource != Layer.BaseSourceName)
+            if (baseSourceSelector.SelectedItem as string == "Pitch")
             {
-                if (newSource == "Pitch")
-                {
-                    pitchInput.Visibility = Visibility.Visible;
-                    // use contents of pitch field as source
-                    Layer.SetBaseSource(pitchInput.Text);
-                }
-                else
+                pitchInput.Visibility = Visibility.Visible;
+                // use contents of pitch field as source
+                Layer.SetBaseSource(pitchInput.Text);
+            }
+            else
+            {
+                string newSource = WavFileStream.GetFileByName(baseSourceSelector.SelectedItem as string);
+                // set new base source
+                if (newSource != Layer.BaseSourceName)
                 {
                     pitchInput.Visibility = Visibility.Collapsed;
                     Layer.SetBaseSource(newSource);
@@ -159,7 +159,7 @@ namespace Pronome
             }
         }
 
-        protected void pitchInput_TextChanged(object sender, TextChangedEventArgs e)
+        protected void pitchInput_LostFocus(object sender, RoutedEventArgs e)
         {
             // validate input
             if (Regex.IsMatch(pitchInput.Text, @"^[A-Ga-g][#b]?[\d]$|^[\d.]+$"))

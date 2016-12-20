@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Runtime.Serialization;
+using NAudio.Wave;
 
 namespace Pronome
 {
@@ -16,33 +17,46 @@ namespace Pronome
 
         /** <summary>The audio sources that are not pitch are the base sound.</summary> */
         public Dictionary<string, IStreamProvider> AudioSources = new Dictionary<string, IStreamProvider>();
+
         /** <summary>The base audio source. Could be a pitch or wav file source.</summary> */
         public IStreamProvider BaseAudioSource;
+
         /** <summary>If this layer has any pitch sounds, they are held here.</summary> */
         public PitchStream BasePitchSource; // only use one pitch source per layer
+
         /** <summary>True if the base source is a pitch.</summary> */
         [DataMember]
         public bool IsPitch;
+
         /** <summary>The beat code string that was passed in to create the rhythm of this layer.</summary> */
         [DataMember]
         public string ParsedString;
+
         /** <summary>The fractional portion of sample per second values are accumulated here and added in when over 1.</summary> */
         [DataMember]
         public double Remainder = .0; // holds the accumulating fractional milliseconds.
+
         /** <summary>A value in quarter notes that all sounds in this layer are offset by.</summary> */
         [DataMember]
         public double Offset = 0; // in BPM
+
         /** <summary>The name of the base source.</summary> */
         [DataMember]
         public string BaseSourceName;
-        /** <summary>True if the layer is muted.</summary> */
+
+        /** <summary>True if the layer 
+         * is muted.</summary> */
         public bool IsMuted = false;
+
         /** <summary>True if the layer is part of the soloed group.</summary> */
         public bool IsSoloed = false;
+
         /** <summary>True if a solo group exists.</summary> */
         public static bool SoloGroupEngaged = false; // is there a solo group?
+
         /** <summary>Does the layer contain a hihat closed source?</summary> */
         public bool HasHiHatClosed = false;
+
         /** <summary>Does the layer contain a hihat open source?</summary> */
         public bool HasHiHatOpen = false;
 
@@ -244,7 +258,12 @@ namespace Pronome
         public void SetBaseSource(string baseSourceName)
         {
             // remove base source from AudioSources if exists
-            if (!IsPitch && BaseSourceName != null) AudioSources.Remove(BaseSourceName); // for pitch layers, base source is not in AudioSources.
+            if (!IsPitch && BaseSourceName != null)
+            {
+                // remove the old base wav source from mixer
+                Metronome.GetInstance().Mixer.RemoveMixerInput(Metronome.GetInstance().SampleDictionary[BaseAudioSource]);
+                AudioSources.Remove(BaseSourceName); // for pitch layers, base source is not in AudioSources.
+            } 
 
             // is sample or pitch source?
             if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
@@ -254,14 +273,28 @@ namespace Pronome
                     BasePitchSource = new PitchStream()
                     {
                         BaseFrequency = PitchStream.ConvertFromSymbol(baseSourceName),
-                        Layer = this
+                        Layer = this,
+                        Volume = Volume
                     };
                     BaseAudioSource = BasePitchSource; // needs to be cast back to ISampleProvider when added to mixer
                 }
+                else
+                {
+                    BaseAudioSource = BasePitchSource;
+                }
+
                 IsPitch = true;
             }
             else
             {
+                // remove pitch source if this was formerly a pitch based layer
+                if (IsPitch)
+                {
+                    // remove from mixer
+                    Metronome.GetInstance().Mixer.RemoveMixerInput(Metronome.GetInstance().SampleDictionary[BasePitchSource]);
+                    BasePitchSource.Dispose();
+                    BasePitchSource = null;
+                }
                 BaseAudioSource = new WavFileStream(baseSourceName)
                 {
                     Layer = this
@@ -339,13 +372,15 @@ namespace Pronome
             // deal with the old audio sources.
             if (Beat != null)
             {
-                // dispose wav audio sources if no the base
+                // dispose wav audio sources if not the base
                 foreach (BeatCell b in Beat.Where(x => !x.AudioSource.IsPitch && x.SourceName != ""))
                 {
                     b.AudioSource?.Dispose();
                 }
                 // need to rebuild the pitch source
                 BasePitchSource?.Frequencies.Clear();
+                if (IsPitch)
+                    BasePitchSource.BaseFrequency = PitchStream.ConvertFromSymbol(BaseSourceName);
             }
 
             // refresh the hashihatxxx bools
@@ -403,6 +438,9 @@ namespace Pronome
                 // set beat's value based on tempo and bytes/sec
                 beat[i].SetBeatValue();
             }
+
+            //if (Beat != null)
+            //    Metronome.GetInstance().RedoMixerInputs();
 
             Beat = beat.ToList();
 
@@ -467,6 +505,8 @@ namespace Pronome
 
             // do any initial muting, includes hihat timings
             AudioSources.Values.ToList().ForEach(x => x.SetInitialMuting());
+
+            Metronome.GetInstance().AddSourcesFromLayer(this);
         }
 
         /**<summary>Get a random pitch based on existing pitch layers</summary>*/

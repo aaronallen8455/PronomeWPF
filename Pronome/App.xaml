@@ -8,7 +8,8 @@
         <!--The base panel of the beat layer-->
         <Grid
             x:Key="layerGrid"
-            x:Shared="False">
+            x:Shared="False"
+            Margin="5, 5, 5, 0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
