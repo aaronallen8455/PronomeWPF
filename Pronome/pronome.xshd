@@ -28,7 +28,7 @@
     </Keywords>
     <Span color="Repeat">
       <Begin>\]|\(</Begin>
-      <End>(?=[,}|])</End>
+      <End>(?=[,}|!])</End>
     </Span>
 
     <Keywords color="Multiply">
@@ -36,17 +36,17 @@
     </Keywords>
     <Span color="Multiply">
       <Begin>\}</Begin>
-      <End>(?=[,|\]\[])</End>
+      <End>(?=[,|\]\[!])</End>
     </Span>
 
     <Span color="Pitch">
       <Begin>@</Begin>
-      <End>(?=[^\d.\w#])</End>
+      <End>(?=[^\d.\w#!])</End>
     </Span>
 
     <Span color="Reference">
       <Begin>\$</Begin>
-      <End>(?=[^s\d])</End>
+      <End>(?=[^s\d!])</End>
     </Span>
 
     <Span color="Comment">

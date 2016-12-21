@@ -70,8 +70,9 @@ namespace Pronome
             MakeLabel("Source", baseSourceSelector);
             // get array of sources
             // TODO: add index numbers to .wav items
-            List<string> sources = WavFileStream.FileNameIndex.Cast<string>().ToList();
-            sources = sources.Where((n, i) => i % 2 == 1).ToList(); // get the pretty names from the odd numbered indexes
+            List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
+                .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
+                .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
             baseSourceSelector.ItemsSource = sources;
             baseSourceSelector.SelectedIndex = 0;
@@ -148,7 +149,7 @@ namespace Pronome
             }
             else
             {
-                string newSource = WavFileStream.GetFileByName(baseSourceSelector.SelectedItem as string);
+                string newSource = WavFileStream.GetFileByName((baseSourceSelector.SelectedItem as string).Substring(4));
                 // set new base source
                 if (newSource != Layer.BaseSourceName)
                 {
@@ -157,26 +158,26 @@ namespace Pronome
                 }
             }
             // if there is a ex. @23 we need to reparse to set it correctly to pitch or wav sound
-            if (Regex.IsMatch(Layer.ParsedString, @"@[\d.]+"))
-            {
-                //// remove pitch mod sources
-                //if (!Layer.IsPitch && Layer.BasePitchSource != null)
-                //{
-                //    // remove pitch
-                //    Metronome.GetInstance().RemoveAudioSource(Layer.BasePitchSource);
-                //    Layer.BasePitchSource.Dispose();
-                //    Layer.BasePitchSource = null;
-                //    // remove non-base wavs
-                //    foreach (IStreamProvider src in Layer.AudioSources.Values.Where(x => x != Layer.BaseAudioSource))
-                //    {
-                //        Metronome.GetInstance().RemoveAudioSource(src);
-                //    }
-                //    Layer.AudioSources.Clear();
-                //    Layer.AudioSources.Add("", Layer.BaseAudioSource);
-                //}
-
-                Layer.Parse(Layer.ParsedString);
-            }
+            //if (Regex.IsMatch(Layer.ParsedString, @"@[\d.]+"))
+            //{
+            //    //// remove pitch mod sources
+            //    //if (!Layer.IsPitch && Layer.BasePitchSource != null)
+            //    //{
+            //    //    // remove pitch
+            //    //    Metronome.GetInstance().RemoveAudioSource(Layer.BasePitchSource);
+            //    //    Layer.BasePitchSource.Dispose();
+            //    //    Layer.BasePitchSource = null;
+            //    //    // remove non-base wavs
+            //    //    foreach (IStreamProvider src in Layer.AudioSources.Values.Where(x => x != Layer.BaseAudioSource))
+            //    //    {
+            //    //        Metronome.GetInstance().RemoveAudioSource(src);
+            //    //    }
+            //    //    Layer.AudioSources.Clear();
+            //    //    Layer.AudioSources.Add("", Layer.BaseAudioSource);
+            //    //}
+            //
+            //    Layer.Parse(Layer.ParsedString);
+            //}
         }
 
         protected void pitchInput_LostFocus(object sender, RoutedEventArgs e)

@@ -62,6 +62,9 @@ namespace Pronome
          */
         public static double ConvertFromSymbol(string symbol)
         {
+            // Remove leading P of raw pitch symbols
+            symbol = symbol.TrimStart(new char[] { 'p', 'P' });
+
             string note = new string(symbol.TakeWhile((x) => !char.IsNumber(x)).ToArray()).ToLower();
             if (note == string.Empty) // raw pitch value
             {

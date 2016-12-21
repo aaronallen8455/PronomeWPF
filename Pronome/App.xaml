@@ -15,6 +15,7 @@
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
+            <Rectangle Fill="SteelBlue" Grid.ColumnSpan="3"/>
         </Grid>
         
         <!--The panel that holds the inner contents of beat layer controls-->
@@ -47,7 +48,7 @@
         
         <!--Source selector dropdown-->
         <ComboBox
-            Width="100"
+            Width="Auto"
             x:Key="sourceSelector"
             x:Shared="False"/>
         
@@ -93,14 +94,16 @@
         <!--Mute button-->
         <ToggleButton
             x:Key="muteButton"
-            x:Shared="False">
+            x:Shared="False"
+            Margin="4, 4, 4, 2">
             M
         </ToggleButton>
         
         <!--Solo button-->
         <ToggleButton
             x:Key="soloButton"
-            x:Shared="False">
+            x:Shared="False"
+            Margin="4, 2, 4, 4">
             S
         </ToggleButton>
         
@@ -119,7 +122,10 @@
             x:Shared="False"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            Grid.Column="2">
+            Grid.Column="2"
+            Margin="4"
+            Width="23"
+            Height="23">
             X
         </Button>
         
@@ -128,8 +134,7 @@
             x:Key="label"
             x:Shared="False"
             Foreground="White"
-            FontSize="7pt"
-            Margin="0"/>
+            FontSize="7pt"/>
         
         <!--Label - controller stack panel-->
         <StackPanel

@@ -298,12 +298,17 @@ namespace Pronome
             }
         }
 
+        protected double _volume = 1;
         /** <summary>The master volume.</summary> */
         [DataMember]
-        public float Volume
+        public double Volume
         {
-            get { return Player.Volume; }
-            set { Player.Volume = value; }
+            get => _volume;
+            set
+            {
+                _volume = value;
+                Layers.ForEach(x => x.Volume = x.Volume); // run the 'set' function on layers
+            }
         }
 
         /** <summary>Used for random muting.</summary> */
@@ -439,8 +444,9 @@ namespace Pronome
         {
             Instance = this;
             Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(16000, 2));
+            Recorder = new StreamToWavFile(Mixer);
             Player = new DirectSoundOut();
-            Player.Init(Mixer);
+            Player.Init(Recorder);
         }
 
         /** <summary>After deserializing, add in the layers and audio sources.</summary> */

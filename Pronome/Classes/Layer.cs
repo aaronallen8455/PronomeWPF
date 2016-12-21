@@ -69,8 +69,8 @@ namespace Pronome
             set
             {
                 volume = value;
-                foreach (IStreamProvider src in AudioSources.Values) src.Volume = value;
-                if (BasePitchSource != null) BasePitchSource.Volume = value;
+                foreach (IStreamProvider src in AudioSources.Values) src.Volume = value * Metronome.GetInstance().Volume;
+                if (BasePitchSource != null) BasePitchSource.Volume = value * Metronome.GetInstance().Volume;
             }
         }
 
@@ -123,6 +123,8 @@ namespace Pronome
             // remove comments
             beat = Regex.Replace(beat, @"!.*?!", "");
 
+            string pitchModifier = "@[a-gA-G]?[#b]?[pP]?[1-9.]+";
+
             if (beat.Contains('$'))
             {
                 // prep single cell repeat on ref if exists
@@ -147,7 +149,7 @@ namespace Pronome
                         refBeat = Regex.Replace(Metronome.GetInstance().Layers[refIndex].ParsedString, @"!.*?!", "");
 
                         // remove sound source modifiers for non self references, unless its @0
-                        refBeat = Regex.Replace(refBeat, @"@[a-gA-G]?[#b]?[1-9.]+", "");
+                        refBeat = Regex.Replace(refBeat, pitchModifier, ""); // get rid of this?
                     }
                     // remove references and their innermost nest from the referenced beat
                     while (refBeat.Contains('$'))
@@ -178,7 +180,7 @@ namespace Pronome
                 // insert the multiplication
                 string inner = Regex.Replace(match.Groups[1].Value, @"(?<!\]\d*)(?=([\]\(\|,+-]|$))", "*" + match.Groups[2].Value);
                 // switch the multiplier to be in front of pitch modifiers
-                inner = Regex.Replace(inner, @"(@[a-gA-G]?[#b]?\d+)(\*[\d.*/]+)", "$2$1");
+                inner = Regex.Replace(inner, @"(@[a-gA-GpP]?[#b]?[\d.]+)(\*[\d.*/]+)", "$2$1");
                 // insert into beat
                 beat = beat.Substring(0, match.Index) + inner + beat.Substring(match.Index + match.Length);
             }
@@ -186,7 +188,7 @@ namespace Pronome
             // handle single cell repeats
             while (Regex.IsMatch(beat, @"[^\]]\(\d+\)"))
             {
-                var match = Regex.Match(beat, @"([.\d+\-/*]+@?[a-gA-G]?[#b]?\d*)\((\d+)\)([\d\-+/*.]*)");
+                var match = Regex.Match(beat, @"([.\d+\-/*]+@?[a-gA-G]?[#b]?[Pp]?\d*)\((\d+)\)([\d\-+/*.]*)");
                 StringBuilder result = new StringBuilder(beat.Substring(0, match.Index));
                 for (int i = 0; i < int.Parse(match.Groups[2].Value); i++)
                 {
@@ -228,24 +230,22 @@ namespace Pronome
             }
 
             // fix instances of a pitch modifier being following by +0 from repeater
-            beat = Regex.Replace(beat, @"(@[a-gA-G]?[#b]?[\d.]+)(\+[\d.\-+/*]+)", "$2$1");
+            beat = Regex.Replace(beat, $@"({pitchModifier})(\+[\d.\-+/*]+)", "$2$1");
             
             BeatCell[] cells = beat.Split(',').Select((x) =>
             {
                 var match = Regex.Match(x, @"([\d.+\-/*]+)@?(.*)");
                 string source = match.Groups[2].Value;
 
-                if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}"))
+                //if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}$|^[pP][\d.]+$"))
+                if (!Regex.IsMatch(source, @"^\d{1,2}$"))
                 {
                     // is a pitch reference
                     return new BeatCell(match.Groups[1].Value, source);
                 }
-                else // ref is a plain number. use as pitch or wav file depending on base source.
+                else // ref is a plain number (wav source) or "" base source.
                 {
-                    if (IsPitch)
-                        return new BeatCell(match.Groups[1].Value, source);
-                    else
-                        return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
+                    return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
                 }
 
             }).ToArray();
@@ -267,7 +267,7 @@ namespace Pronome
             //} 
 
             // is sample or pitch source?
-            if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
+            if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[pP][\d.]+$"))
             {
                 if (BasePitchSource == default(PitchStream))
                 {
@@ -296,12 +296,19 @@ namespace Pronome
                 //    BasePitchSource.Dispose();
                 //    BasePitchSource = null;
                 //}
+                if (AudioSources.ContainsKey(""))
+                {
+                    Metronome.GetInstance().RemoveAudioSource(AudioSources[""]);
+                    AudioSources.Remove("");
+                }
+
                 BaseAudioSource = new WavFileStream(baseSourceName)
                 {
                     Layer = this,
                     Volume = Volume
                 };
-                AudioSources.Add(baseSourceName, BaseAudioSource);
+                
+                AudioSources.Add("", BaseAudioSource);
                 IsPitch = false;
 
                 if (BeatCell.HiHatOpenFileNames.Contains(baseSourceName)) HasHiHatOpen = true;
@@ -314,22 +321,6 @@ namespace Pronome
             if (Beat != null)
             {
                 SetBeat(Beat.ToArray());
-                //var baseBeats = Beat.Where(x => x.SourceName == "").ToList();
-                //SetBeatCollectionOnSources(baseBeats);
-                //
-                //// reasses the hihat status of base source cells
-                //if (BeatCell.HiHatClosedFileNames.Contains(baseSourceName))
-                //    baseBeats.ForEach(x => x.IsHiHatClosed = true);
-                //else
-                //    baseBeats.ForEach(x => x.IsHiHatClosed = false);
-                //if (BeatCell.HiHatOpenFileNames.Contains(baseSourceName))
-                //    baseBeats.ForEach(x => x.IsHiHatOpen = true);
-                //else
-                //    baseBeats.ForEach(x => x.IsHiHatOpen = false);
-                //
-                //// reasses layer hihat status
-                //HasHiHatOpen = Beat.Any(x => BeatCell.HiHatOpenFileNames.Contains(x.SourceName));
-                //HasHiHatClosed = Beat.Any(x => BeatCell.HiHatClosedFileNames.Contains(x.SourceName));
             }
         }
 
@@ -404,7 +395,7 @@ namespace Pronome
             for (int i = 0; i < beat.Count(); i++)
             {
                 beat[i].Layer = this;
-                if (beat[i].SourceName != string.Empty && !Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
+                if (beat[i].SourceName != string.Empty && !Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[Pp][\d.]+$"))
                 {
                     // should cells of the same source use the same audiosource instead of creating new source each time? Yes
                     if (!AudioSources.ContainsKey(beat[i].SourceName))
@@ -422,7 +413,7 @@ namespace Pronome
                 }
                 else
                 {
-                    if (beat[i].SourceName != string.Empty && Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
+                    if (beat[i].SourceName != string.Empty/* && Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$")*/)
                     {
                         // beat has a defined pitch
                         // check if basepitch source exists
@@ -576,6 +567,7 @@ namespace Pronome
             foreach (IStreamProvider src in AudioSources.Values)
             {
                 src.Reset();
+                src.SetInitialMuting();
             }
             //BaseAudioSource.Reset();
             if (BasePitchSource != default(PitchStream))

@@ -17,50 +17,69 @@
             <Grid DockPanel.Dock="Top" MouseLeftButtonDown="window_MouseLeftButtonDown">
                 <Rectangle Fill="Black" Opacity=".5"/>
                 <!--Title Element-->
-                <TextBlock Foreground="White" FontSize="20pt" HorizontalAlignment="Center">ProNome</TextBlock>
+                <TextBlock Foreground="White" FontSize="30pt" HorizontalAlignment="Center">ProNome</TextBlock>
                 <!--Close Window button-->
-                <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="windowCloseButton_Click">
+                <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="windowCloseButton_Click" Width="23" Height="23" Margin="4">
                     X
                 </Button>
             </Grid>
             
             <!--Main controls-->
-            <WrapPanel DockPanel.Dock="Bottom" HorizontalAlignment="Center">
-                <WrapPanel.Resources>
-                    <Style TargetType="Button">
-                        <Setter Property="Margin" Value="5, 10"/>
-                    </Style>
-                </WrapPanel.Resources>
-                <!--Add layer button-->
-                <Button Click="addLayerButton_Click">Add Layer</Button>
-                <!--Play button-->
-                <Button Click="playButton_Click">Play</Button>
-                <!--Pause button-->
-                <Button Click="pauseButton_Click">Pause</Button>
-                <!--Stop button-->
-                <Button Click="stopButton_Click">Stop</Button>
-                <!--Tempo tap button-->
-                <Button Click="tempoTap_Click">Tempo</Button>
-                <!--Tempo input field-->
-                <Grid Margin="5, 0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <RepeatButton Click="tempoUp_Click" FontSize="6pt">U</RepeatButton>
-                        <RepeatButton Click="tempoDown_Click" FontSize="6pt">D</RepeatButton>
+            <Grid DockPanel.Dock="Bottom">
+                <WrapPanel HorizontalAlignment="Center">
+                    <WrapPanel.Resources>
+                        <Style TargetType="Button">
+                            <Setter Property="Margin" Value="5, 10"/>
+                        </Style>
+                    </WrapPanel.Resources>
+                    <!--Add layer button-->
+                    <Button Click="addLayerButton_Click">Add Layer</Button>
+                    <!--Play button-->
+                    <Button Click="playButton_Click">Play</Button>
+                    <!--Pause button-->
+                    <Button Click="pauseButton_Click">Pause</Button>
+                    <!--Stop button-->
+                    <Button Click="stopButton_Click">Stop</Button>
+                    <!--Tempo tap button-->
+                    <Button Click="tempoTap_Click">Tempo</Button>
+                    <!--Tempo input field-->
+                    <Grid Margin="5, 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <RepeatButton Click="tempoUp_Click" FontSize="6pt">U</RepeatButton>
+                            <RepeatButton Click="tempoDown_Click" FontSize="6pt">D</RepeatButton>
+                        </StackPanel>
+                        <TextBox Name="tempoInput" 
+                             LostFocus="tempoInput_LostFocus"
+                             Background="Black"
+                             Foreground="White"
+                             Width="60"
+                             VerticalAlignment="Center"
+                             Grid.Column="1"/>
+                    </Grid>
+                    <!--Master volume-->
+                    <StackPanel Margin="5, 0">
+                        <TextBlock Foreground="White" FontSize="7pt" HorizontalAlignment="Center">Master Vol.</TextBlock>
+                        <Slider 
+                        Name="masterVolume" 
+                        Value="1" 
+                        ValueChanged="masterVolume_ValueChanged" 
+                        Minimum="0" 
+                        Maximum="1" 
+                        Width="80"/>
                     </StackPanel>
-                    <TextBox Name="tempoInput" 
-                         LostFocus="tempoInput_LostFocus"
-                         Background="Black"
-                         Foreground="White"
-                         Width="60"
-                         VerticalAlignment="Center"
-                         Grid.Column="1"/>
-                </Grid>
+                </WrapPanel>
                 
-            </WrapPanel>
+                <!--Window Resizer-->
+                <TextBlock MouseLeftButtonDown="windowResizer_MouseLeftButtonDown" MouseLeftButtonUp="windowResizer_MouseLeftButtonUp"
+                           MouseMove="windowResizer_MouseMove"
+                    Foreground="White" Name="windowResizer" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                    resize
+                </TextBlock>
+            </Grid>
 
             <!--Layer UI container-->
             <ScrollViewer VerticalScrollBarVisibility="Auto">
