@@ -135,10 +135,33 @@ namespace Pronome
             }
         }
 
+        /**<summary>Remove an audiosource from the mixer</summary>
+         * <param name="src">The IStreamProvider upcast that was originally added into the mixer</param>
+         */
         public void RemoveAudioSource(IStreamProvider src)
         {
             Mixer.RemoveMixerInput(SampleDictionary[src]);
             SampleDictionary.Remove(src);
+        }
+
+        /**<summary>Add an audiosource to the mixer</summary>
+         * <param name="src">The IStreamProvider from the layer's AudioSources dictionary</param>
+         */
+        public void AddAudioSource(IStreamProvider src)
+        {
+            if (src.IsPitch)
+            {
+                SampleDictionary.Add(src, (PitchStream)src);
+                Mixer.AddMixerInput(SampleDictionary[src]);
+            }
+            else
+            {
+                SampleDictionary.Add(
+                    src, 
+                    SampleConverter.ConvertWaveProviderIntoSampleProvider((WavFileStream)src)
+                );
+                Mixer.AddMixerInput(SampleDictionary[src]);
+            }
         }
 
         public enum State { Playing, Paused, Stopped };

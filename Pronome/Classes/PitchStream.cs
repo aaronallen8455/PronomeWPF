@@ -54,7 +54,7 @@ namespace Pronome
         public void AddFrequency(string symbol, BeatCell cell)
         {
             Frequencies.Add(cell, ConvertFromSymbol(symbol));
-            freqEnum = Frequencies.Values.GetEnumerator();
+            freqEnum = Frequencies.Values.GetEnumerator(); // could be optimized so that this only called the last time
         }
 
         /**<summary>Convert a pitch symbol or raw number into a hertz value.</summary>

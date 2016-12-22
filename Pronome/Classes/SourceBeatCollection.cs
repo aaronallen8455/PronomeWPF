@@ -9,7 +9,7 @@ namespace Pronome
         Layer Layer;
         double[] Beats;
         public IEnumerator<int> Enumerator;
-        bool isWav;
+        public bool isWav;
 
         public SourceBeatCollection(Layer layer, double[] beats, IStreamProvider src)
         {

@@ -145,7 +145,8 @@ namespace Pronome
             {
                 (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
                 // use contents of pitch field as source
-                Layer.SetBaseSource(pitchInput.Text);
+                //Layer.SetBaseSource(pitchInput.Text);
+                Layer.NewBaseSource(pitchInput.Text);
             }
             else
             {
@@ -154,7 +155,8 @@ namespace Pronome
                 if (newSource != Layer.BaseSourceName)
                 {
                     (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
-                    Layer.SetBaseSource(newSource);
+                    //Layer.SetBaseSource(newSource);
+                    Layer.NewBaseSource(newSource);
                 }
             }
             // if there is a ex. @23 we need to reparse to set it correctly to pitch or wav sound
@@ -185,7 +187,8 @@ namespace Pronome
             // validate input
             if (Regex.IsMatch(pitchInput.Text, @"^[A-Ga-g][#b]?[\d]$|^[\d.]+$"))
             {
-                Layer.SetBaseSource(pitchInput.Text);
+                //Layer.SetBaseSource(pitchInput.Text);
+                Layer.NewBaseSource(pitchInput.Text);
             }
         }
 
