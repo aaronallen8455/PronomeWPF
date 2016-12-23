@@ -76,6 +76,7 @@
     <Compile Include="Classes\Layer.cs" />
     <Compile Include="Classes\LayerUI.cs" />
     <Compile Include="Classes\Metronome.cs" />
+    <Compile Include="Classes\OptionsWindow.cs" />
     <Compile Include="Classes\PitchStream.cs" />
     <Compile Include="Classes\SampleConverter.cs" />
     <Compile Include="Classes\SourceBeatCollection.cs" />

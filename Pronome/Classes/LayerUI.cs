@@ -18,6 +18,8 @@ namespace Pronome
 
         public TextEditor textEditor;
 
+        protected Grid controlGrid;
+
         protected WrapPanel controlPanel;
 
         protected Panel layerList;
@@ -52,18 +54,22 @@ namespace Pronome
             basePanel = resources["layerGrid"] as Grid;
             layerList.Children.Add(basePanel);
 
-            // add the panel that has the main controls
-            controlPanel = resources["layerWrap"] as WrapPanel;
-            basePanel.Children.Add(controlPanel);
-
             // create the layer
             Layer = new Layer("1");
+
+            // the grid that seperates beat input from other controls
+            controlGrid = resources["controlGrid"] as Grid;
+            basePanel.Children.Add(controlGrid);
+
+            // add the panel that has the main controls
+            controlPanel = resources["layerWrap"] as WrapPanel;
+            controlGrid.Children.Add(controlPanel);
 
             // init the text editor
             textEditor = resources["textEditor"] as TextEditor;
             textEditor.Text = "1";
             textEditor.LostFocus += new RoutedEventHandler(textEditor_LostFocus);
-            MakeLabel("Beat", textEditor);
+            MakeLabel("Beat Code", textEditor, true);
 
             // source selector control
             baseSourceSelector = resources["sourceSelector"] as ComboBox;
@@ -233,7 +239,7 @@ namespace Pronome
         }
 
         /**<summary>Make a label for the given element</summary>*/
-        protected void MakeLabel(string labelText, UIElement element)
+        protected void MakeLabel(string labelText, UIElement element, bool isBeatInput = false)
         {
             Label label = Application.Current.Resources["label"] as Label;
             var text = new TextBlock();
@@ -244,7 +250,14 @@ namespace Pronome
             StackPanel panel = Application.Current.Resources["labelControlPanel"] as StackPanel;
             panel.Children.Add(label);
             panel.Children.Add(element);
-            controlPanel.Children.Add(panel);
+
+            if (isBeatInput)
+            {
+                panel.SetValue(Grid.RowProperty, 0);
+                controlGrid.Children.Add(panel);
+            }
+            else
+                controlPanel.Children.Add(panel);
         }
     }
 }

@@ -8,6 +8,42 @@
         Height="400" Width="800"
         AllowsTransparency="True" WindowStyle="None" Background="Transparent"
         Title="MainWindow">
+    <Window.Resources>
+        <!--window for displaying options-->
+        <local:OptionsWindow
+            x:Key="optionsWindow"
+            Height="400" Width="800"
+            Title="Options"
+            SizeToContent="Height">
+
+            <StackPanel>
+                <StackPanel.Resources>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Margin" Value="10, 0"/>
+                    </Style>
+                    <Style TargetType="TextBox">
+                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                    </Style>
+                </StackPanel.Resources>
+                <Expander Header="Random Muting">
+                    <WrapPanel>
+                        <StackPanel>
+                            <Label Target="randomMuteToggle">Enable</Label>
+                            <CheckBox x:Name="randomMuteToggle"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Target="randomMuteInput">Percentage</Label>
+                            <TextBox x:Name="randomMuteInput" LostFocus="randomMuteInput_LostFocus" Width="50"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Target="randomMuteTimerInput">Ramp Duration (seconds)</Label>
+                            <TextBox x:Name="randomMuteTimerInput" LostFocus="randomMuteTimerInput_LostFocus" Width="50"/>
+                        </StackPanel>
+                    </WrapPanel>
+                </Expander>
+            </StackPanel>
+        </local:OptionsWindow>
+    </Window.Resources>
     <Grid>
         <!--The background element-->
         <Rectangle Fill="DarkBlue" Opacity=".7"/>
@@ -23,7 +59,7 @@
                     X
                 </Button>
             </Grid>
-            
+
             <!--Main controls-->
             <Grid DockPanel.Dock="Bottom">
                 <WrapPanel HorizontalAlignment="Center">
@@ -71,8 +107,10 @@
                         Maximum="1" 
                         Width="80"/>
                     </StackPanel>
+                    <!--Open options-->
+                    <Button Name="openOptionsButton" Click="openOptionsButton_Click">Options</Button>
                 </WrapPanel>
-                
+
                 <!--Window Resizer-->
                 <TextBlock MouseLeftButtonDown="windowResizer_MouseLeftButtonDown" MouseLeftButtonUp="windowResizer_MouseLeftButtonUp"
                            MouseMove="windowResizer_MouseMove"

@@ -429,24 +429,28 @@ namespace Pronome
                     else CurrentHiHatDuration -= chunkSize;
                 }
                 int result = 0;
+                int result2 = 0;
 
                 if (!Layer.IsMuted && !(Pronome.Layer.SoloGroupEngaged && !Layer.IsSoloed) && !HiHatOpenIsMuted)
                     result = sourceStream.Read(buffer, offset + bytesCopied, chunkSize);
+                else // progress stream silently
+                    result2 = sourceStream.Read(new byte[buffer.Length], offset + bytesCopied, chunkSize);
 
                 if (result == 0) // silence
                 {
+                    bool use2 = result2 > 0; // true if the sourcestream was progressed silently.
                     // if hihat closing happens while hihat open sound is in silence
                     if (IsHiHatOpen && Layer.HasHiHatClosed && CurrentHiHatDuration > 0)
                     {
-                        CurrentHiHatDuration -= chunkSize;
+                        CurrentHiHatDuration -= use2 ? result2 : chunkSize;
                         if (CurrentHiHatDuration < 0)
                             CurrentHiHatDuration = 0;
                     }
 
-                    Array.Copy(new byte[chunkSize], 0, buffer, offset + bytesCopied, chunkSize);
+                    Array.Copy(new byte[chunkSize], 0, buffer, offset + bytesCopied, use2 ? result2 : chunkSize);
 
-                    ByteInterval -= chunkSize;
-                    bytesCopied += chunkSize;
+                    ByteInterval -= use2 ? result2 : chunkSize;
+                    bytesCopied += use2 ? result2 : chunkSize;
                 }
                 else
                 {

@@ -158,7 +158,7 @@ namespace Pronome
             {
                 SampleDictionary.Add(
                     src, 
-                    SampleConverter.ConvertWaveProviderIntoSampleProvider((WavFileStream)src)
+                    SampleConverter.ConvertWaveProviderIntoSampleProvider(((WavFileStream)src).Channel)
                 );
                 Mixer.AddMixerInput(SampleDictionary[src]);
             }

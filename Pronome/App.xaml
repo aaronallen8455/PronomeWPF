@@ -18,13 +18,25 @@
             <Rectangle Fill="SteelBlue" Grid.ColumnSpan="3"/>
         </Grid>
         
+        <!--Seperates the beat input from other controls-->
+        <Grid
+            x:Key="controlGrid"
+            x:Shared="False"
+            Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+        </Grid>
+
         <!--The panel that holds the inner contents of beat layer controls-->
         <WrapPanel
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             x:Key="layerWrap"
             x:Shared="False"
-            Grid.Column="1">
+            Margin="5"
+            Grid.Row="1">
             <WrapPanel.Resources>
                 <Style TargetType="StackPanel">
                     <Setter Property="Margin" Value="10, 0"/>
@@ -43,8 +55,7 @@
             HorizontalScrollBarVisibility="Auto"
             Background="Black"
             Foreground="White"
-            Margin="4"
-            MinWidth="100"/>
+            Margin="10,0,10,4"/>
         
         <!--Source selector dropdown-->
         <ComboBox
@@ -141,6 +152,6 @@
             x:Key="labelControlPanel"
             x:Shared="False"
             Orientation="Vertical"/>
-
+        
     </Application.Resources>
 </Application>

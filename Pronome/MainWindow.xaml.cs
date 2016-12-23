@@ -17,6 +17,8 @@ using System.IO;
 using System.Xml;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using System.ComponentModel;
+using System.IO.IsolatedStorage;
 
 namespace Pronome
 {
@@ -59,6 +61,7 @@ namespace Pronome
         {
             Metronome.GetInstance().Stop();
             Metronome.GetInstance().Dispose();
+
             Close();
         }
 
@@ -66,8 +69,6 @@ namespace Pronome
         private void addLayerButton_Click(object sender, RoutedEventArgs e)
         {
             LayerUI layerUI = new LayerUI(layerStack);
-            // resize window
-            //this.Height += layerUI.basePanel.ActualHeight;
         }
 
         /**<summary>Play the beat.</summary>*/
@@ -174,6 +175,100 @@ namespace Pronome
                 Width = position.X + resizeOffset.X;
                 Height = position.Y + resizeOffset.Y;
             }
+        }
+
+        public Dictionary<string, double> Settings = new Dictionary<string, double>();
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+
+            // close the options window
+            OptionsWindow options = Resources["optionsWindow"] as OptionsWindow;
+            options.KeepOpen = false;
+            options.Close();
+
+            // save user settings
+            if (Settings.ContainsKey("winWidth")) Settings["winWidth"] = Width;
+            else Settings.Add("winWidth", Width);
+            if (Settings.ContainsKey("winHeight")) Settings["winHeight"] = Height;
+            else Settings.Add("winHeight", Height);
+            if (Settings.ContainsKey("winX")) Settings["winX"] = Left;
+            else Settings.Add("winX", Left);
+            if (Settings.ContainsKey("winY")) Settings["winY"] = Top;
+            else Settings.Add("winY", Top);
+
+            // Write window size and position to storage
+            IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
+            using (IsolatedStorageFileStream stream = new IsolatedStorageFileStream("pronomeSettings", FileMode.Create, f))
+                using (StreamWriter writer = new StreamWriter(stream))
+            {
+                foreach (KeyValuePair<string, double> pair in Settings)
+                {
+                    writer.WriteLine("{0}={1}", pair.Key, pair.Value);
+                }
+            }
+
+            f.Dispose();
+        }
+
+        protected override void OnInitialized(EventArgs e)
+        {
+            base.OnInitialized(e);
+
+            // Read each setting when application is initialized
+            IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
+            using (IsolatedStorageFileStream stream = new IsolatedStorageFileStream("pronomeSettings", FileMode.OpenOrCreate, f))
+                using (StreamReader reader = new StreamReader(stream))
+            {
+                string line = reader.ReadLine();
+                while (line != null)
+                {
+                    string[] setting = line.Split('=');
+                    try
+                    {
+                        Settings.Add(setting[0], double.Parse(setting[1]));
+                    }
+                    catch (Exception err) { }
+
+                    line = reader.ReadLine();
+                }
+
+            }
+            // apply settings
+            if (Settings.ContainsKey("winX")) Left = Settings["winX"];
+            if (Settings.ContainsKey("winY")) Top = Settings["winY"];
+            if (Settings.ContainsKey("winWidth")) Width = Settings["winWidth"];
+            if (Settings.ContainsKey("winHeight")) Height = Settings["winHeight"];
+
+            f.Dispose();
+        }
+
+        private void openOptionsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Window pop = Resources["optionsWindow"] as Window;
+            //pop.Owner = this;
+            pop.Show();
+        }
+
+        private void randomMuteInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            int percent;
+            if (int.TryParse(((TextBox)sender).Text, out percent))
+            {
+                Metronome.GetInstance().SetRandomMute(percent);
+            }
+        }
+
+        private void randomMuteTimerInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            //int seconds;
+            //int percent;
+            //if (int.TryParse(((TextBox)sender).Text, out seconds) &&
+            //    int.TryParse((randomMuteInput).Text, out percent))
+            //{
+            //    Metronome.GetInstance().SetRandomMute(percent, seconds);
+            //}
         }
     }
 }

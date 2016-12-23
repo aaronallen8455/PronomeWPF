@@ -263,11 +263,13 @@ namespace Pronome
                 // remove old wav base source from AudioSources
                 if (AudioSources.Keys.Contains(""))
                 {
+                    AudioSources[""].Dispose();
                     AudioSources.Remove("");
                 }
+                BasePitchSource = null;
 
                 IStreamProvider newBaseSource = null;
-
+                var met = Metronome.GetInstance();
                 // is new source a pitch or a wav?
                 if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
                 {
@@ -296,11 +298,11 @@ namespace Pronome
                     }
                     else
                     {
-                        Metronome.GetInstance().RemoveAudioSource(BasePitchSource);
+                        //Metronome.GetInstance().RemoveAudioSource(BasePitchSource);
                         // old base was a wav, we need to rebuild the beatcollection
                         List<double> beats = new List<double>();
                         double accumulator = 0;
-                        int indexOfFirst = Beat.FindIndex(x => x.AudioSource == BasePitchSource || x.SourceName == "");
+                        int indexOfFirst = Beat.FindIndex(x => x.AudioSource.IsPitch || x.SourceName == "");
                         
                         for (int i=0; i<Beat.Count; i++)
                         {
@@ -334,7 +336,7 @@ namespace Pronome
                     WavFileStream newSource = new WavFileStream(baseSourceName)
                     {
                         Layer = this,
-                        Volume = Volume,
+                        Volume = Volume
                     };
 
                     foreach (BeatCell bc in Beat.Where(x => x.SourceName == ""))
@@ -425,6 +427,9 @@ namespace Pronome
                     src.SetInitialMuting();
                 }
 
+                BaseSourceName = baseSourceName;
+
+                BaseAudioSource = null;
                 BaseAudioSource = newBaseSource;
 
                 // set initial offset
@@ -443,7 +448,7 @@ namespace Pronome
          * <param name="baseSourceName">Name of source to use.</param> */
         public void SetBaseSource(string baseSourceName)
         {
-            //// remove base source from AudioSources if exists
+            // remove base source from AudioSources if exists
             //if (!IsPitch && BaseSourceName != null)
             //{
             //    // remove the old base wav source from mixer
@@ -482,6 +487,7 @@ namespace Pronome
                 //    BasePitchSource.Dispose();
                 //    BasePitchSource = null;
                 //}
+
                 if (AudioSources.ContainsKey(""))
                 {
                     Metronome.GetInstance().RemoveAudioSource(AudioSources[""]);
@@ -503,11 +509,11 @@ namespace Pronome
 
             BaseSourceName = baseSourceName;
 
-            //// reassign source to existing cells that use the base source. base source beats will have an empty string
-            //if (Beat != null)
-            //{
-            //    SetBeat(Beat.ToArray());
-            //}
+            // reassign source to existing cells that use the base source. base source beats will have an empty string
+            if (Beat != null)
+            {
+                SetBeat(Beat.ToArray());
+            }
         }
 
         /** <summary>Set the offset for this layer.</summary>
