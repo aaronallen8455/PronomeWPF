@@ -6,6 +6,7 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Threading;
 using System.Text.RegularExpressions;
+using System.Windows;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
@@ -171,8 +172,11 @@ namespace Pronome
         /** <summary>Play all layers in sync.</summary> */
         public void Play()
         {
-            Player.Play();
-            PlayState = State.Playing;
+            if (Layers.Count > 0)
+            {
+                Player.Play();
+                PlayState = State.Playing;
+            }
         }
 
         /** <summary>Stop playing and reset positions.</summary> */
@@ -204,7 +208,7 @@ namespace Pronome
          */
         public void Record(string fileName)
         {
-            fileName = ValidateFileName(fileName);
+            //fileName = ValidateFileName(fileName);
             Recorder.InitRecording(fileName);
             Play();
         }
@@ -215,9 +219,9 @@ namespace Pronome
          */
         public void ExportAsWav(double seconds, string fileName)
         {
-            fileName = ValidateFileName(fileName);
-            if (fileName.Substring(fileName.Length-4).ToLower() != ".wav") // append wav extension
-                fileName += ".wav";
+            //fileName = ValidateFileName(fileName);
+            //if (fileName.Substring(fileName.Length-4).ToLower() != ".wav") // append wav extension
+            //    fileName += ".wav";
             Writer = new WaveFileWriter(fileName, Mixer.WaveFormat);
 
             // if no seconds param, use the complete cycle
@@ -304,7 +308,10 @@ namespace Pronome
                 float ratio = Tempo / newTempo;
                 Layers.ForEach(x =>
                 {
-                    x.AudioSources.Values.Select(a => { a.BeatCollection.MultiplyBeatValues(ratio); a.MultiplyByteInterval(ratio); return a; }).ToArray();
+                    if (x.AudioSources != null)
+                    {
+                        x.AudioSources.Values.Select(a => { a.BeatCollection.MultiplyBeatValues(ratio); a.MultiplyByteInterval(ratio); return a; }).ToArray();
+                    }
                     if (x.BasePitchSource != null)
                     {
                         x.BasePitchSource.BeatCollection.MultiplyBeatValues(ratio);
@@ -433,9 +440,9 @@ namespace Pronome
          * <param name="name">The name for this beat.</param> */
         static public void Save(string name)
         {
-            name = ValidateFileName(name);
+            //name = ValidateFileName(name);
             var ds = new DataContractSerializer(typeof(Metronome));
-            using (Stream s = File.Create($"saves/{name}.beat"))
+            using (Stream s = File.Create(name))
             using (var w = XmlDictionaryWriter.CreateBinaryWriter(s))
             {
                 ds.WriteObject(w, GetInstance());
@@ -446,12 +453,25 @@ namespace Pronome
          * <param name="fileName">The name of the beat to open.</param> */
         static public void Load(string fileName)
         {
-            fileName = ValidateFileName(fileName);
+            //fileName = ValidateFileName(fileName);
             var ds = new DataContractSerializer(typeof(Metronome));
-            using (Stream s = File.OpenRead($"saves/{fileName}.beat"))
+            using (Stream s = File.OpenRead(fileName))
             using (var w = XmlDictionaryReader.CreateBinaryReader(s, XmlDictionaryReaderQuotas.Max))
             {
-                ds.ReadObject(w);
+                try
+                {
+                    ds.ReadObject(w);
+                }
+                catch (SerializationException e)
+                {
+                    string name = Path.GetFileName(fileName);
+                    MessageBox.Show($"'{name}' could not be used because it is not a valid beat file.", "Invalid Beat File", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                foreach (Layer layer in GetInstance().Layers)
+                {
+                    new LayerUI(MainWindow.LayerStack, layer);
+                }
             }
         }
 
@@ -465,11 +485,19 @@ namespace Pronome
         [OnDeserializing]
         void BeforeDeserialization(StreamingContext sc)
         {
+            Instance.Dispose();
+            // remove all UI layers
+            foreach(LayerUI ui in LayerUI.Items)
+            {
+                ui.Remove();
+            }
+
             Instance = this;
             Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(16000, 2));
             Recorder = new StreamToWavFile(Mixer);
             Player = new DirectSoundOut();
             Player.Init(Recorder);
+            SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
         }
 
         /** <summary>After deserializing, add in the layers and audio sources.</summary> */
@@ -481,6 +509,8 @@ namespace Pronome
                 layer.Deserialize();
                 AddSourcesFromLayer(layer);
             }
+
+            ChangeTempo(Tempo);
         }
 
         ~Metronome()

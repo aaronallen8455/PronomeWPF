@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Text.RegularExpressions;
+using Microsoft.Win32;
 
 // TODO: pitch random muting doesn't occur on first note
 namespace Pronome
@@ -81,22 +82,64 @@ namespace Pronome
 
         private void saveButton_Click(object sender, RoutedEventArgs e)
         {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.AddExtension = true;
+            saveFileDialog.DefaultExt = "beat";
+            saveFileDialog.ValidateNames = true;
+            saveFileDialog.Title = "Save Beat As";
+            saveFileDialog.Filter = "Beat file (*.beat)|*.beat";
 
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                Metronome.Save(saveFileDialog.FileName);
+            }
         }
 
         private void loadButton_Click(object sender, RoutedEventArgs e)
         {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Beat file (*.beat)|*.beat";
+            openFileDialog.Title = "Open Beat";
+            openFileDialog.DefaultExt = "beat";
 
+            if (openFileDialog.ShowDialog() == true)
+            {
+                Metronome.Load(openFileDialog.FileName);
+            }
         }
 
         private void exportWavButton_Click(object sender, RoutedEventArgs e)
         {
+            ExportWavWindow wavWindow = new ExportWavWindow();
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.AddExtension = true;
+            saveFileDialog.DefaultExt = "wav";
+            saveFileDialog.ValidateNames = true;
+            saveFileDialog.Title = "Export to Wav File";
+            saveFileDialog.Filter = "Wav file (*.wav)|*.wav";
 
+            if (wavWindow.ShowDialog() == true)
+            {
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    Metronome.GetInstance().ExportAsWav(wavWindow.numerOfSeconds, saveFileDialog.FileName);
+                }
+            }
         }
 
         private void recordWavButton_Click(object sender, RoutedEventArgs e)
         {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.AddExtension = true;
+            saveFileDialog.DefaultExt = "wav";
+            saveFileDialog.ValidateNames = true;
+            saveFileDialog.Title = "Record to Wav File";
+            saveFileDialog.Filter = "Wav file (*.wav)|*.wav";
 
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                Metronome.GetInstance().Record(saveFileDialog.FileName);
+            }
         }
     }
 }

@@ -37,8 +37,11 @@ namespace Pronome
         public double Remainder = .0; // holds the accumulating fractional milliseconds.
 
         /** <summary>A value in quarter notes that all sounds in this layer are offset by.</summary> */
-        [DataMember]
         public double Offset = 0; // in BPM
+
+        /**<summary>The string that was parsed to get the offset value.</summary>*/
+        [DataMember]
+        public string ParsedOffset = "0";
 
         /** <summary>The name of the base source.</summary> */
         [DataMember]
@@ -69,7 +72,8 @@ namespace Pronome
             set
             {
                 volume = value;
-                foreach (IStreamProvider src in AudioSources.Values) src.Volume = value * Metronome.GetInstance().Volume;
+                if (AudioSources != null)
+                    foreach (IStreamProvider src in AudioSources.Values) src.Volume = value * Metronome.GetInstance().Volume;
                 if (BasePitchSource != null) BasePitchSource.Volume = value * Metronome.GetInstance().Volume;
             }
         }
@@ -796,7 +800,7 @@ namespace Pronome
             SetBaseSource(BaseSourceName);
             Parse(ParsedString);
             if (Offset != 0)
-                SetOffset(Offset);
+                SetOffset(BeatCell.Parse(ParsedOffset));
             if (pan != 0)
                 Pan = pan;
             Volume = volume;

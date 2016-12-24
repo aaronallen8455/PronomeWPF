@@ -418,7 +418,13 @@ namespace Pronome
                         if (gainStep != newGainStep) // set new gainstep if volume was changed
                             gainStep = newGainStep;
                     }
-                    else Frequency = curFreq; //retain frequency if random/interval muting occurs.
+                    else
+                    {
+                        Frequency = curFreq; //retain frequency if random/interval muting occurs.
+                        // if first note is getting muted, set gain to 0
+                        if (Gain == Volume) Gain = 0;
+
+                    }
                 }
 
                 if (Gain <= 0)

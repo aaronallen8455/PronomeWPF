@@ -44,7 +44,9 @@ namespace Pronome
         static public double ConvertFromBpm(double bpm, IStreamProvider src)
         {
             double result = bpm * (60d / Metronome.GetInstance().Tempo) * src.WaveFormat.SampleRate;
-            
+
+            if (result > int.MaxValue) throw new Exception(bpm.ToString());
+
             return result;
         }
 
@@ -90,7 +92,9 @@ namespace Pronome
             "wav/hihat_pedal_v5.wav"
         };
 
-        /**<summary>Parse a math expression string.</summary>*/
+        /**<summary>Parse a math expression string.</summary>
+         * <param name="str">String to parse.</param>
+         */
         static public double Parse(string str)
         {
             string operators = "";
@@ -137,6 +141,8 @@ namespace Pronome
                 }
                 operators = operators.Remove(index, 1);
             }
+
+            if (numbers[0] > int.MaxValue) throw new Exception(numbers[0].ToString());
 
             return numbers[0];
         }

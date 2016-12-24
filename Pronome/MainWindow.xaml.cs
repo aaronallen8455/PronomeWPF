@@ -27,9 +27,13 @@ namespace Pronome
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static StackPanel LayerStack;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            LayerStack = layerStack;
 
             // import the syntax definition
             Assembly myAssembly = Assembly.GetExecutingAssembly();
@@ -249,26 +253,7 @@ namespace Pronome
             Window pop = Resources["optionsWindow"] as Window;
             //pop.Owner = this;
             pop.Show();
-        }
-
-        private void randomMuteInput_LostFocus(object sender, RoutedEventArgs e)
-        {
-            int percent;
-            if (int.TryParse(((TextBox)sender).Text, out percent))
-            {
-                Metronome.GetInstance().SetRandomMute(percent);
-            }
-        }
-
-        private void randomMuteTimerInput_LostFocus(object sender, RoutedEventArgs e)
-        {
-            //int seconds;
-            //int percent;
-            //if (int.TryParse(((TextBox)sender).Text, out seconds) &&
-            //    int.TryParse((randomMuteInput).Text, out percent))
-            //{
-            //    Metronome.GetInstance().SetRandomMute(percent, seconds);
-            //}
+            pop.Activate();
         }
     }
 }

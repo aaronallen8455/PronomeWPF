@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Text.RegularExpressions;
+using System;
 using ICSharpCode.AvalonEdit;
 
 namespace Pronome
@@ -12,6 +13,8 @@ namespace Pronome
     /**<summary>Provides the user interface for a beat layer.</summary>*/
     class LayerUI
     {
+        public static List<LayerUI> Items = new List<LayerUI>();
+
         public Layer Layer;
 
         public Grid basePanel;
@@ -45,8 +48,10 @@ namespace Pronome
         /**<summary>Constructor</summary>
          * <param name="Parent">The list to add the UI to.</param>
          */
-        public LayerUI(Panel Parent)
+        public LayerUI(Panel Parent, Layer layer = null)
         {
+            Items.Add(this);
+
             ResourceDictionary resources = Application.Current.Resources;
 
             layerList = Parent;
@@ -54,8 +59,10 @@ namespace Pronome
             basePanel = resources["layerGrid"] as Grid;
             layerList.Children.Add(basePanel);
 
-            // create the layer
-            Layer = new Layer("1");
+            // create the layer if doesn't exist
+            if (layer == null)
+                Layer = new Layer("1");
+            else Layer = layer;
 
             // the grid that seperates beat input from other controls
             controlGrid = resources["controlGrid"] as Grid;
@@ -67,7 +74,7 @@ namespace Pronome
 
             // init the text editor
             textEditor = resources["textEditor"] as TextEditor;
-            textEditor.Text = "1";
+            textEditor.Text = Layer.ParsedString;
             textEditor.LostFocus += new RoutedEventHandler(textEditor_LostFocus);
             MakeLabel("Beat Code", textEditor, true);
 
@@ -81,7 +88,7 @@ namespace Pronome
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
             baseSourceSelector.ItemsSource = sources;
-            baseSourceSelector.SelectedIndex = 0;
+            baseSourceSelector.SelectedIndex = sources.Contains(Layer.BaseSourceName) ? sources.IndexOf(Layer.BaseSourceName) : 0;
             baseSourceSelector.SelectionChanged += new SelectionChangedEventHandler(baseSourceSelector_SelectionChanged);
 
             // pitch field (used if source is a pitch)
@@ -91,21 +98,28 @@ namespace Pronome
             {
                 pitchInput.Text = Layer.BaseSourceName;
             }
-            else pitchInput.Visibility = Visibility.Collapsed;
+            else
+            {
+                pitchInput.Text = Layer.GetAutoPitch();
+                pitchInput.Visibility = Visibility.Collapsed;
+            }
             pitchInput.LostFocus += new RoutedEventHandler(pitchInput_LostFocus);
 
             // volume control
             volumeSlider = resources["volumeControl"] as Slider;
+            volumeSlider.Value = Layer.Volume;
             MakeLabel("Vol.", volumeSlider);
             volumeSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(volumeSlider_ValueChanged);
 
             // pan control
             panSlider = resources["panControl"] as Slider;
+            panSlider.Value = Layer.Pan;
             MakeLabel("Pan", panSlider);
             panSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(panSlider_ValueChanged);
 
             // offset control
             offsetInput = resources["offsetInput"] as TextBox;
+            offsetInput.Text = Layer.ParsedOffset;
             MakeLabel("Offset", offsetInput);
             offsetInput.LostFocus += new RoutedEventHandler(offsetInput_LostFocus);
 
@@ -141,7 +155,14 @@ namespace Pronome
 
             if (Layer.ParsedString != textEditor.Text)
             {
-                Layer.Parse(textEditor.Text);
+                try
+                {
+                    Layer.Parse(textEditor.Text);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"This Beat contains a value that is too large ({ex.Message}). Use smaller values.", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -165,27 +186,6 @@ namespace Pronome
                     Layer.NewBaseSource(newSource);
                 }
             }
-            // if there is a ex. @23 we need to reparse to set it correctly to pitch or wav sound
-            //if (Regex.IsMatch(Layer.ParsedString, @"@[\d.]+"))
-            //{
-            //    //// remove pitch mod sources
-            //    //if (!Layer.IsPitch && Layer.BasePitchSource != null)
-            //    //{
-            //    //    // remove pitch
-            //    //    Metronome.GetInstance().RemoveAudioSource(Layer.BasePitchSource);
-            //    //    Layer.BasePitchSource.Dispose();
-            //    //    Layer.BasePitchSource = null;
-            //    //    // remove non-base wavs
-            //    //    foreach (IStreamProvider src in Layer.AudioSources.Values.Where(x => x != Layer.BaseAudioSource))
-            //    //    {
-            //    //        Metronome.GetInstance().RemoveAudioSource(src);
-            //    //    }
-            //    //    Layer.AudioSources.Clear();
-            //    //    Layer.AudioSources.Add("", Layer.BaseAudioSource);
-            //    //}
-            //
-            //    Layer.Parse(Layer.ParsedString);
-            //}
         }
 
         protected void pitchInput_LostFocus(object sender, RoutedEventArgs e)
@@ -217,6 +217,7 @@ namespace Pronome
             if (Regex.IsMatch(offsetInput.Text, @"[\d+\-*/xX.]+"))
             {
                 Layer.SetOffset(BeatCell.Parse(offsetInput.Text));
+                Layer.ParsedOffset = offsetInput.Text;
             }
         }
 
@@ -234,6 +235,12 @@ namespace Pronome
         {
             // dispose the layer
             Layer.Dispose();
+            Remove();
+        }
+
+        /**<summary>Remove this item from the interface.</summary>*/
+        public void Remove()
+        {
             // remove the panel
             layerList.Children.Remove(basePanel);
         }

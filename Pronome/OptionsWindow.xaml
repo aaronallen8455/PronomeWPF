@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="OptionsWindow" Height="300" Width="500">
+        Title="Options" Height="300" Width="530"
+        Name="optionsWindow">
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <StackPanel>
+        <StackPanel HorizontalAlignment="Left">
             <StackPanel.Resources>
                 <Style TargetType="StackPanel">
                     <Setter Property="Margin" Value="10, 0"/>
@@ -16,59 +17,87 @@
                     <Setter Property="HorizontalAlignment" Value="Left"/>
                     <Setter Property="Width" Value="50"/>
                 </Style>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10, 0"/>
+                </Style>
+                <Style TargetType="Expander">
+                    <Setter Property="Width" Value="{Binding ElementName=optionsWindow, Path=Width}"/>
+                    <Setter Property="Margin" Value="0,0,-40,0"/>
+                    <Setter Property="Padding" Value="0,0,40,0"/>
+                </Style>
             </StackPanel.Resources>
             <!--Random Muting-->
             <Expander Header="Random Muting">
-                <WrapPanel>
-                    <StackPanel>
-                        <Label Target="{Binding ElementName=randomMuteToggle}">Enable</Label>
-                        <CheckBox x:Name="randomMuteToggle" Checked="applyMuting" Unchecked="applyMuting"/>
-                    </StackPanel>
-                    <StackPanel>
-                        <Label Target="{Binding ElementName=randomMuteInput}">Percentage</Label>
-                        <TextBox x:Name="randomMuteInput" LostFocus="applyMuting"  Text="0"/>
-                    </StackPanel>
-                    <StackPanel>
-                        <Label Target="{Binding ElementName=randomMuteTimerInput}">Ramp Duration (seconds)</Label>
-                        <TextBox x:Name="randomMuteTimerInput" LostFocus="applyMuting"  Text="0"/>
-                    </StackPanel>
-                </WrapPanel>
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap">When Random Muting is enabled, there is a percent chance that a beat cell will not be played. Enter a Ramp Duration to have the chance start at 0% and reach the full value in the given number of seconds.</TextBlock>
+                    <WrapPanel>
+                        <StackPanel>
+                            <Label Target="{Binding ElementName=randomMuteToggle}">Enable</Label>
+                            <CheckBox x:Name="randomMuteToggle" Checked="applyMuting" Unchecked="applyMuting"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Target="{Binding ElementName=randomMuteInput}">Percentage</Label>
+                            <TextBox x:Name="randomMuteInput" LostFocus="applyMuting"  Text="0"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Target="{Binding ElementName=randomMuteTimerInput}">Ramp Duration (seconds)</Label>
+                            <TextBox x:Name="randomMuteTimerInput" LostFocus="applyMuting"  Text="0"/>
+                        </StackPanel>
+                    </WrapPanel>
+                </StackPanel>
             </Expander>
             <!--Interval muting-->
             <Expander Header="Intervallic Muting">
-                <WrapPanel>
-                    <StackPanel>
-                        <Label Target="{Binding ElementName=intervalMuteToggle}">Enable</Label>
-                        <CheckBox x:Name="intervalMuteToggle" Checked="applyIntervalMuting" Unchecked="applyIntervalMuting"/>
-                    </StackPanel>
-                    <StackPanel>
-                        <Label Target="{Binding ElementName=intervalAudibleInput}">Audible Interval</Label>
-                        <TextBox x:Name="intervalAudibleInput" 
-                                 Text="0" 
-                                 ToolTip="A value representing the number of audible quarter notes."
-                                 LostFocus="applyIntervalMuting"/>
-                    </StackPanel>
-                    <StackPanel>
-                        <Label Target="{Binding ElementName=intervalSilentInput}">Silent Interval</Label>
-                        <TextBox x:Name="intervalSilentInput"
-                                 Text="0"
-                                 ToolTip="A value representing the number of silent quarter notes."
-                                 LostFocus="applyIntervalMuting"/>
-                    </StackPanel>
-                </WrapPanel>
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap">
+                        With intervallic muting enabled, the beat will play for a set duration and then be silent for a set duration. The interval durations are represented as a number of Quarter-Notes.
+                    </TextBlock>
+                    <WrapPanel>
+                        <StackPanel>
+                            <Label Target="{Binding ElementName=intervalMuteToggle}">Enable</Label>
+                            <CheckBox x:Name="intervalMuteToggle" Checked="applyIntervalMuting" Unchecked="applyIntervalMuting"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Target="{Binding ElementName=intervalAudibleInput}">Audible Interval</Label>
+                            <TextBox x:Name="intervalAudibleInput" 
+                                     Text="0" 
+                                     ToolTip="A value representing the number of audible quarter notes."
+                                     LostFocus="applyIntervalMuting"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Label Target="{Binding ElementName=intervalSilentInput}">Silent Interval</Label>
+                            <TextBox x:Name="intervalSilentInput"
+                                     Text="0"
+                                     ToolTip="A value representing the number of silent quarter notes."
+                                     LostFocus="applyIntervalMuting"/>
+                        </StackPanel>
+                    </WrapPanel>
+                </StackPanel>
             </Expander>
             <!--Save and Load-->
             <Expander Header="Save and Load">
-                <WrapPanel>
-                    <Button Name="saveButton" Click="saveButton_Click">Save Beat</Button>
-                    <Button Name="loadButton" Click="loadButton_Click">Load Beat</Button>
-                </WrapPanel>
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap">
+                        You can save your work to a file or open a previously saved beat.
+                    </TextBlock>
+                    <WrapPanel>
+                        <Button Name="saveButton" Click="saveButton_Click">Save Beat As...</Button>
+                        <Button Name="loadButton" Click="loadButton_Click">Load Beat</Button>
+                    </WrapPanel>
+                </StackPanel>
             </Expander>
             <Expander Header="Wav File Creation">
-                <WrapPanel>
-                    <Button Name="exportWavButton" Click="exportWavButton_Click">Export Wav File</Button>
-                    <Button Name="recordWavButton" Click="recordWavButton_Click">Record to Wav File</Button>
-                </WrapPanel>
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap">
+                        There's two ways to export your beat to a Wav audio file:<LineBreak/>
+                        - Based on a specified length of time.<LineBreak/>
+                        - Record to the Wav file as the beat is playing until you press stop.
+                    </TextBlock>
+                    <WrapPanel>
+                        <Button Name="exportWavButton" Click="exportWavButton_Click">Export Wav File</Button>
+                        <Button Name="recordWavButton" Click="recordWavButton_Click">Record to Wav File</Button>
+                    </WrapPanel>
+                </StackPanel>
             </Expander>
         </StackPanel>
     </ScrollViewer>

@@ -1,0 +1,50 @@
+﻿<Window x:Class="Pronome.ExportWavWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Pronome"
+        mc:Ignorable="d"
+        Title="Wav Export Options" Height="200" Width="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0, 10, 0, 0">
+            Enter the length in seconds that you would like to export.
+        </TextBlock>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Grid.Column="1">
+                <TextBox Name="seconds" TextChanged="seconds_TextChanged" VerticalAlignment="Top" Width="40"/>
+                <TextBlock Text=" seconds"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Center">
+                <TextBlock Text="Filesize: "/>
+                <TextBlock Name="fileSize">0</TextBlock>
+                <TextBlock Text=" KB"/>
+            </StackPanel>
+        </Grid>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Center">
+            <CheckBox Name="useCycle" Checked="useCycle_Checked" Unchecked="useCycle_Unchecked" Margin="5, 0"/>
+            <TextBlock>Use length of one whole cycle, if applicable.</TextBlock>
+        </StackPanel>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Name="cancelButton" Click="cancelButton_Click" Grid.Column="0" Padding="8, 4"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">Cancel</Button>
+            <Button Name="okButton" Click="okButton_Click" Grid.Column="1" IsDefault="True" Padding="8, 4"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">OK</Button>
+        </Grid>
+    </Grid>
+</Window>
