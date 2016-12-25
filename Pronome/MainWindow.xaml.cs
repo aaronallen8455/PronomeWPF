@@ -79,18 +79,29 @@ namespace Pronome
         private void playButton_Click(object sender, RoutedEventArgs e)
         {
             Metronome.GetInstance().Play();
+
+            (Application.Current.Resources["disableDuringPlay"] as Button).IsEnabled = false;
+            playButton.IsEnabled = false;
+            pauseButton.IsEnabled = true;
         }
 
         /**<summary>Pause the beat.</summary>*/
         private void pauseButton_Click(object sender, RoutedEventArgs e)
         {
             Metronome.GetInstance().Pause();
+
+            playButton.IsEnabled = true;
+            pauseButton.IsEnabled = false;
         }
 
         /**<summary>Stop the beat.</summary>*/
         private void stopButton_Click(object sender, RoutedEventArgs e)
         {
             Metronome.GetInstance().Stop();
+
+            playButton.IsEnabled = true;
+            pauseButton.IsEnabled = false;
+            (Application.Current.Resources["disableDuringPlay"] as Button).IsEnabled = true;
         }
 
         private List<int> tempoHistory = new List<int>();
@@ -201,6 +212,8 @@ namespace Pronome
             else Settings.Add("winX", Left);
             if (Settings.ContainsKey("winY")) Settings["winY"] = Top;
             else Settings.Add("winY", Top);
+            if (Settings.ContainsKey("beatFontSize")) Settings["beatFontSize"] = (double)Application.Current.Resources["textBoxFontSize"];
+            else Settings.Add("beatFontSize", (double)Application.Current.Resources["textBoxFontSize"]);
 
             // Write window size and position to storage
             IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
@@ -244,6 +257,7 @@ namespace Pronome
             if (Settings.ContainsKey("winY")) Top = Settings["winY"];
             if (Settings.ContainsKey("winWidth")) Width = Settings["winWidth"];
             if (Settings.ContainsKey("winHeight")) Height = Settings["winHeight"];
+            if (Settings.ContainsKey("beatFontSize")) Application.Current.Resources["textBoxFontSize"] = Settings["beatFontSize"];
 
             f.Dispose();
         }
@@ -251,9 +265,31 @@ namespace Pronome
         private void openOptionsButton_Click(object sender, RoutedEventArgs e)
         {
             Window pop = Resources["optionsWindow"] as Window;
-            //pop.Owner = this;
             pop.Show();
             pop.Activate();
         }
+    }
+
+    [ValueConversion(typeof(bool), typeof(bool))]
+    public class InverseBooleanConverter : IValueConverter
+    {
+        #region IValueConverter Members
+
+        public object Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (targetType != typeof(bool))
+                throw new InvalidOperationException("The target must be a boolean");
+
+            return !(bool)value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
     }
 }

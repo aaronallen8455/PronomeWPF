@@ -4,11 +4,11 @@ using System.Linq;
 
 namespace Pronome
 {
-    public class SourceBeatCollection : IEnumerable<int>
+    public class SourceBeatCollection : IEnumerable<long>
     {
         Layer Layer;
         double[] Beats;
-        public IEnumerator<int> Enumerator;
+        public IEnumerator<long> Enumerator;
         public bool isWav;
 
         public SourceBeatCollection(Layer layer, double[] beats, IStreamProvider src)
@@ -19,7 +19,7 @@ namespace Pronome
             isWav = src.WaveFormat.AverageBytesPerSecond == 64000;
         }
 
-        public IEnumerator<int> GetEnumerator()
+        public IEnumerator<long> GetEnumerator()
         {
             for (int i = 0; ; i++)
             {
@@ -27,7 +27,7 @@ namespace Pronome
 
                 double bpm = Beats[i];//BeatCell.ConvertFromBpm(Beats[i], BytesPerSec);
 
-                int whole = (int)bpm;
+                long whole = (long)bpm;
 
                 Layer.Remainder += bpm - whole; // add to layer's remainder accumulator
 

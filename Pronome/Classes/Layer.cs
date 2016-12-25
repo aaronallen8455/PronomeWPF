@@ -126,6 +126,8 @@ namespace Pronome
             ParsedString = beat;
             // remove comments
             beat = Regex.Replace(beat, @"!.*?!", "");
+            // remove whitespace
+            beat = Regex.Replace(beat, @"\s", "");
 
             string pitchModifier = "@[a-gA-G]?[#b]?[pP]?[1-9.]+";
 

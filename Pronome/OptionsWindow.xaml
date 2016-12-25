@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="Options" Height="300" Width="530"
+        Title="ProNome Options" Height="300" Width="530"
         Name="optionsWindow">
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <StackPanel HorizontalAlignment="Left">
+        <StackPanel HorizontalAlignment="Left" DataContext="{DynamicResource disableDuringPlay}">
             <StackPanel.Resources>
                 <Style TargetType="StackPanel">
                     <Setter Property="Margin" Value="10, 0"/>
@@ -52,7 +52,7 @@
                     <TextBlock TextWrapping="Wrap">
                         With intervallic muting enabled, the beat will play for a set duration and then be silent for a set duration. The interval durations are represented as a number of Quarter-Notes.
                     </TextBlock>
-                    <WrapPanel>
+                    <WrapPanel IsEnabled="{Binding Path=IsEnabled}">
                         <StackPanel>
                             <Label Target="{Binding ElementName=intervalMuteToggle}">Enable</Label>
                             <CheckBox x:Name="intervalMuteToggle" Checked="applyIntervalMuting" Unchecked="applyIntervalMuting"/>
@@ -82,7 +82,7 @@
                     </TextBlock>
                     <WrapPanel>
                         <Button Name="saveButton" Click="saveButton_Click">Save Beat As...</Button>
-                        <Button Name="loadButton" Click="loadButton_Click">Load Beat</Button>
+                        <Button Name="loadButton" Click="loadButton_Click" IsEnabled="{Binding Path=IsEnabled}">Load Beat</Button>
                     </WrapPanel>
                 </StackPanel>
             </Expander>
@@ -93,10 +93,21 @@
                         - Based on a specified length of time.<LineBreak/>
                         - Record to the Wav file as the beat is playing until you press stop.
                     </TextBlock>
-                    <WrapPanel>
+                    <WrapPanel IsEnabled="{Binding Path=IsEnabled}">
                         <Button Name="exportWavButton" Click="exportWavButton_Click">Export Wav File</Button>
                         <Button Name="recordWavButton" Click="recordWavButton_Click">Record to Wav File</Button>
                     </WrapPanel>
+                </StackPanel>
+            </Expander>
+            <Expander Header="Additional Settings">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap">
+                        Set the font size for beat code inputs.
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Target="{Binding ElementName=beatFontSizeTextBox}"></Label>
+                        <TextBox Name="beatFontSizeTextBox" LostFocus="beatFontSizeTextBox_LostFocus" Loaded="beatFontSizeTextBox_Loaded" Width="50"/>
+                    </StackPanel>
                 </StackPanel>
             </Expander>
         </StackPanel>

@@ -6,7 +6,7 @@ namespace Pronome
     {
         bool IsPitch { get; }
 
-        int GetNextInterval();
+        long GetNextInterval();
 
         double Volume { get; set; }
 

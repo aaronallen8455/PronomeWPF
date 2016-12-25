@@ -7,6 +7,7 @@
   <Color name="Reference" foreground="#9876aa" exampleText="$1"/>
   <Color name="Multiply" foreground="#ccb96e" exampleText="{}3/4"/>
   <Color name="Comment" foreground="Gray" exampleText="!comment!"/>
+  <Color name="Number" foreground="White" exampleText="1.5"/>
 
   <RuleSet>
     <Keywords color="Seperator">
@@ -53,6 +54,7 @@
       <Begin>!</Begin>
       <End>!</End>
     </Span>
+
   </RuleSet>
   
 </SyntaxDefinition>

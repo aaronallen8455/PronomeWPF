@@ -106,6 +106,10 @@ namespace Pronome
             {
                 Metronome.Load(openFileDialog.FileName);
             }
+
+            // set the UI inputs
+            ((MainWindow)Application.Current.MainWindow).tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
+            ((MainWindow)Application.Current.MainWindow).masterVolume.Value = Metronome.GetInstance().Volume;
         }
 
         private void exportWavButton_Click(object sender, RoutedEventArgs e)
@@ -140,6 +144,20 @@ namespace Pronome
             {
                 Metronome.GetInstance().Record(saveFileDialog.FileName);
             }
+        }
+
+        private void beatFontSizeTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            double size;
+            if (double.TryParse(beatFontSizeTextBox.Text, out size))
+            {
+                Application.Current.Resources["textBoxFontSize"] = size;
+            }
+        }
+
+        private void beatFontSizeTextBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            beatFontSizeTextBox.Text = Application.Current.Resources["textBoxFontSize"].ToString();
         }
     }
 }

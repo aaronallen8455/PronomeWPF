@@ -156,13 +156,13 @@ namespace Pronome
                     BeatCollection.MultiplyBeatValues();
 
                     double mult = intervalMultiplyFactor * ByteInterval;
-                    ByteInterval = (int)mult;
+                    ByteInterval = (long)mult;
                     Layer.Remainder *= intervalMultiplyFactor;
                     Layer.Remainder += mult - ByteInterval;
 
                     if (Layer.Remainder >= 1)
                     {
-                        ByteInterval += (int)Layer.Remainder;
+                        ByteInterval += (long)Layer.Remainder;
                         Layer.Remainder -= (int)Layer.Remainder;
                     }
 
@@ -170,7 +170,7 @@ namespace Pronome
                     if (hasOffset)
                     {
                         mult = intervalMultiplyFactor * totalOffset;
-                        totalOffset = (int)mult;
+                        totalOffset = (long)mult;
                         OffsetRemainder *= intervalMultiplyFactor;
                         OffsetRemainder += mult - totalOffset;
                     }
@@ -231,10 +231,10 @@ namespace Pronome
         private float right;
 
         /**<summary>Gets the next interval value and determines if it will be muted.</summary>*/
-        public int GetNextInterval()
+        public long GetNextInterval()
         {
             BeatCollection.Enumerator.MoveNext();
-            int result = BeatCollection.Enumerator.Current;
+            long result = BeatCollection.Enumerator.Current;
             // hand silent interval
 
             if (IsSilentIntervalSilent())
@@ -252,7 +252,7 @@ namespace Pronome
 
         protected double SilentInterval; // total samples in silent interval
         protected double AudibleInterval; // total samples in audible interval
-        protected int currentSlntIntvl; // samples in current interval (silent or audible)
+        protected long currentSlntIntvl; // samples in current interval (silent or audible)
         protected bool silentIntvlSilent = false; // currently silent
         protected double SilentIntervalRemainder; // fractional portion
 
@@ -264,12 +264,12 @@ namespace Pronome
         {
             AudibleInterval = BeatCell.ConvertFromBpm(audible, this);
             SilentInterval = BeatCell.ConvertFromBpm(silent, this);
-            currentSlntIntvl = (int)AudibleInterval - totalOffset;
+            currentSlntIntvl = (long)AudibleInterval - totalOffset;
             SilentIntervalRemainder = audible - currentSlntIntvl + OffsetRemainder;
         }
 
-        protected int? randomMuteCountdown = null; // If the rand mute has a countdown, we track it here
-        protected int randomMuteCountdownTotal; // The rand mute initial countdown value.
+        protected long? randomMuteCountdown = null; // If the rand mute has a countdown, we track it here
+        protected long randomMuteCountdownTotal; // The rand mute initial countdown value.
         protected bool currentlyMuted = false; // true if sound is randomly muted.
 
         /**<summary>Returns true if the note should be randomly muted.</summary>*/
@@ -284,7 +284,7 @@ namespace Pronome
             // init countdown
             if (randomMuteCountdown == null && Metronome.GetInstance().RandomMuteSeconds > 0)
             {
-                randomMuteCountdown = randomMuteCountdownTotal = Metronome.GetInstance().RandomMuteSeconds * BytesPerSec - totalOffset;
+                randomMuteCountdown = randomMuteCountdownTotal = (long)Metronome.GetInstance().RandomMuteSeconds * BytesPerSec - totalOffset;
             }
 
             int rand = Metronome.GetRandomNum();
@@ -307,7 +307,7 @@ namespace Pronome
         {
             if (!Metronome.GetInstance().IsSilentInterval) return false;
 
-            currentSlntIntvl -= previousByteInterval;
+            currentSlntIntvl -= (long)previousByteInterval;
             if (currentSlntIntvl <= 0)
             {
                 do
@@ -336,7 +336,7 @@ namespace Pronome
         public void SetOffset(double value)
         {
             initialOffset = value;
-            totalOffset = (int)value;
+            totalOffset = (long)value;
             OffsetRemainder = value - totalOffset;
             
             hasOffset = totalOffset > 0;
@@ -349,13 +349,13 @@ namespace Pronome
         }
 
         protected double initialOffset = 0; // the offset value to reset to.
-        protected int totalOffset = 0; // time to wait before reading source.
+        protected long totalOffset = 0; // time to wait before reading source.
         protected double OffsetRemainder = 0;
         protected bool hasOffset = false;
         protected bool lastIntervalMuted = false; // used to cycle pitch if the last interval was randomly muted.
 
-        protected int previousByteInterval;
-        protected int ByteInterval;
+        protected long previousByteInterval;
+        protected long ByteInterval;
 
         double multiple; // used in sine wave calculation
 

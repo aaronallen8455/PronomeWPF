@@ -115,10 +115,10 @@ namespace Pronome
         }
 
         /**<summary>Get the next byte interval while also setting the mute status.</summary>*/
-        public int GetNextInterval()
+        public long GetNextInterval()
         {
             BeatCollection.Enumerator.MoveNext();
-            int result = BeatCollection.Enumerator.Current;
+            long result = BeatCollection.Enumerator.Current;
 
             previousByteInterval = result;
 
@@ -179,9 +179,9 @@ namespace Pronome
                     // recalculate the hihat count and byte to cutoff values
                     if (IsHiHatOpen && Layer.HasHiHatClosed)
                     {
-                        int countDiff = HiHatCycleToMute - cycle;
-                        int totalBytes = countDiff * 2560 + HiHatByteToMute;
-                        totalBytes = (int)(totalBytes * intervalMultiplyFactor);
+                        long countDiff = HiHatCycleToMute - cycle;
+                        long totalBytes = countDiff * 2560 + HiHatByteToMute;
+                        totalBytes = (long)(totalBytes * intervalMultiplyFactor);
                         HiHatCycleToMute = cycle + totalBytes / 2560;
                         HiHatByteToMute = totalBytes % 2560;
                         HiHatByteToMute -= HiHatByteToMute % 4; // align
@@ -263,8 +263,8 @@ namespace Pronome
             return silentIntvlSilent;
         }
 
-        protected int? randomMuteCountdown = null;
-        protected int randomMuteCountdownTotal;
+        protected long? randomMuteCountdown = null;
+        protected long randomMuteCountdownTotal;
         protected bool currentlyMuted = false;
 
         protected bool IsRandomMuted()
@@ -323,7 +323,7 @@ namespace Pronome
 
         protected double SilentInterval; // remaining samples in silent interval
         protected double AudibleInterval; // remaining samples in audible interval
-        protected int currentSlntIntvl;
+        protected long currentSlntIntvl;
         protected bool silentIntvlSilent = false;
         protected double SilentIntervalRemainder; // fractional portion
         protected bool IsHiHatOpen = false; // is this an open hihat sound?
@@ -340,13 +340,13 @@ namespace Pronome
             SetInitialMuting();
         }
 
-        protected int previousByteInterval = 0;
+        protected long previousByteInterval = 0;
 
-        public int ByteInterval;
+        public long ByteInterval;
 
-        public int HiHatCycleToMute;
-        public int HiHatByteToMute;
-        int CurrentHiHatDuration = 0;
+        public long HiHatCycleToMute;
+        public long HiHatByteToMute;
+        long CurrentHiHatDuration = 0;
         //bool HiHatMuteInitiated = false;
         int cycle = 0;
 
@@ -402,9 +402,9 @@ namespace Pronome
                     // if this is a hihat down, pass it's time position to all hihat opens in this layer
                     if (IsHiHatClose && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted)
                     {
-                        int total = bytesCopied + ByteInterval + offset;
-                        int cycles = total / count + cycle;
-                        int bytes = total % count;
+                        long total = bytesCopied + ByteInterval + offset;
+                        long cycles = total / count + cycle;
+                        long bytes = total % count;
                         
                         // assign the hihat cutoff to all open hihat sounds.
                         IEnumerable hhos = Layer.AudioSources.Where(x => BeatCell.HiHatOpenFileNames.Contains(x.Key)).Select(x => x.Value);
@@ -416,14 +416,14 @@ namespace Pronome
                     }
                 }
 
-                int chunkSize = new int[] { ByteInterval, count - bytesCopied }.Min();
+                int chunkSize = (int)new long[] { ByteInterval, count - bytesCopied }.Min();
 
                 // if this is a hihat open sound, determine when it should be stopped by a hihat close sound.
                 if (IsHiHatOpen && CurrentHiHatDuration > 0)
                 {
                     if (chunkSize >= CurrentHiHatDuration)
                     {
-                        chunkSize = CurrentHiHatDuration;
+                        chunkSize = (int)CurrentHiHatDuration;
 
                     }
                     else CurrentHiHatDuration -= chunkSize;
@@ -477,6 +477,26 @@ namespace Pronome
             string[] flat = new string[length];
             flat = FileNameIndex.Cast<string>().ToArray();
             return flat[Array.IndexOf(flat, name) - 1];
+        }
+
+        static public string GetSelectorNameByFile(string fileName)
+        {
+            string[] flat = new string[FileNameIndex.Length];
+            flat = FileNameIndex.Cast<string>().ToArray();
+            int index = Array.IndexOf(flat, fileName);
+            if (index > -1)
+            {
+                string selector = flat[index + 1];
+                // append the index number
+                index -= 2; // silentbeat
+                index /= 2;
+                index += 1;
+                selector = (index + ".").PadRight(4) + selector;
+
+                return selector;
+            }
+
+            return string.Empty;
         }
 
         static public string[,] FileNameIndex = new string[,]

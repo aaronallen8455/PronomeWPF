@@ -45,7 +45,7 @@ namespace Pronome
         {
             double result = bpm * (60d / Metronome.GetInstance().Tempo) * src.WaveFormat.SampleRate;
 
-            if (result > int.MaxValue) throw new Exception(bpm.ToString());
+            if (result > long.MaxValue) throw new Exception(bpm.ToString());
 
             return result;
         }
@@ -142,7 +142,7 @@ namespace Pronome
                 operators = operators.Remove(index, 1);
             }
 
-            if (numbers[0] > int.MaxValue) throw new Exception(numbers[0].ToString());
+            if (numbers[0] > long.MaxValue) throw new Exception(numbers[0].ToString());
 
             return numbers[0];
         }

@@ -11,6 +11,8 @@
     <Window.Resources>
         <!--window for displaying options-->
         <local:OptionsWindow x:Key="optionsWindow"/>
+        <!--Boolean inverter-->
+        <local:InverseBooleanConverter x:Key="inverseBooleanConverter"/>
     </Window.Resources>
     <Grid>
         <!--The background element-->
@@ -30,7 +32,7 @@
 
             <!--Main controls-->
             <Grid DockPanel.Dock="Bottom">
-                <WrapPanel HorizontalAlignment="Center">
+                <WrapPanel HorizontalAlignment="Center" DataContext="{DynamicResource disableDuringPlay}">
                     <WrapPanel.Resources>
                         <Style TargetType="Button">
                             <Setter Property="Margin" Value="5, 10"/>
@@ -39,11 +41,11 @@
                     <!--Add layer button-->
                     <Button Click="addLayerButton_Click">Add Layer</Button>
                     <!--Play button-->
-                    <Button Click="playButton_Click">Play</Button>
+                    <Button Name="playButton" Click="playButton_Click">Play</Button>
                     <!--Pause button-->
-                    <Button Click="pauseButton_Click">Pause</Button>
+                    <Button Name="pauseButton" Click="pauseButton_Click" IsEnabled="False">Pause</Button>
                     <!--Stop button-->
-                    <Button Click="stopButton_Click">Stop</Button>
+                    <Button Name="stopButton" Click="stopButton_Click" IsEnabled="{Binding Path=IsEnabled, Converter={StaticResource inverseBooleanConverter}}">Stop</Button>
                     <!--Tempo tap button-->
                     <Button Click="tempoTap_Click">Tempo</Button>
                     <!--Tempo input field-->

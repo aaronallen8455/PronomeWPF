@@ -88,7 +88,19 @@ namespace Pronome
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
             baseSourceSelector.ItemsSource = sources;
-            baseSourceSelector.SelectedIndex = sources.Contains(Layer.BaseSourceName) ? sources.IndexOf(Layer.BaseSourceName) : 0;
+            if (Layer.BaseSourceName.First() == 'w') // if wav source get the the selector name from file name
+            {
+                string selector = WavFileStream.GetSelectorNameByFile(Layer.BaseSourceName);
+                if (sources.Contains(selector))
+                {
+                    baseSourceSelector.SelectedIndex = sources.IndexOf(selector);
+                }
+                else baseSourceSelector.SelectedIndex = 0;
+            }
+            else
+            {
+                baseSourceSelector.SelectedIndex = 0; // pitch source
+            }
             baseSourceSelector.SelectionChanged += new SelectionChangedEventHandler(baseSourceSelector_SelectionChanged);
 
             // pitch field (used if source is a pitch)
@@ -101,7 +113,7 @@ namespace Pronome
             else
             {
                 pitchInput.Text = Layer.GetAutoPitch();
-                pitchInput.Visibility = Visibility.Collapsed;
+                (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
             }
             pitchInput.LostFocus += new RoutedEventHandler(pitchInput_LostFocus);
 
