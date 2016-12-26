@@ -107,9 +107,33 @@ namespace Pronome
                 Metronome.Load(openFileDialog.FileName);
             }
 
+            Metronome met = Metronome.GetInstance();
+
+            // set muting inputs
+            if (Metronome.GetInstance().IsRandomMute)
+            {
+                randomMuteToggle.IsChecked = true;
+                randomMuteInput.Text = met.RandomMutePercent.ToString();
+                randomMuteTimerInput.Text = met.RandomMuteSeconds.ToString();
+            }
+            else
+            {
+                randomMuteToggle.IsChecked = false;
+            }
+            if (Metronome.GetInstance().IsSilentInterval)
+            {
+                intervalMuteToggle.IsChecked = true;
+                intervalAudibleInput.Text = met.AudibleInterval.ToString();
+                intervalSilentInput.Text = met.SilentInterval.ToString();
+            }
+            else
+            {
+                intervalMuteToggle.IsChecked = false;
+            }
+
             // set the UI inputs
-            ((MainWindow)Application.Current.MainWindow).tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
-            ((MainWindow)Application.Current.MainWindow).masterVolume.Value = Metronome.GetInstance().Volume;
+            ((MainWindow)Application.Current.MainWindow).tempoInput.Text = met.Tempo.ToString();
+            ((MainWindow)Application.Current.MainWindow).masterVolume.Value = met.Volume;
         }
 
         private void exportWavButton_Click(object sender, RoutedEventArgs e)

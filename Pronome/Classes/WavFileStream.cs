@@ -73,29 +73,35 @@ namespace Pronome
         {
             BeatCollection.Enumerator = BeatCollection.GetEnumerator();
             ByteInterval = 0;
-            if (Metronome.GetInstance().IsSilentInterval)
-            {
-                SetSilentInterval(Metronome.GetInstance().AudibleInterval, Metronome.GetInstance().SilentInterval);
-            }
-            if (Metronome.GetInstance().IsRandomMute)
-            {
-                randomMuteCountdown = null;
-                currentlyMuted = false;
-            }
+            previousByteInterval = 0;
 
             HiHatOpenIsMuted = false;
             //HiHatMuteInitiated = false;
             HiHatCycleToMute = 0;
             cycle = 0;
 
-            // will first muting occur for first sound?
-            SetInitialMuting();
 
             // set stream back to start.
             Position = 0;
 
             if (initialOffset > 0)
                 SetOffset(initialOffset);
+
+            if (Metronome.GetInstance().IsRandomMute)
+            {
+                randomMuteCountdown = null; // will be reinitialized
+                currentlyMuted = false;
+            }
+            silentIntvlSilent = false;
+            if (Metronome.GetInstance().IsSilentInterval)
+            { // setInitialMuting is called in this method
+                SetSilentInterval(Metronome.GetInstance().AudibleInterval, Metronome.GetInstance().SilentInterval);
+            }
+            else
+            {
+                // will first muting occur for first sound?
+                SetInitialMuting();
+            }
         }
 
         /**<summary>Get the length of the source file in bytes.</summary>*/
@@ -250,8 +256,8 @@ namespace Pronome
                 {
                     silentIntvlSilent = !silentIntvlSilent;
                     double nextInterval = silentIntvlSilent ? SilentInterval : AudibleInterval;
-                    currentSlntIntvl += (int)nextInterval;
-                    SilentIntervalRemainder += nextInterval - ((int)nextInterval);
+                    currentSlntIntvl += (long)nextInterval;
+                    SilentIntervalRemainder += nextInterval - (long)nextInterval;
                     if (SilentIntervalRemainder >= 1)
                     {
                         currentSlntIntvl += 1;
@@ -334,8 +340,8 @@ namespace Pronome
         {
             AudibleInterval = BeatCell.ConvertFromBpm(audible, this) * 4;
             SilentInterval = BeatCell.ConvertFromBpm(silent, this) * 4;
-            currentSlntIntvl = (int)AudibleInterval - totalOffset - 4;
-            SilentIntervalRemainder = audible - currentSlntIntvl + offsetRemainder;
+            currentSlntIntvl = (long)(AudibleInterval - initialOffset * 4 - 4);
+            SilentIntervalRemainder = audible - (int)audible + offsetRemainder;
 
             SetInitialMuting();
         }
@@ -363,7 +369,7 @@ namespace Pronome
             }
             
             // set the upcoming hihat close time for hihat open sounds
-            if (!hasOffset && IsHiHatOpen && cycle == HiHatCycleToMute - 1)// && !HiHatMuteInitiated)
+            if (!hasOffset && IsHiHatOpen && cycle == HiHatCycleToMute - 1)
             {
                 CurrentHiHatDuration = HiHatByteToMute + count;
             }

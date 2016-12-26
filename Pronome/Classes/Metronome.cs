@@ -511,6 +511,11 @@ namespace Pronome
             }
 
             ChangeTempo(Tempo);
+
+            if (IsSilentInterval)
+                SetSilentInterval(AudibleInterval, SilentInterval);
+            if (IsRandomMute)
+                SetRandomMute(RandomMutePercent, RandomMuteSeconds);
         }
 
         ~Metronome()

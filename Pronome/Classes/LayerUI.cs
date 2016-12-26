@@ -6,7 +6,10 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Text.RegularExpressions;
 using System;
+using System.ComponentModel.Design;
 using ICSharpCode.AvalonEdit;
+using ICSharpCode.SharpDevelop.Editor;
+using ICSharpCode.AvalonEdit.AddIn;
 
 namespace Pronome
 {
@@ -45,6 +48,8 @@ namespace Pronome
 
         protected Button deleteButton;
 
+        ITextMarkerService textMarkerService;
+
         /**<summary>Constructor</summary>
          * <param name="Parent">The list to add the UI to.</param>
          */
@@ -74,6 +79,15 @@ namespace Pronome
 
             // init the text editor
             textEditor = resources["textEditor"] as TextEditor;
+            // init markup utility
+            var textMarkerService = new TextMarkerService(textEditor.Document);
+            textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
+            textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
+            IServiceContainer services = (IServiceContainer)textEditor.Document.ServiceProvider.GetService(typeof(IServiceContainer));
+            if (services != null)
+                services.AddService(typeof(ITextMarkerService), textMarkerService);
+            this.textMarkerService = textMarkerService;
+
             textEditor.Text = Layer.ParsedString;
             textEditor.LostFocus += new RoutedEventHandler(textEditor_LostFocus);
             MakeLabel("Beat Code", textEditor, true);
@@ -169,7 +183,17 @@ namespace Pronome
             {
                 try
                 {
-                    Layer.Parse(textEditor.Text);
+                    string errorMsg = ValidateBeatCode();
+
+                    if (errorMsg == string.Empty)
+                    {
+                        Layer.Parse(textEditor.Text);
+                    }
+                    else throw new BeatSyntaxException(errorMsg);
+                }
+                catch (BeatSyntaxException ex)
+                {
+                    MessageBox.Show("Please fix the following errors:\r\r" + ex.Message, "Beat Code Contains Errors", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 catch (Exception ex)
                 {
@@ -278,5 +302,122 @@ namespace Pronome
             else
                 controlPanel.Children.Add(panel);
         }
+
+        public string ValidateBeatCode()
+        {
+            textMarkerService.RemoveAll(x => true);
+
+            List<string> errorMessages = new List<string>();
+            string beatCode = textEditor.Text;
+
+            Dictionary<int, int> commentPos = new Dictionary<int, int>();
+
+            while (Regex.IsMatch(beatCode, @"!.*?!")) // replace comments with spaces
+            {
+                Match m = Regex.Match(beatCode, @"!.*?!");
+                commentPos.Add(m.Index, m.Length);
+                beatCode = Regex.Replace(beatCode, @"!.*?!", "");
+            }
+
+            for (int i=0; i<beatTests.GetLength(0); i++)
+            {
+                string test = beatTests[i, 0];
+                string msg = beatTests[i, 1];
+
+                var matches = Regex.Matches(beatCode, test);
+
+                // underline syntax and add to error message
+                if (matches.Count > 0)
+                {
+                    errorMessages.Add(msg);
+
+                    foreach (Match match in matches)
+                    {
+                        // add back in comment space
+                        int off = match.Index;
+                        int index = commentPos.Where(x => x.Key < off).Select(x => x.Value).Sum() + off;
+                        ITextMarker marker = textMarkerService.Create(index, match.Length);
+                        marker.MarkerTypes = TextMarkerTypes.SquigglyUnderline;
+                        marker.MarkerColor = Colors.Red;
+                    }
+                }
+            }
+
+            return String.Join("\r", errorMessages.Select(x => "- " + x));
+        }
+
+        protected static string[,] beatTests =
+        {
+            {
+                @"\)[^,\]@\\|]*\(|" +
+                @"\)[^,@]*[a-z]+[^,]*", "Invalid final repeat modifier"
+            },
+            {
+                @"\(\d*[^\d)]+\d*\)|" +
+                @"\(\)", "The number of repeats must be an integer."
+            },
+            {
+                @"][^\d(]|" +
+                @"]$", "Missing 'n' value for multi-cell repeat."
+            },
+            {
+                @",$|"+
+                @",\s*,|"+
+                @"^,|"+
+                @"^$|"+
+                @",\(|"+
+                @",]", "Empty beat cell."
+            },
+            {
+                @"^\[?[^\d$]+,|"+
+                @",\[?[^\d$]+,|"+
+                @",[^,\d\ss]+$|"+
+                @"\d[a-wyzA-WYZ]|"+
+                @"[+\-*xX/][^\d.]|"+
+                @"[^\d).\s,s]$|"+
+                @"[^\d$]\.\D|"+
+                @"[^\d$]\.$|"+
+                @"\.\d+\.|"+
+                @"^[a-zA-Z]|"+
+                @",[a-zA-Z]", "Invalid beat cell value."
+            },
+            {
+                @"@[^a-gA-G\dPp]|"+
+                @"@[a-gA-G]?[b#]?$|"+
+                @"@[a-gA-G][^#b\d]", "Invalid pitch assignment using '@.'"
+            },
+            {
+                @"[^\[,}{]\[", "Incorrect multi-cell repeat syntax"
+            },
+            {
+                @"}[\d.+\-\/*Xx]*[^\d.+\-\/*Xx,|"+
+                @"\(\]}][\d.+\-/*Xx]*|"+
+                @"}[^\d.]", "Invalid group multiplication coefficient."
+            },
+            {
+                @"\{[^}]*$", "Missing the closing brace of a multiplication group."
+            },
+            {
+                @"^[^{]*}", "Missing the opening brace of a multiplication group."
+            },
+            {
+                @"\[[^\]]*$", "Missing the closing brace of a multi-cell repeat."
+            },
+            {
+                @"^[^\[]*]", "Missingthe opening brace of a multi-cell repeat."
+            },
+            {
+                @"[^|,\[{]\$", "Invalid use of beat reference."
+            },
+            {
+                @"\$[^\ds]|"+
+                @"\$[\ds]+[^,|\]}(]", "Invalid beat reference."
+            }
+        };
+    }
+
+    class BeatSyntaxException : Exception
+    {
+        public BeatSyntaxException(string message) : base(message) { }
     }
 }
