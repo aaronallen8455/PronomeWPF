@@ -78,11 +78,12 @@ namespace Pronome
         /**<summary>Play the beat.</summary>*/
         private void playButton_Click(object sender, RoutedEventArgs e)
         {
-            Metronome.GetInstance().Play();
-
-            (Application.Current.Resources["disableDuringPlay"] as Button).IsEnabled = false;
-            playButton.IsEnabled = false;
-            pauseButton.IsEnabled = true;
+            if (Metronome.GetInstance().Play())
+            {
+                (Application.Current.Resources["disableDuringPlay"] as Button).IsEnabled = false;
+                playButton.IsEnabled = false;
+                pauseButton.IsEnabled = true;
+            }
         }
 
         /**<summary>Pause the beat.</summary>*/

@@ -32,5 +32,12 @@ namespace Pronome
 
             ((TextBox)sender).RaiseEvent(new RoutedEventArgs(TextBox.LostFocusEvent));
         }
+
+        private void TextEditor_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // Don't allow beat code content to be altered while playing.
+            if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
+                e.Handled = true;
+        }
     }
 }

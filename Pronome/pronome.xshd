@@ -27,7 +27,7 @@
     <Keywords color="Repeat">
       <Word>[</Word>
     </Keywords>
-    <Span color="Repeat">
+    <Span color="Repeat" multiline="true">
       <Begin>\]|\(</Begin>
       <End>(?=[,}|!])</End>
     </Span>
@@ -35,22 +35,22 @@
     <Keywords color="Multiply">
       <Word>{</Word>
     </Keywords>
-    <Span color="Multiply">
+    <Span color="Multiply" multiline="true">
       <Begin>\}</Begin>
       <End>(?=[,|\]\[!])</End>
     </Span>
 
-    <Span color="Pitch">
+    <Span color="Pitch" multiline="true">
       <Begin>@</Begin>
       <End>(?=[^\d.\w#!])</End>
     </Span>
 
-    <Span color="Reference">
+    <Span color="Reference" multiline="true">
       <Begin>\$</Begin>
       <End>(?=[^s\d!])</End>
     </Span>
 
-    <Span color="Comment">
+    <Span color="Comment" multiline="true">
       <Begin>!</Begin>
       <End>!</End>
     </Span>

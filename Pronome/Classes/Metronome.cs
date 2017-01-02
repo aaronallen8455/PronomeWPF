@@ -170,37 +170,47 @@ namespace Pronome
         public State PlayState = State.Stopped;
 
         /** <summary>Play all layers in sync.</summary> */
-        public void Play()
+        public bool Play()
         {
-            if (Layers.Count > 0)
+            if (Layers.Count > 0 && (PlayState == State.Stopped || PlayState == State.Paused))
             {
                 Player.Play();
                 PlayState = State.Playing;
+
+                return true;
             }
+
+            return false;
         }
 
         /** <summary>Stop playing and reset positions.</summary> */
         public void Stop()
         {
-            Player.Pause();
-
-            // reset components
-            foreach (Layer layer in Layers)
+            if (PlayState == State.Playing)
             {
-                layer.Reset();
+                Player.Pause();
+
+                // reset components
+                foreach (Layer layer in Layers)
+                {
+                    layer.Reset();
+                }
+
+                Recorder.Stop();
+
+                PlayState = State.Stopped;
             }
-
-            Recorder.Stop();
-
-            PlayState = State.Stopped;
         }
 
         /** <summary>Pause at current playback point.</summary> */
         public void Pause()
         {
-            Player.Pause();
+            if (PlayState == State.Playing)
+            {
+                Player.Pause();
 
-            PlayState = State.Paused;
+                PlayState = State.Paused;
+            }
         }
 
         /** <summary>Playback and record to wav.</summary>
@@ -487,9 +497,13 @@ namespace Pronome
         {
             Instance.Dispose();
             // remove all UI layers
-            foreach(LayerUI ui in LayerUI.Items)
+            //foreach(LayerUI ui in LayerUI.Items)
+            //{
+            //    ui.Remove();
+            //}
+            while (LayerUI.Items.Count != 0)
             {
-                ui.Remove();
+                LayerUI.Items.First().Remove();
             }
 
             Instance = this;
@@ -504,6 +518,8 @@ namespace Pronome
         [OnDeserialized]
         void Deserialized(StreamingContext sc)
         {
+            PlayState = State.Stopped;
+
             foreach (Layer layer in Layers)
             {
                 layer.Deserialize();

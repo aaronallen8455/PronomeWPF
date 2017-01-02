@@ -28,6 +28,7 @@
             </Setter>
         </Style>
 
+        <!--Used for the font size of the beat code input-->
         <sys:Double x:Key="textBoxFontSize">16</sys:Double>
         
         <!--The base panel of the beat layer-->
@@ -40,8 +41,14 @@
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Rectangle Fill="SteelBlue" Grid.ColumnSpan="3"/>
         </Grid>
+        
+        <!--Background rect-->
+        <Rectangle 
+            x:Key="backgroundRect"
+            x:Shared="False"
+            Fill="SteelBlue" 
+            Grid.ColumnSpan="3"/>
         
         <!--Seperates the beat input from other controls-->
         <Grid
@@ -81,8 +88,8 @@
             Background="Black"
             Foreground="White"
             Margin="10,0,10,4"
-            DataContext="{DynamicResource disableDuringPlay}"
-            IsEnabled="{Binding Path=IsEnabled}"/>
+            Padding="3,0"
+            PreviewKeyDown="TextEditor_PreviewKeyDown"/>
         
         <!--Source selector dropdown-->
         <ComboBox
@@ -152,6 +159,16 @@
             S
         </ToggleButton>
         
+        <!--Layer number label-->
+        <TextBlock 
+            x:Key="layerIndexLabel" 
+            x:Shared="False"
+            Grid.Column="0" 
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Top"
+            FontWeight="Bold"
+            Margin="0, 4, 0, 0"/>
+
         <!--Mute and solo stack panel-->
         <StackPanel 
             x:Key="layerLeftStackPanel"

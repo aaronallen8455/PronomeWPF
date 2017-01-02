@@ -32,6 +32,7 @@
 
             <!--Main controls-->
             <Grid DockPanel.Dock="Bottom">
+                <Rectangle Fill="Black" Opacity=".5"/>
                 <WrapPanel HorizontalAlignment="Center" DataContext="{DynamicResource disableDuringPlay}">
                     <WrapPanel.Resources>
                         <Style TargetType="Button">

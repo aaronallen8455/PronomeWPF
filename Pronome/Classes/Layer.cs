@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Runtime.Serialization;
-using NAudio.Wave;
 
 namespace Pronome
 {
@@ -144,7 +143,7 @@ namespace Pronome
                     if (beat[beat.IndexOf('$') + 1].ToString().ToLower() == "s" ||
                         Regex.Match(beat, @"\$(\d+)").Groups[1].Value == (Metronome.GetInstance().Layers.Count + 1).ToString())
                     {
-                        refBeat = Regex.Replace(ParsedString, @"!.*?!", "");
+                        refBeat = Regex.Replace(ParsedString, @"!.*?!|\s", "");
                     }
                     else
                     {
@@ -152,7 +151,7 @@ namespace Pronome
                         int refIndex = int.Parse(Regex.Match(beat, @"\$[\d]+").Value.Substring(1)) - 1;
                         // does referenced beat exist?
                         refIndex = Metronome.GetInstance().Layers.ElementAtOrDefault(refIndex) == null ? 0 : refIndex;
-                        refBeat = Regex.Replace(Metronome.GetInstance().Layers[refIndex].ParsedString, @"!.*?!", "");
+                        refBeat = Regex.Replace(Metronome.GetInstance().Layers[refIndex].ParsedString, @"!.*?!|\s", "");
 
                         // remove sound source modifiers for non self references, unless its @0
                         refBeat = Regex.Replace(refBeat, pitchModifier, ""); // get rid of this?
@@ -167,7 +166,8 @@ namespace Pronome
                     }
                     // clean out empty cells
                     refBeat = Regex.Replace(refBeat, @",,", ",");
-                    refBeat = Regex.Replace(refBeat, @",$", "");
+                    //refBeat = Regex.Replace(refBeat, @",$", "");
+                    refBeat = refBeat.Trim(',');
 
                     // replace in the refBeat
                     var match = Regex.Match(beat, @"\$[\ds]+");
@@ -259,9 +259,9 @@ namespace Pronome
             SetBeat(cells);
         }
         
+        /**<summary>Apply a new base source to the layer.</summary>*/
         public void NewBaseSource(string baseSourceName)
         {
-            // drop old base from the mixer
             if (BaseAudioSource != null && Beat != null)
             {
                 Metronome.GetInstance().RemoveAudioSource(BaseAudioSource);
@@ -275,6 +275,7 @@ namespace Pronome
                 BasePitchSource = null;
 
                 IStreamProvider newBaseSource = null;
+
                 var met = Metronome.GetInstance();
                 // is new source a pitch or a wav?
                 if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
@@ -300,11 +301,12 @@ namespace Pronome
                                 newSource.AddFrequency(baseSourceName, bc);
                             else
                                 newSource.AddFrequency(bc.SourceName, bc);
+
+                            bc.AudioSource = newSource;
                         }
                     }
                     else
                     {
-                        //Metronome.GetInstance().RemoveAudioSource(BasePitchSource);
                         // old base was a wav, we need to rebuild the beatcollection
                         List<double> beats = new List<double>();
                         double accumulator = 0;
@@ -447,8 +449,6 @@ namespace Pronome
                 Metronome.GetInstance().AddAudioSource(BaseAudioSource);
             }
         }
-
-
 
         /** <summary>Set the base source. Will also set Base pitch if a pitch.</summary>
          * <param name="baseSourceName">Name of source to use.</param> */

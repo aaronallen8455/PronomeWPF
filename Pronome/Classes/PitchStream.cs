@@ -265,7 +265,7 @@ namespace Pronome
             AudibleInterval = BeatCell.ConvertFromBpm(audible, this);
             SilentInterval = BeatCell.ConvertFromBpm(silent, this);
             currentSlntIntvl = (long)AudibleInterval - totalOffset;
-            SilentIntervalRemainder = audible - currentSlntIntvl + OffsetRemainder;
+            SilentIntervalRemainder = audible - (long)audible + OffsetRemainder;
         }
 
         protected long? randomMuteCountdown = null; // If the rand mute has a countdown, we track it here

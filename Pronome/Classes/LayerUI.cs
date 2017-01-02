@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Text.RegularExpressions;
 using System;
 using System.ComponentModel.Design;
@@ -46,6 +47,10 @@ namespace Pronome
 
         protected ToggleButton soloButton;
 
+        protected TextBlock indexLabel;
+
+        protected Rectangle backgroundRect;
+
         protected Button deleteButton;
 
         ITextMarkerService textMarkerService;
@@ -63,6 +68,12 @@ namespace Pronome
             // add base panel to parent layerlist panel
             basePanel = resources["layerGrid"] as Grid;
             layerList.Children.Add(basePanel);
+
+            // add background
+            backgroundRect = resources["backgroundRect"] as Rectangle;
+            // set to different colors for odd numbered
+            backgroundRect.Fill = Items.IndexOf(this) % 2 == 0 ? Brushes.SteelBlue : Brushes.DarkCyan;
+            basePanel.Children.Add(backgroundRect);
 
             // create the layer if doesn't exist
             if (layer == null)
@@ -165,6 +176,11 @@ namespace Pronome
             soloButton.Checked += new RoutedEventHandler(soloButton_Checked);
             soloButton.Unchecked += new RoutedEventHandler(soloButton_Checked);
 
+            // Layer index label
+            indexLabel = resources["layerIndexLabel"] as TextBlock;
+            indexLabel.Text = (Items.IndexOf(this) + 1).ToString();
+            basePanel.Children.Add(indexLabel);
+
             // delete button
             deleteButton = resources["deleteButton"] as Button;
             basePanel.Children.Add(deleteButton);
@@ -195,10 +211,10 @@ namespace Pronome
                 {
                     MessageBox.Show("Please fix the following errors:\r\r" + ex.Message, "Beat Code Contains Errors", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"This Beat contains a value that is too large ({ex.Message}). Use smaller values.", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                //catch (Exception ex)
+                //{
+                //    MessageBox.Show($"This Beat contains a value that is too large ({ex.Message}). Use smaller values.", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Error);
+                //}
             }
         }
 
@@ -269,6 +285,12 @@ namespace Pronome
 
         protected void deleteButton_Click(object sender, RoutedEventArgs e)
         {
+            // if no more layers, stop the playback
+            if (Metronome.GetInstance().Layers.Count == 1)
+            {
+                (Application.Current.MainWindow as MainWindow).stopButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            }
+
             // dispose the layer
             Layer.Dispose();
             Remove();
@@ -279,6 +301,15 @@ namespace Pronome
         {
             // remove the panel
             layerList.Children.Remove(basePanel);
+            int index = Items.IndexOf(this);
+            Items.Remove(this);
+
+            // update index labels and background color
+            for (int i=index; i<Items.Count; i++)
+            {
+                Items[i].indexLabel.Text = (i + 1).ToString();
+                Items[i].backgroundRect.Fill = i % 2 == 0 ? Brushes.SteelBlue : Brushes.DarkCyan;
+            }
         }
 
         /**<summary>Make a label for the given element</summary>*/
@@ -312,11 +343,38 @@ namespace Pronome
 
             Dictionary<int, int> commentPos = new Dictionary<int, int>();
 
-            while (Regex.IsMatch(beatCode, @"!.*?!")) // replace comments with spaces
+            while (Regex.IsMatch(beatCode, @"!.*?!|\s")) // replace comments with spaces
             {
-                Match m = Regex.Match(beatCode, @"!.*?!");
-                commentPos.Add(m.Index, m.Length);
-                beatCode = Regex.Replace(beatCode, @"!.*?!", "");
+                Match m = Regex.Match(beatCode, @"!.*?!|[\r\n ]");
+
+                int index;
+                int length;
+
+                if (m.Value != " " && m.Value.Trim() == string.Empty)
+                {
+                    index = m.Index - 1;
+                    length = m.Length + 1;
+                    beatCode = Regex.Replace(beatCode.Substring(0, m.Index + m.Length), @"!.*?!|\s", "") + beatCode.Substring(m.Index + m.Length + 1);
+
+                }
+                else
+                {
+                    index = m.Index;
+                    length = m.Length;
+                    Regex rex = new Regex(@"!.*?!| ");
+                    beatCode = rex.Replace(beatCode, "", 1);
+                }
+
+                if (commentPos.ContainsKey(index))
+                    commentPos[index] += length;
+                else
+                    commentPos.Add(index, length);
+
+                //foreach (Match m in mc)
+                //{
+                //    //m = Regex.Match(beatCode, @"[\r\n]");
+                //    //commentPos.Add(m.Index, m.Length + 1);
+                //}
             }
 
             for (int i=0; i<beatTests.GetLength(0); i++)
