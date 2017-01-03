@@ -174,6 +174,16 @@ namespace Pronome
                     {
                         initialOffset *= intervalMultiplyFactor;
                     }
+                    
+                    // multiply the silent interval
+                    if (Metronome.GetInstance().IsSilentInterval)
+                    {
+                        double sid = SilentInterval / 4;
+                        sid *= intervalMultiplyFactor;
+                        SilentIntervalRemainder *= intervalMultiplyFactor;
+                        SilentIntervalRemainder += sid - (int)sid;
+                        SilentInterval = (int)sid * 4;
+                    }
 
                     //// do the hihat cutoff interval
                     if (IsHiHatOpen && CurrentHiHatDuration != 0)
@@ -258,11 +268,14 @@ namespace Pronome
                     double nextInterval = silentIntvlSilent ? SilentInterval : AudibleInterval;
                     currentSlntIntvl += (long)nextInterval;
                     SilentIntervalRemainder += nextInterval - (long)nextInterval;
+
                     if (SilentIntervalRemainder >= 1)
                     {
-                        currentSlntIntvl += 1;
-                        SilentIntervalRemainder -= 1;
+                        int rounded = (int)SilentIntervalRemainder;
+                        currentSlntIntvl += rounded;
+                        SilentIntervalRemainder -= rounded;
                     }
+
                 } while (currentSlntIntvl < 0);
             }
 

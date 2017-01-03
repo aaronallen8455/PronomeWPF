@@ -31,10 +31,11 @@ namespace Pronome
 
                 Layer.Remainder += bpm - whole; // add to layer's remainder accumulator
 
-                while (Layer.Remainder >= 1) // fractional value exceeds 1, add it to whole
+                if (Layer.Remainder >= 1)
                 {
-                    whole++;
-                    Layer.Remainder -= 1;
+                    int rounded = (int)Layer.Remainder;
+                    whole += rounded;
+                    Layer.Remainder -= rounded;
                 }
 
                 if (isWav) whole *= 4; // multiply for wav files. 4 bytes per sample

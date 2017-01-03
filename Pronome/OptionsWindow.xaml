@@ -7,29 +7,45 @@
         mc:Ignorable="d"
         Title="ProNome Options" Height="300" Width="530"
         Name="optionsWindow">
-    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <StackPanel HorizontalAlignment="Left" DataContext="{DynamicResource disableDuringPlay}">
-            <StackPanel.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        
+        <DockPanel Name="dock" HorizontalAlignment="Stretch" 
+                       DataContext="{DynamicResource disableDuringPlay}" >
+            <DockPanel.Resources>
                 <Style TargetType="StackPanel">
                     <Setter Property="Margin" Value="10, 0"/>
                 </Style>
                 <Style TargetType="TextBox">
-                    <Setter Property="HorizontalAlignment" Value="Left"/>
                     <Setter Property="Width" Value="50"/>
+                    <Setter Property="HorizontalAlignment" Value="Left"/>
                 </Style>
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="10, 0"/>
                 </Style>
                 <Style TargetType="Expander">
-                    <Setter Property="Width" Value="{Binding ElementName=optionsWindow, Path=Width}"/>
-                    <Setter Property="Margin" Value="0,0,-40,0"/>
-                    <Setter Property="Padding" Value="0,0,40,0"/>
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="VerticalAlignment" Value="Top"/>
+                    <Setter Property="BorderBrush" Value="Black"/>
+                    <Setter Property="BorderThickness" Value="3"/>
+                    <Setter Property="DockPanel.Dock" Value="Top"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter Property="Padding" Value="0,0,0,20"/>
+                        </Trigger>
+                    </Style.Triggers>
                 </Style>
-            </StackPanel.Resources>
-            <!--Random Muting-->
+                <Style TargetType="TextBlock">
+                    <Setter Property="Margin" Value="5,-7,5,10"/>
+                    <Setter Property="TextWrapping" Value="Wrap"/>
+                </Style>
+            </DockPanel.Resources>
+
+        <!--Random Muting-->
             <Expander Header="Random Muting">
                 <StackPanel>
-                    <TextBlock TextWrapping="Wrap">When Random Muting is enabled, there is a percent chance that a beat cell will not be played. Enter a Ramp Duration to have the chance start at 0% and reach the full value in the given number of seconds.</TextBlock>
+                    <TextBlock>When Random Muting is enabled, there is a percent chance that a beat cell will not be played. Enter a Ramp Duration to have the chance start at 0% and reach the full value in the given number of seconds.</TextBlock>
                     <WrapPanel>
                         <StackPanel>
                             <Label Target="{Binding ElementName=randomMuteToggle}">Enable</Label>
@@ -49,7 +65,7 @@
             <!--Interval muting-->
             <Expander Header="Intervallic Muting">
                 <StackPanel>
-                    <TextBlock TextWrapping="Wrap">
+                    <TextBlock>
                         With intervallic muting enabled, the beat will play for a set duration and then be silent for a set duration. The interval durations are represented as a number of Quarter-Notes.
                     </TextBlock>
                     <WrapPanel IsEnabled="{Binding Path=IsEnabled}">
@@ -60,16 +76,16 @@
                         <StackPanel>
                             <Label Target="{Binding ElementName=intervalAudibleInput}">Audible Interval</Label>
                             <TextBox x:Name="intervalAudibleInput" 
-                                     Text="0" 
-                                     ToolTip="A value representing the number of audible quarter notes."
-                                     LostFocus="applyIntervalMuting"/>
+                                        Text="0" 
+                                        ToolTip="A value representing the number of audible quarter notes."
+                                        LostFocus="applyIntervalMuting"/>
                         </StackPanel>
                         <StackPanel>
                             <Label Target="{Binding ElementName=intervalSilentInput}">Silent Interval</Label>
                             <TextBox x:Name="intervalSilentInput"
-                                     Text="0"
-                                     ToolTip="A value representing the number of silent quarter notes."
-                                     LostFocus="applyIntervalMuting"/>
+                                        Text="0"
+                                        ToolTip="A value representing the number of silent quarter notes."
+                                        LostFocus="applyIntervalMuting"/>
                         </StackPanel>
                     </WrapPanel>
                 </StackPanel>
@@ -77,7 +93,7 @@
             <!--Save and Load-->
             <Expander Header="Save and Load">
                 <StackPanel>
-                    <TextBlock TextWrapping="Wrap">
+                    <TextBlock>
                         You can save your work to a file or open a previously saved beat.
                     </TextBlock>
                     <WrapPanel>
@@ -88,7 +104,7 @@
             </Expander>
             <Expander Header="Wav File Creation">
                 <StackPanel>
-                    <TextBlock TextWrapping="Wrap">
+                    <TextBlock>
                         There's two ways to export your beat to a Wav audio file:<LineBreak/>
                         - Based on a specified length of time.<LineBreak/>
                         - Record to the Wav file as the beat is playing until you press stop.
@@ -101,7 +117,7 @@
             </Expander>
             <Expander Header="Additional Settings">
                 <StackPanel>
-                    <TextBlock TextWrapping="Wrap">
+                    <TextBlock>
                         Set the font size for beat code inputs.
                     </TextBlock>
                     <StackPanel Orientation="Horizontal">
@@ -110,6 +126,7 @@
                     </StackPanel>
                 </StackPanel>
             </Expander>
-        </StackPanel>
+        </DockPanel>
     </ScrollViewer>
+        <!--</ScrollViewer>-->
 </Window>

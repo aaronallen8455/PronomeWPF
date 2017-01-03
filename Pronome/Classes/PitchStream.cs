@@ -166,6 +166,15 @@ namespace Pronome
                         Layer.Remainder -= (int)Layer.Remainder;
                     }
 
+                    // multiply the silent interval
+                    if (Metronome.GetInstance().IsSilentInterval)
+                    {
+                        double sim = SilentInterval * intervalMultiplyFactor;
+                        SilentInterval = (long)sim;
+                        SilentIntervalRemainder *= intervalMultiplyFactor;
+                        SilentIntervalRemainder += sim - SilentInterval;
+                    }
+
                     // multiply the offset aswell
                     if (hasOffset)
                     {
