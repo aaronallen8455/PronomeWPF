@@ -169,10 +169,12 @@ namespace Pronome
                     // multiply the silent interval
                     if (Metronome.GetInstance().IsSilentInterval)
                     {
-                        double sim = SilentInterval * intervalMultiplyFactor;
-                        SilentInterval = (long)sim;
+                        double sim = currentSlntIntvl * intervalMultiplyFactor;
+                        currentSlntIntvl = (long)sim;
                         SilentIntervalRemainder *= intervalMultiplyFactor;
-                        SilentIntervalRemainder += sim - SilentInterval;
+                        SilentIntervalRemainder += sim - currentSlntIntvl;
+                        SilentInterval *= intervalMultiplyFactor;
+                        AudibleInterval *= intervalMultiplyFactor;
                     }
 
                     // multiply the offset aswell

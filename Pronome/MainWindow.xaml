@@ -13,87 +13,135 @@
         <local:OptionsWindow x:Key="optionsWindow"/>
         <!--Boolean inverter-->
         <local:InverseBooleanConverter x:Key="inverseBooleanConverter"/>
+        <Style TargetType="Rectangle">
+            <Setter Property="RadiusX" Value="15"/>
+            <Setter Property="RadiusY" Value="15"/>
+        </Style>
+        <Style TargetType="Border" x:Key="headerBorder">
+            <Setter Property="Background" Value="#7F000000"/>
+        </Style>
     </Window.Resources>
-    <Grid>
-        <!--The background element-->
-        <Rectangle Fill="DarkBlue" Opacity=".7"/>
-        <!--The base panel-->
-        <DockPanel>
-            <!--Header element. Draggable-->
-            <Grid DockPanel.Dock="Top" MouseLeftButtonDown="window_MouseLeftButtonDown">
-                <Rectangle Fill="Black" Opacity=".5"/>
-                <!--Title Element-->
-                <TextBlock Foreground="White" FontSize="30pt" HorizontalAlignment="Center">ProNome</TextBlock>
-                <!--Close Window button-->
-                <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="windowCloseButton_Click" Width="23" Height="23" Margin="4">
-                    X
-                </Button>
-            </Grid>
+    <Border BorderBrush="Black" BorderThickness="1,1,1,1" CornerRadius="15,15,15,15" Background="#8C00008B">
 
-            <!--Main controls-->
-            <Grid DockPanel.Dock="Bottom">
-                <Rectangle Fill="Black" Opacity=".5"/>
-                <WrapPanel HorizontalAlignment="Center" DataContext="{DynamicResource disableDuringPlay}">
-                    <WrapPanel.Resources>
-                        <Style TargetType="Button">
-                            <Setter Property="Margin" Value="5, 10"/>
-                        </Style>
-                    </WrapPanel.Resources>
-                    <!--Add layer button-->
-                    <Button Click="addLayerButton_Click">Add Layer</Button>
-                    <!--Play button-->
-                    <Button Name="playButton" Click="playButton_Click">Play</Button>
-                    <!--Pause button-->
-                    <Button Name="pauseButton" Click="pauseButton_Click" IsEnabled="False">Pause</Button>
-                    <!--Stop button-->
-                    <Button Name="stopButton" Click="stopButton_Click" IsEnabled="{Binding Path=IsEnabled, Converter={StaticResource inverseBooleanConverter}}">Stop</Button>
-                    <!--Tempo tap button-->
-                    <Button Click="tempoTap_Click">Tempo</Button>
-                    <!--Tempo input field-->
-                    <Grid Margin="5, 0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <RepeatButton Click="tempoUp_Click" FontSize="6pt">U</RepeatButton>
-                            <RepeatButton Click="tempoDown_Click" FontSize="6pt">D</RepeatButton>
-                        </StackPanel>
-                        <TextBox Name="tempoInput" 
-                             LostFocus="tempoInput_LostFocus"
-                             Background="Black"
-                             Foreground="White"
-                             Width="60"
-                             VerticalAlignment="Center"
-                             Grid.Column="1"/>
+        <Grid>
+            <!--The background element
+            <Rectangle Fill="DarkBlue" Opacity=".7"/>-->
+            <!--The base panel-->
+            <DockPanel>
+                <!--Header element. Draggable-->
+                <Border DockPanel.Dock="Top" CornerRadius="15,15,0,0" Style="{StaticResource headerBorder}"
+                        MouseLeftButtonDown="window_MouseLeftButtonDown">
+                    <Grid>
+                        <!--<Rectangle Fill="Black" Opacity=".5"/>-->
+                        <!--Title Element-->
+                        <TextBlock Foreground="White" FontSize="30pt" HorizontalAlignment="Center">ProNome</TextBlock>
+                        <!--Close Window button-->
+                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="windowCloseButton_Click" Width="23" Height="23" Margin="4">
+                            X
+                        </Button>
                     </Grid>
-                    <!--Master volume-->
-                    <StackPanel Margin="5, 0">
-                        <TextBlock Foreground="White" FontSize="7pt" HorizontalAlignment="Center">Master Vol.</TextBlock>
-                        <Slider 
-                        Name="masterVolume" 
-                        Value="1" 
-                        ValueChanged="masterVolume_ValueChanged" 
-                        Minimum="0" 
-                        Maximum="1" 
-                        Width="80"/>
-                    </StackPanel>
-                    <!--Open options-->
-                    <Button Name="openOptionsButton" Click="openOptionsButton_Click">Options</Button>
-                </WrapPanel>
+                </Border>
 
-                <!--Window Resizer-->
-                <TextBlock MouseLeftButtonDown="windowResizer_MouseLeftButtonDown" MouseLeftButtonUp="windowResizer_MouseLeftButtonUp"
-                           MouseMove="windowResizer_MouseMove"
-                    Foreground="White" Name="windowResizer" VerticalAlignment="Bottom" HorizontalAlignment="Right">
-                    resize
-                </TextBlock>
-            </Grid>
+                <!--Main controls-->
+                <Border DockPanel.Dock="Bottom" CornerRadius="0,0,15,15" Style="{StaticResource headerBorder}">
+                    <Grid>
+                        <!--<Rectangle Fill="Black" Opacity=".5"/>-->
+                        <WrapPanel HorizontalAlignment="Center" DataContext="{DynamicResource disableDuringPlay}">
+                            <WrapPanel.Resources>
+                                <Style TargetType="Button">
+                                    <Setter Property="Margin" Value="5, 10"/>
+                                </Style>
+                            </WrapPanel.Resources>
+                            <!--Add layer button-->
+                            <Button Click="addLayerButton_Click">Add Layer</Button>
+                            <!--Play button-->
+                            <Button Name="playButton" Click="playButton_Click">Play</Button>
+                            <!--Pause button-->
+                            <Button Name="pauseButton" Click="pauseButton_Click" IsEnabled="False">Pause</Button>
+                            <!--Stop button-->
+                            <Button Name="stopButton" Click="stopButton_Click" IsEnabled="{Binding Path=IsEnabled, Converter={StaticResource inverseBooleanConverter}}">Stop</Button>
+                            <!--Tempo tap button-->
+                            <Button Click="tempoTap_Click">Tempo</Button>
+                            <!--Tempo input field-->
+                            <Grid Margin="5, 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <RepeatButton Click="tempoUp_Click" FontSize="6pt">U</RepeatButton>
+                                    <RepeatButton Click="tempoDown_Click" FontSize="6pt">D</RepeatButton>
+                                </StackPanel>
+                                <TextBox Name="tempoInput" 
+                                     LostFocus="tempoInput_LostFocus"
+                                     Background="Black"
+                                     Foreground="White"
+                                     Width="60"
+                                     VerticalAlignment="Center"
+                                     Grid.Column="1"/>
+                            </Grid>
+                            <!--Master volume-->
+                            <StackPanel Margin="5, 0">
+                                <TextBlock Foreground="White" FontSize="7pt" HorizontalAlignment="Center">Master Vol.</TextBlock>
+                                <Slider 
+                                Name="masterVolume" 
+                                Value="1" 
+                                ValueChanged="masterVolume_ValueChanged" 
+                                Minimum="0" 
+                                Maximum="1" 
+                                Width="80"/>
+                            </StackPanel>
+                            <!--Open options-->
+                            <Button Name="openOptionsButton" Click="openOptionsButton_Click">Options</Button>
+                        </WrapPanel>
 
-            <!--Layer UI container-->
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Name="layerStack"/>
-            </ScrollViewer>
-        </DockPanel>
-    </Grid>
+                        <!--Window Resizer-->
+                        <Image Width="25" Height="25" MouseLeftButtonDown="windowResizer_MouseLeftButtonDown" MouseLeftButtonUp="windowResizer_MouseLeftButtonUp"
+                               MouseMove="windowResizer_MouseMove" Name="windowResizer" VerticalAlignment="Bottom" HorizontalAlignment="Right" Opacity=".6"
+                               Margin="0,0,5,5" Cursor="SizeNWSE">
+                            <Image.Source>
+                                <DrawingImage>
+                                    <DrawingImage.Drawing>
+                                        <GeometryDrawing>
+                                            <GeometryDrawing.Pen>
+                                                <Pen Brush="#FF4097FF" Thickness="1"/>
+                                            </GeometryDrawing.Pen>
+                                            <GeometryDrawing.Geometry>
+                                                <PathGeometry>
+                                                    <PathFigure StartPoint="0,12">
+                                                        <LineSegment Point="12,0"/>
+                                                    </PathFigure>
+                                                    <PathFigure StartPoint="3,12">
+                                                        <LineSegment Point="12,3"/>
+                                                    </PathFigure>
+                                                    <PathFigure StartPoint="6,12">
+                                                        <LineSegment Point="12,6"/>
+                                                    </PathFigure>
+                                                    <PathFigure StartPoint="9,12">
+                                                        <LineSegment Point="12,9"/>
+                                                    </PathFigure>
+                                                </PathGeometry>
+                                            </GeometryDrawing.Geometry>
+                                        </GeometryDrawing>
+                                    </DrawingImage.Drawing>
+                                </DrawingImage>
+                            </Image.Source>
+                        </Image>
+                        <!--<TextBlock MouseLeftButtonDown="windowResizer_MouseLeftButtonDown" MouseLeftButtonUp="windowResizer_MouseLeftButtonUp"
+                                   MouseMove="windowResizer_MouseMove"
+                            Foreground="White" Name="windowResizer" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                            resize
+                        </TextBlock>-->
+                    </Grid>
+                </Border>
+
+                <!--Layer UI container-->
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Border Padding="0,0,0,5">
+                        <StackPanel Name="layerStack"/>
+                    </Border>
+                </ScrollViewer>
+            </DockPanel>
+        </Grid>
+    </Border>
 </Window>

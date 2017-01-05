@@ -178,11 +178,13 @@ namespace Pronome
                     // multiply the silent interval
                     if (Metronome.GetInstance().IsSilentInterval)
                     {
-                        double sid = SilentInterval / 4;
+                        double sid = currentSlntIntvl / 4;
                         sid *= intervalMultiplyFactor;
                         SilentIntervalRemainder *= intervalMultiplyFactor;
                         SilentIntervalRemainder += sid - (int)sid;
-                        SilentInterval = (int)sid * 4;
+                        currentSlntIntvl = (int)sid * 4;
+                        SilentInterval *= intervalMultiplyFactor;
+                        AudibleInterval *= intervalMultiplyFactor;
                     }
 
                     //// do the hihat cutoff interval
