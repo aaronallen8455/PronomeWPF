@@ -14,14 +14,14 @@
         <!--Boolean inverter-->
         <local:InverseBooleanConverter x:Key="inverseBooleanConverter"/>
         <Style TargetType="Rectangle">
-            <Setter Property="RadiusX" Value="15"/>
-            <Setter Property="RadiusY" Value="15"/>
+            <Setter Property="RadiusX" Value="8"/>
+            <Setter Property="RadiusY" Value="8"/>
         </Style>
         <Style TargetType="Border" x:Key="headerBorder">
             <Setter Property="Background" Value="#7F000000"/>
         </Style>
     </Window.Resources>
-    <Border BorderBrush="Black" BorderThickness="1,1,1,1" CornerRadius="15,15,15,15" Background="#8C00008B">
+    <Border BorderBrush="Black" BorderThickness="1,1,1,1" CornerRadius="8,8,8,8" Background="#B200008B">
 
         <Grid>
             <!--The background element
@@ -29,7 +29,7 @@
             <!--The base panel-->
             <DockPanel>
                 <!--Header element. Draggable-->
-                <Border DockPanel.Dock="Top" CornerRadius="15,15,0,0" Style="{StaticResource headerBorder}"
+                <Border DockPanel.Dock="Top" CornerRadius="8,8,0,0" Style="{StaticResource headerBorder}"
                         MouseLeftButtonDown="window_MouseLeftButtonDown">
                     <Grid>
                         <!--<Rectangle Fill="Black" Opacity=".5"/>-->
@@ -43,7 +43,7 @@
                 </Border>
 
                 <!--Main controls-->
-                <Border DockPanel.Dock="Bottom" CornerRadius="0,0,15,15" Style="{StaticResource headerBorder}">
+                <Border DockPanel.Dock="Bottom" CornerRadius="0,0,8,8" Style="{StaticResource headerBorder}">
                     <Grid>
                         <!--<Rectangle Fill="Black" Opacity=".5"/>-->
                         <WrapPanel HorizontalAlignment="Center" DataContext="{DynamicResource disableDuringPlay}">

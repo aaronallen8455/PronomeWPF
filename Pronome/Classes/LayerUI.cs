@@ -218,14 +218,24 @@ namespace Pronome
             }
         }
 
-        protected void baseSourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        protected async void baseSourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            MainWindow window = Application.Current.MainWindow as MainWindow;
+
             if (baseSourceSelector.SelectedItem as string == "Pitch")
             {
                 (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
                 // use contents of pitch field as source
                 //Layer.SetBaseSource(pitchInput.Text);
-                Layer.NewBaseSource(pitchInput.Text);
+
+                // disable play button while base source is being updated
+                window.playButton.IsEnabled = false;
+                
+                await window.Dispatcher.InvokeAsync(() =>
+                {
+                    Layer.NewBaseSource(pitchInput.Text);
+                });
+                window.playButton.IsEnabled = true;
             }
             else
             {
@@ -234,8 +244,13 @@ namespace Pronome
                 if (newSource != Layer.BaseSourceName)
                 {
                     (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
-                    //Layer.SetBaseSource(newSource);
-                    Layer.NewBaseSource(newSource);
+
+                    window.playButton.IsEnabled = false;
+                    await window.Dispatcher.InvokeAsync(() =>
+                    {
+                        Layer.NewBaseSource(newSource);
+                    });
+                    window.playButton.IsEnabled = true;
                 }
             }
         }

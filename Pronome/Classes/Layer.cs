@@ -156,6 +156,8 @@ namespace Pronome
                         // remove sound source modifiers for non self references, unless its @0
                         refBeat = Regex.Replace(refBeat, pitchModifier, ""); // get rid of this?
                     }
+                    // remove single cell repeat on references
+                    refBeat = Regex.Replace(refBeat, @"(\$[\ds]+)\(\d\)", "$1");
                     // remove references and their innermost nest from the referenced beat
                     while (refBeat.Contains('$'))
                     {
@@ -189,6 +191,8 @@ namespace Pronome
                 inner = Regex.Replace(inner, @"(@[a-gA-GpP]?[#b]?[\d.]+)(\*[\d.*/]+)", "$2$1");
                 // insert into beat
                 beat = beat.Substring(0, match.Index) + inner + beat.Substring(match.Index + match.Length);
+                // get rid of errant multiplier on closing parantheses
+                //beat = Regex.Replace(beat, @"\)\*[\d./\-+*]+", ")");
             }
 
             // handle single cell repeats

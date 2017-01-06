@@ -188,8 +188,10 @@ namespace Pronome
             {
                 // Resize window
                 Point position = e.GetPosition(this);
-                Width = position.X + resizeOffset.X;
-                Height = position.Y + resizeOffset.Y;
+                double width = position.X + resizeOffset.X;
+                double height = position.Y + resizeOffset.Y;
+                Width = width > 540 ? width : 540; // limit the dimensions
+                Height = height > 150 ? height : 150;
             }
         }
 
