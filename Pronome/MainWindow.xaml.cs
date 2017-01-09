@@ -206,6 +206,10 @@ namespace Pronome
             options.KeepOpen = false;
             options.Close();
 
+            BeatGraphWindow graph = Resources["graphWindow"] as BeatGraphWindow;
+            graph.KeepOpen = false;
+            graph.Close();
+
             // save user settings
             if (Settings.ContainsKey("winWidth")) Settings["winWidth"] = Width;
             else Settings.Add("winWidth", Width);
@@ -270,6 +274,14 @@ namespace Pronome
             Window pop = Resources["optionsWindow"] as Window;
             pop.Show();
             pop.Activate();
+        }
+
+        private void openGraphButton_Click(object sender, RoutedEventArgs e)
+        {
+            var graph = Resources["graphWindow"] as BeatGraphWindow;
+            graph.Show();
+            graph.Activate();
+            graph.DrawGraph();
         }
     }
 

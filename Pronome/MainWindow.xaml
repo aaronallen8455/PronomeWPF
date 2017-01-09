@@ -11,6 +11,8 @@
     <Window.Resources>
         <!--window for displaying options-->
         <local:OptionsWindow x:Key="optionsWindow"/>
+        <!--window for displaying the graph-->
+        <local:BeatGraphWindow x:Key="graphWindow"/>
         <!--Boolean inverter-->
         <local:InverseBooleanConverter x:Key="inverseBooleanConverter"/>
         <Style TargetType="Rectangle">
@@ -93,6 +95,7 @@
                             </StackPanel>
                             <!--Open options-->
                             <Button Name="openOptionsButton" Click="openOptionsButton_Click">Options</Button>
+                            <Button Name="openGraphButton" Click="openGraphButton_Click">Graph</Button>
                         </WrapPanel>
 
                         <!--Window Resizer-->
