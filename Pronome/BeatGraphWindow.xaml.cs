@@ -33,19 +33,51 @@ namespace Pronome
 
             BeatGraphLayer[] graphLayers = BeatGraph.DrawGraph();
 
+            int index = 0;
             // pick a color and draw the ticks for each layer
             foreach (BeatGraphLayer layer in graphLayers)
             {
+                Point center = new Point(BeatGraph.graphRadius, BeatGraph.graphRadius);
+
+                // draw halo circle
+                EllipseGeometry halo = new EllipseGeometry(
+                    center,
+                    layer.Radius + BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize);
+                var haloGeo = new GeometryDrawing();
+                //var haloColor1 = GetRgb(index);
+                //haloColor1.ScA = .2f;
+                var haloColor = GetRgb(index);
+                var grad = MakeGradient(center, layer.Radius - BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize, haloColor);
+                //grad.ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation;
+                //grad.Center = center;
+                //grad.GradientOrigin = center;
+                //grad.MappingMode = BrushMappingMode.Absolute;
+                //grad.RadiusX = grad.RadiusY = layer.Radius + BeatGraph.tickSize;
+                //grad.GradientStops = new GradientStopCollection(new GradientStop[]
+                //{
+                //    new GradientStop(Color.FromArgb(0, 0, 0, 0), 0),
+                //    new GradientStop(Color.FromArgb(0, 0, 0, 0), (layer.Radius - BeatGraph.tickSize) / (layer.Radius + BeatGraph.tickSize)),
+                //    new GradientStop(haloColor1, (layer.Radius - BeatGraph.tickSize) / (layer.Radius + BeatGraph.tickSize)),
+                //    new GradientStop(haloColor2, 1),
+                //});
+                haloGeo.Brush = grad;
+                haloGeo.Geometry = halo;
+                drawingGroup.Children.Add(haloGeo);
+
+                // stroke color
                 Color color = new Color();
-                color.ScR = .5f;
-                color.ScB = .5f;
-                color.ScG = 0f;
+                color.ScR = .8f;
+                color.ScB = 1f;
+                color.ScG = .8f;
                 color.ScA = 1f;
 
                 SolidColorBrush stroke = new SolidColorBrush(color);
 
                 var geoDrawing = new GeometryDrawing();
-                geoDrawing.Pen = new Pen(stroke, 2);
+                geoDrawing.Pen = new Pen(
+                    MakeGradient(center, layer.Radius - BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize, color),
+                    2
+                );
 
                 var streamGeo = new StreamGeometry();
                 using (StreamGeometryContext context = streamGeo.Open())
@@ -62,16 +94,82 @@ namespace Pronome
 
                 drawingGroup.Children.Add(geoDrawing);
 
-                // draw cirlce
-                EllipseGeometry circle = new EllipseGeometry(
-                    new Point(BeatGraph.graphRadius, BeatGraph.graphRadius), 
-                    layer.Radius, layer.Radius
-                );
-                var circleGeo = new GeometryDrawing();
-                circleGeo.Pen = new Pen(stroke, 3);
-                circleGeo.Geometry = circle;
-                drawingGroup.Children.Add(circleGeo);
+
+                //// draw center circle
+                //EllipseGeometry circle = new EllipseGeometry(
+                //    center, 
+                //    layer.Radius, layer.Radius
+                //);
+                //var circleGeo = new GeometryDrawing();
+                //circleGeo.Pen = new Pen(stroke, 3);
+                //circleGeo.Geometry = circle;
+                //drawingGroup.Children.Add(circleGeo);
+
+                
+
+                index++;
             }
+        }
+
+        protected Color GetRgb(int index)
+        {
+            float i = 3f / 8f * (index % 8f);
+            i += .5f;
+            if (i > 3f) i -= 3f;
+
+            Color color = new Color() { ScA = 1f };
+
+            // find RGB based on layer index
+            if (i >= 2.5f)
+            {
+                color.ScG = .5f + (i - 2.5f);
+                color.ScR = i - 2.5f;
+
+            }
+            else if (i >= 1.5f)
+            {
+                color.ScB = .5f + (i - 1.5f);
+                color.ScG = i - 1.5f;
+            }
+            else if (i >= .5f)
+            {
+                color.ScR = .5f + (i - .5f);
+                color.ScB = i - .5f;
+            }
+            else
+            {
+                color.ScR = .5f + i;
+                color.ScG = .5f - i;
+            }
+
+            return color;
+        }
+
+        protected RadialGradientBrush MakeGradient(Point center, double innerRadius, double outerRadius, Color color)
+        {
+            Color transColor = new Color()
+            {
+                ScA = .2f,
+                ScB = color.ScB,
+                ScG = color.ScG,
+                ScR = color.ScR
+            };
+
+            var grad = new RadialGradientBrush();
+            grad.ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation;
+            grad.Center = center;
+            grad.GradientOrigin = center;
+            grad.MappingMode = BrushMappingMode.Absolute;
+            grad.RadiusX = grad.RadiusY = outerRadius;
+            grad.GradientStops = new GradientStopCollection(new GradientStop[]
+            {
+                    new GradientStop(Color.FromArgb(0, 0, 0, 0), 0),
+                    new GradientStop(Color.FromArgb(0, 0, 0, 0), innerRadius / outerRadius),
+                    new GradientStop(transColor, innerRadius / outerRadius),
+                    new GradientStop(color, 1),
+            });
+
+            return grad;
         }
 
         public bool KeepOpen = true;
@@ -85,5 +183,6 @@ namespace Pronome
                 e.Cancel = true;
             }
         }
+
     }
 }

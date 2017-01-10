@@ -55,16 +55,32 @@ namespace Pronome
 
             int timesRepeated = (int)Math.Round(cycleLength / layer.GetTotalBpmValue());
 
-            // convert beatcells to degrees
-            double[] angles = layer.Beat.Select(x => x.Bpm / cycleLength * twoPi).ToArray();
+            // convert beatcells to degrees. Silent beats are a negative value
+            double[] angles = layer.Beat.Select(x => {
+                double result = x.Bpm / cycleLength * twoPi;
+                if (x.SourceName == "wav/silence.wav")
+                {
+                    return result * -1;
+                }
+                return result;
+                }
+            ).ToArray();
 
             double angleAccumulator = layer.Offset / cycleLength * twoPi;
+
+            // check if first beat is silent and to start position if so
+            //if (angles[0] < 0) angleAccumulator -= angles[0];
 
             // draw the tick marks
             for (int i=0; i<timesRepeated; i++)
             {
                 foreach (double angle in angles)
                 {
+                    // don't graph silent beats.
+                    if (angle < 0) {
+                        angleAccumulator -= angle;
+                        continue;
+                    }
                     // coordinates of point on circle
                     double xLeg = Math.Sin(angleAccumulator) * radius;
                     double yLeg = Math.Cos(angleAccumulator) * radius * -1;
@@ -91,7 +107,7 @@ namespace Pronome
                 }
             }
 
-            return new BeatGraphLayer(points.ToArray(), radius, new Point(graphRadius / 2, graphRadius / 2 + radius));
+            return new BeatGraphLayer(points.ToArray(), radius);
         }
     }
 
@@ -99,13 +115,11 @@ namespace Pronome
     {
         public Point[] Ticks;
         public double Radius;
-        public Point InitialPoint;
 
-        public BeatGraphLayer(Point[] ticks, double radius, Point initialPoint)
+        public BeatGraphLayer(Point[] ticks, double radius)
         {
             Ticks = ticks;
             Radius = radius;
-            InitialPoint = initialPoint;
         }
     }
 }

@@ -814,6 +814,9 @@ namespace Pronome
 
         public void Dispose()
         {
+            // unmute other layers if this was the only soloed layer
+            if (IsSoloed) ToggleSoloGroup();
+
             Metronome.GetInstance().RemoveLayer(this);
 
             foreach (IStreamProvider src in AudioSources.Values)
