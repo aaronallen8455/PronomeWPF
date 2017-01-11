@@ -37,10 +37,15 @@
                         <!--<Rectangle Fill="Black" Opacity=".5"/>-->
                         <!--Title Element-->
                         <TextBlock Foreground="White" FontSize="30pt" HorizontalAlignment="Center">ProNome</TextBlock>
-                        <!--Close Window button-->
-                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="windowCloseButton_Click" Width="23" Height="23" Margin="4">
-                            X
-                        </Button>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                            <Button Name="minimizeButton" Width="23" Height="23" Margin="4" Click="minimizeButton_Click">
+                                -
+                            </Button>
+                            <!--Close Window button-->
+                            <Button Click="windowCloseButton_Click" Width="23" Height="23" Margin="4">
+                                X
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 

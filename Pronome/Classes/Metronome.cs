@@ -312,25 +312,31 @@ namespace Pronome
         /** <summary>Change the tempo. Can be during play.</summary> */
         public void ChangeTempo(float newTempo)
         {
+            float oldTempo = tempo;
+            tempo = newTempo;
+
             if (PlayState != State.Stopped)
             {
                 // modify the beat values and current byte intervals for all layers and audio sources.
-                float ratio = Tempo / newTempo;
+                float ratio = oldTempo / newTempo;
                 Layers.ForEach(x =>
                 {
                     if (x.AudioSources != null)
                     {
-                        x.AudioSources.Values.Select(a => { a.BeatCollection.MultiplyBeatValues(ratio); a.MultiplyByteInterval(ratio); return a; }).ToArray();
+                        x.AudioSources.Values.Select(a => {
+                            //a.BeatCollection.MultiplyBeatValues(ratio);
+                            a.MultiplyByteInterval(ratio);
+                            return a;
+                        }).ToArray();
                     }
                     if (x.BasePitchSource != null)
                     {
-                        x.BasePitchSource.BeatCollection.MultiplyBeatValues(ratio);
+                        //x.BasePitchSource.BeatCollection.MultiplyBeatValues(ratio);
                         x.BasePitchSource.MultiplyByteInterval(ratio);
                     }
                 });
             }
             
-            tempo = newTempo;
 
             if (PlayState == State.Stopped) // set new tempo by recalculating all the beatCollections
             {

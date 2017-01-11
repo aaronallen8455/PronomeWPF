@@ -139,165 +139,59 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="wav\crash1_edge_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\crash1_edge_v5.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\crash1_edge_v8.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\floortom_v11.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\floortom_v16.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\floortom_v6.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_closed_center_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_closed_center_v4.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_closed_center_v7.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_closed_edge_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_closed_edge_v7.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_half_center_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_half_center_v4.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_half_center_v7.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_half_edge_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_half_edge_v7.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_open_center_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_open_center_v4.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_open_center_v7.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_open_center_v72.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_open_edge_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_open_edge_v7.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_pedal_v3.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\hihat_pedal_v5.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\kick_v11.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\kick_v16.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\kick_v7.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\racktom_v11.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\racktom_v16.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\racktom_v6.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_bell_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_bell_v5.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_bell_v8.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_center_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_center_v5.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_center_v6.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_center_v8.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_edge_v10.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_edge_v4.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\ride_edge_v7.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\silence.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_center_v11.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_center_v16.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_center_v6.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_edge_v11.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_edge_v16.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_edge_v6.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_rim_v11.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_rim_v16.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_rim_v6.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_xstick_v11.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_xstick_v16.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="wav\snare_xstick_v6.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="wav\crash1_edge_v10.wav" />
+    <EmbeddedResource Include="wav\crash1_edge_v5.wav" />
+    <EmbeddedResource Include="wav\crash1_edge_v8.wav" />
+    <EmbeddedResource Include="wav\floortom_v11.wav" />
+    <EmbeddedResource Include="wav\floortom_v16.wav" />
+    <EmbeddedResource Include="wav\floortom_v6.wav" />
+    <EmbeddedResource Include="wav\hihat_closed_center_v10.wav" />
+    <EmbeddedResource Include="wav\hihat_closed_center_v4.wav" />
+    <EmbeddedResource Include="wav\hihat_closed_center_v7.wav" />
+    <EmbeddedResource Include="wav\hihat_closed_edge_v10.wav" />
+    <EmbeddedResource Include="wav\hihat_closed_edge_v7.wav" />
+    <EmbeddedResource Include="wav\hihat_half_center_v10.wav" />
+    <EmbeddedResource Include="wav\hihat_half_center_v4.wav" />
+    <EmbeddedResource Include="wav\hihat_half_center_v7.wav" />
+    <EmbeddedResource Include="wav\hihat_half_edge_v10.wav" />
+    <EmbeddedResource Include="wav\hihat_half_edge_v7.wav" />
+    <EmbeddedResource Include="wav\hihat_open_center_v10.wav" />
+    <EmbeddedResource Include="wav\hihat_open_center_v4.wav" />
+    <EmbeddedResource Include="wav\hihat_open_center_v7.wav" />
+    <EmbeddedResource Include="wav\hihat_open_center_v72.wav" />
+    <EmbeddedResource Include="wav\hihat_open_edge_v10.wav" />
+    <EmbeddedResource Include="wav\hihat_open_edge_v7.wav" />
+    <EmbeddedResource Include="wav\hihat_pedal_v3.wav" />
+    <EmbeddedResource Include="wav\hihat_pedal_v5.wav" />
+    <EmbeddedResource Include="wav\kick_v11.wav" />
+    <EmbeddedResource Include="wav\kick_v16.wav" />
+    <EmbeddedResource Include="wav\kick_v7.wav" />
+    <EmbeddedResource Include="wav\racktom_v11.wav" />
+    <EmbeddedResource Include="wav\racktom_v16.wav" />
+    <EmbeddedResource Include="wav\racktom_v6.wav" />
+    <EmbeddedResource Include="wav\ride_bell_v10.wav" />
+    <EmbeddedResource Include="wav\ride_bell_v5.wav" />
+    <EmbeddedResource Include="wav\ride_bell_v8.wav" />
+    <EmbeddedResource Include="wav\ride_center_v10.wav" />
+    <EmbeddedResource Include="wav\ride_center_v5.wav" />
+    <EmbeddedResource Include="wav\ride_center_v6.wav" />
+    <EmbeddedResource Include="wav\ride_center_v8.wav" />
+    <EmbeddedResource Include="wav\ride_edge_v10.wav" />
+    <EmbeddedResource Include="wav\ride_edge_v4.wav" />
+    <EmbeddedResource Include="wav\ride_edge_v7.wav" />
+    <EmbeddedResource Include="wav\silence.wav" />
+    <EmbeddedResource Include="wav\snare_center_v11.wav" />
+    <EmbeddedResource Include="wav\snare_center_v16.wav" />
+    <EmbeddedResource Include="wav\snare_center_v6.wav" />
+    <EmbeddedResource Include="wav\snare_edge_v11.wav" />
+    <EmbeddedResource Include="wav\snare_edge_v16.wav" />
+    <EmbeddedResource Include="wav\snare_edge_v6.wav" />
+    <EmbeddedResource Include="wav\snare_rim_v11.wav" />
+    <EmbeddedResource Include="wav\snare_rim_v16.wav" />
+    <EmbeddedResource Include="wav\snare_rim_v6.wav" />
+    <EmbeddedResource Include="wav\snare_xstick_v11.wav" />
+    <EmbeddedResource Include="wav\snare_xstick_v16.wav" />
+    <EmbeddedResource Include="wav\snare_xstick_v6.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

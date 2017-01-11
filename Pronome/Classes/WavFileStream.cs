@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
+using System.Reflection;
+using System.IO;
 using NAudio.Wave;
 
 namespace Pronome
@@ -28,7 +30,9 @@ namespace Pronome
         public WavFileStream(string fileName)
         {
             this.fileName = fileName;
-            sourceStream = new WaveFileReader(fileName);
+            Assembly myAssembly = Assembly.GetExecutingAssembly();
+            Stream s = myAssembly.GetManifestResourceStream(fileName);
+            sourceStream = new WaveFileReader(s);
             BytesPerSec = sourceStream.WaveFormat.AverageBytesPerSecond;
             Channel = new WaveChannel32(this);
 
@@ -522,58 +526,58 @@ namespace Pronome
 
         static public string[,] FileNameIndex = new string[,]
         {
-            { "wav/silence.wav", "silentbeat" },                                  //0
-            { "wav/crash1_edge_v5.wav", "Crash Edge V1" },                        //1
-            { "wav/crash1_edge_v8.wav", "Crash Edge V2" },                        //2
-            { "wav/crash1_edge_v10.wav", "Crash Edge V3" },                       //3
-            { "wav/floortom_v6.wav", "FloorTom V1" },                             //4
-            { "wav/floortom_v11.wav", "FloorTom V2" },                            //5
-            { "wav/floortom_v16.wav", "FloorTom V3" },                            //6
-            { "wav/hihat_closed_center_v4.wav", "HiHat Closed Center V1" },       //7
-            { "wav/hihat_closed_center_v7.wav", "HiHat Closed Center V2" },       //8
-            { "wav/hihat_closed_center_v10.wav", "HiHat Closed Center V3" },      //9
-            { "wav/hihat_closed_edge_v7.wav", "HiHat Closed Edge V1" },           //10
-            { "wav/hihat_closed_edge_v10.wav", "HiHat Closed Edge V2" },          //11
-            { "wav/hihat_half_center_v4.wav", "HiHat Half Center V1" },           //12
-            { "wav/hihat_half_center_v7.wav", "HiHat Half Center V2" },           //13
-            { "wav/hihat_half_center_v10.wav", "HiHat Half Center V3" },          //14
-            { "wav/hihat_half_edge_v7.wav", "HiHat Half Edge V1" },               //15
-            { "wav/hihat_half_edge_v10.wav", "HiHat Half Edge V2" },              //16
-            { "wav/hihat_open_center_v4.wav", "HiHat Open Center V1" },           //17
-            { "wav/hihat_open_center_v7.wav", "HiHat Open Center V2" },           //18
-            { "wav/hihat_open_center_v10.wav", "HiHat Open Center V3" },          //19
-            { "wav/hihat_open_edge_v7.wav", "HiHat Open Edge V1" },               //20
-            { "wav/hihat_open_edge_v10.wav", "HiHat Open Edge V2" },              //21
-            { "wav/hihat_pedal_v3.wav", "HiHat Pedal V1" },                       //22
-            { "wav/hihat_pedal_v5.wav", "HiHat Pedal V2" },                       //23
-            { "wav/kick_v7.wav", "Kick Drum V1" },                                //24
-            { "wav/kick_v11.wav", "Kick Drum V2" },                               //25
-            { "wav/kick_v16.wav", "Kick Drum V3" },                               //26
-            { "wav/racktom_v6.wav", "RackTom V1" },                               //27
-            { "wav/racktom_v11.wav", "RackTom V2" },                              //28
-            { "wav/racktom_v16.wav", "RackTom V3" },                              //29
-            { "wav/ride_bell_v5.wav", "Ride Bell V1" },                           //30
-            { "wav/ride_bell_v8.wav", "Ride Bell V2" },                           //31
-            { "wav/ride_bell_v10.wav", "Ride Bell V3" },                          //32
-            { "wav/ride_center_v5.wav", "Ride Center V1" },                       //33
-            { "wav/ride_center_v6.wav", "Ride Center V2" },                       //34
-            { "wav/ride_center_v8.wav", "Ride Center V3" },                       //35
-            { "wav/ride_center_v10.wav", "Ride Center V4" },                      //36
-            { "wav/ride_edge_v4.wav", "Ride Edge V1" },                           //37
-            { "wav/ride_edge_v7.wav", "Ride Edge V2" },                           //38
-            { "wav/ride_edge_v10.wav", "Ride Edge V3" },                          //39
-            { "wav/snare_center_v6.wav", "Snare Center V1" },                     //40
-            { "wav/snare_center_v11.wav", "Snare Center V2" },                    //41
-            { "wav/snare_center_v16.wav", "Snare Center V3" },                    //42
-            { "wav/snare_edge_v6.wav", "Snare Edge V1" },                         //43
-            { "wav/snare_edge_v11.wav", "Snare Edge V2" },                        //44
-            { "wav/snare_edge_v16.wav", "Snare Edge V3" },                        //45
-            { "wav/snare_rim_v6.wav", "Snare Rim V1" },                           //46
-            { "wav/snare_rim_v11.wav", "Snare Rim V2" },                          //47
-            { "wav/snare_rim_v16.wav", "Snare Rim V3" },                          //48
-            { "wav/snare_xstick_v6.wav", "Snare XStick V1" },                     //49
-            { "wav/snare_xstick_v11.wav", "Snare XStick V2" },                    //50
-            { "wav/snare_xstick_v16.wav", "Snare XStick V3" },                    //51
+            { "Pronome.wav.silence.wav", "silentbeat" },                                  //0
+            { "Pronome.wav.crash1_edge_v5.wav", "Crash Edge V1" },                        //1
+            { "Pronome.wav.crash1_edge_v8.wav", "Crash Edge V2" },                        //2
+            { "Pronome.wav.crash1_edge_v10.wav", "Crash Edge V3" },                       //3
+            { "Pronome.wav.floortom_v6.wav", "FloorTom V1" },                             //4
+            { "Pronome.wav.floortom_v11.wav", "FloorTom V2" },                            //5
+            { "Pronome.wav.floortom_v16.wav", "FloorTom V3" },                            //6
+            { "Pronome.wav.hihat_closed_center_v4.wav", "HiHat Closed Center V1" },       //7
+            { "Pronome.wav.hihat_closed_center_v7.wav", "HiHat Closed Center V2" },       //8
+            { "Pronome.wav.hihat_closed_center_v10.wav", "HiHat Closed Center V3" },      //9
+            { "Pronome.wav.hihat_closed_edge_v7.wav", "HiHat Closed Edge V1" },           //10
+            { "Pronome.wav.hihat_closed_edge_v10.wav", "HiHat Closed Edge V2" },          //11
+            { "Pronome.wav.hihat_half_center_v4.wav", "HiHat Half Center V1" },           //12
+            { "Pronome.wav.hihat_half_center_v7.wav", "HiHat Half Center V2" },           //13
+            { "Pronome.wav.hihat_half_center_v10.wav", "HiHat Half Center V3" },          //14
+            { "Pronome.wav.hihat_half_edge_v7.wav", "HiHat Half Edge V1" },               //15
+            { "Pronome.wav.hihat_half_edge_v10.wav", "HiHat Half Edge V2" },              //16
+            { "Pronome.wav.hihat_open_center_v4.wav", "HiHat Open Center V1" },           //17
+            { "Pronome.wav.hihat_open_center_v7.wav", "HiHat Open Center V2" },           //18
+            { "Pronome.wav.hihat_open_center_v10.wav", "HiHat Open Center V3" },          //19
+            { "Pronome.wav.hihat_open_edge_v7.wav", "HiHat Open Edge V1" },               //20
+            { "Pronome.wav.hihat_open_edge_v10.wav", "HiHat Open Edge V2" },              //21
+            { "Pronome.wav.hihat_pedal_v3.wav", "HiHat Pedal V1" },                       //22
+            { "Pronome.wav.hihat_pedal_v5.wav", "HiHat Pedal V2" },                       //23
+            { "Pronome.wav.kick_v7.wav", "Kick Drum V1" },                                //24
+            { "Pronome.wav.kick_v11.wav", "Kick Drum V2" },                               //25
+            { "Pronome.wav.kick_v16.wav", "Kick Drum V3" },                               //26
+            { "Pronome.wav.racktom_v6.wav", "RackTom V1" },                               //27
+            { "Pronome.wav.racktom_v11.wav", "RackTom V2" },                              //28
+            { "Pronome.wav.racktom_v16.wav", "RackTom V3" },                              //29
+            { "Pronome.wav.ride_bell_v5.wav", "Ride Bell V1" },                           //30
+            { "Pronome.wav.ride_bell_v8.wav", "Ride Bell V2" },                           //31
+            { "Pronome.wav.ride_bell_v10.wav", "Ride Bell V3" },                          //32
+            { "Pronome.wav.ride_center_v5.wav", "Ride Center V1" },                       //33
+            { "Pronome.wav.ride_center_v6.wav", "Ride Center V2" },                       //34
+            { "Pronome.wav.ride_center_v8.wav", "Ride Center V3" },                       //35
+            { "Pronome.wav.ride_center_v10.wav", "Ride Center V4" },                      //36
+            { "Pronome.wav.ride_edge_v4.wav", "Ride Edge V1" },                           //37
+            { "Pronome.wav.ride_edge_v7.wav", "Ride Edge V2" },                           //38
+            { "Pronome.wav.ride_edge_v10.wav", "Ride Edge V3" },                          //39
+            { "Pronome.wav.snare_center_v6.wav", "Snare Center V1" },                     //40
+            { "Pronome.wav.snare_center_v11.wav", "Snare Center V2" },                    //41
+            { "Pronome.wav.snare_center_v16.wav", "Snare Center V3" },                    //42
+            { "Pronome.wav.snare_edge_v6.wav", "Snare Edge V1" },                         //43
+            { "Pronome.wav.snare_edge_v11.wav", "Snare Edge V2" },                        //44
+            { "Pronome.wav.snare_edge_v16.wav", "Snare Edge V3" },                        //45
+            { "Pronome.wav.snare_rim_v6.wav", "Snare Rim V1" },                           //46
+            { "Pronome.wav.snare_rim_v11.wav", "Snare Rim V2" },                          //47
+            { "Pronome.wav.snare_rim_v16.wav", "Snare Rim V3" },                          //48
+            { "Pronome.wav.snare_xstick_v6.wav", "Snare XStick V1" },                     //49
+            { "Pronome.wav.snare_xstick_v11.wav", "Snare XStick V2" },                    //50
+            { "Pronome.wav.snare_xstick_v16.wav", "Snare XStick V3" },                    //51
         };
 
         void IStreamProvider.Dispose()

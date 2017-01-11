@@ -73,23 +73,23 @@ namespace Pronome
         /**<summary>A list of the HiHat open sound file names.</summary>*/
         static public string[] HiHatOpenFileNames = new string[]
         {
-            "wav/hihat_half_center_v4.wav",
-            "wav/hihat_half_center_v7.wav",
-            "wav/hihat_half_center_v10.wav",
-            "wav/hihat_half_edge_v7.wav",
-            "wav/hihat_half_edge_v10.wav",
-            "wav/hihat_open_center_v4.wav",
-            "wav/hihat_open_center_v7.wav",
-            "wav/hihat_open_center_v10.wav",
-            "wav/hihat_open_edge_v7.wav",
-            "wav/hihat_open_edge_v10.wav"
+            "Pronome.wav.hihat_half_center_v4.wav",
+            "Pronome.wav.hihat_half_center_v7.wav",
+            "Pronome.wav.hihat_half_center_v10.wav",
+            "Pronome.wav.hihat_half_edge_v7.wav",
+            "Pronome.wav.hihat_half_edge_v10.wav",
+            "Pronome.wav.hihat_open_center_v4.wav",
+            "Pronome.wav.hihat_open_center_v7.wav",
+            "Pronome.wav.hihat_open_center_v10.wav",
+            "Pronome.wav.hihat_open_edge_v7.wav",
+            "Pronome.wav.hihat_open_edge_v10.wav"
         };
 
         /**<summary>A list of the HiHat closed sound file names.</summary>*/
         static public string[] HiHatClosedFileNames = new string[]
         {
-            "wav/hihat_pedal_v3.wav",
-            "wav/hihat_pedal_v5.wav"
+            "Pronome.wav.hihat_pedal_v3.wav",
+            "Pronome.wav.hihat_pedal_v5.wav"
         };
 
         /**<summary>Parse a math expression string.</summary>

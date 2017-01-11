@@ -29,7 +29,13 @@ namespace Pronome
 
         public void DrawGraph()
         {
+            if (Metronome.GetInstance().Layers.Count == 0)
+            {
+                throw new Exception("No layers to graph.");
+            }
+
             drawingGroup.Children.Clear();
+            rgbSeed = Metronome.GetRandomNum();
 
             BeatGraphLayer[] graphLayers = BeatGraph.DrawGraph();
 
@@ -111,10 +117,12 @@ namespace Pronome
             }
         }
 
+        private double rgbSeed;
+
         protected Color GetRgb(int index)
         {
             float i = 3f / 8f * (index % 8f);
-            i += .5f;
+            i += 3f * (float)(rgbSeed / 100);
             if (i > 3f) i -= 3f;
 
             Color color = new Color() { ScA = 1f };

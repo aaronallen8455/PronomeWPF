@@ -113,7 +113,7 @@ namespace Pronome
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
             baseSourceSelector.ItemsSource = sources;
-            if (Layer.BaseSourceName.First() == 'w') // if wav source get the the selector name from file name
+            if (Layer.BaseSourceName.First() == 'P') // if wav source get the the selector name from file name
             {
                 string selector = WavFileStream.GetSelectorNameByFile(Layer.BaseSourceName);
                 if (sources.Contains(selector))

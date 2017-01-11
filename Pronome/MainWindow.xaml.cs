@@ -278,10 +278,18 @@ namespace Pronome
 
         private void openGraphButton_Click(object sender, RoutedEventArgs e)
         {
-            var graph = Resources["graphWindow"] as BeatGraphWindow;
-            graph.Show();
-            graph.Activate();
-            graph.DrawGraph();
+            if (Metronome.GetInstance().Layers.Count > 0)
+            {
+                var graph = Resources["graphWindow"] as BeatGraphWindow;
+                graph.Show();
+                graph.Activate();
+                graph.DrawGraph();
+            }
+        }
+
+        private void minimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
         }
     }
 

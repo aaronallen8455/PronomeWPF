@@ -7,13 +7,17 @@ namespace Pronome
     public class SourceBeatCollection : IEnumerable<long>
     {
         Layer Layer;
+        IStreamProvider Source;
         double[] Beats;
+        double[] Bpm;
         public IEnumerator<long> Enumerator;
         public bool isWav;
 
         public SourceBeatCollection(Layer layer, double[] beats, IStreamProvider src)
         {
             Layer = layer;
+            Source = src;
+            Bpm = beats;
             Beats = beats.Select((x) => BeatCell.ConvertFromBpm(x, src)).ToArray();
             Enumerator = GetEnumerator();
             isWav = src.WaveFormat.AverageBytesPerSecond == 64000;
@@ -49,15 +53,16 @@ namespace Pronome
             return GetEnumerator();
         }
 
-        double _factor;
-        public void MultiplyBeatValues(double factor)
-        {
-            _factor = factor;
-        }
+        //double _factor;
+        //public void MultiplyBeatValues(double factor)
+        //{
+        //    _factor = factor;
+        //}
         public void MultiplyBeatValues()
         {
-            if (_factor > 0)
-                Beats = Beats.Select(x => x * _factor).ToArray();
+            //if (_factor > 0)
+            //    Beats = Beats.Select(x => x * _factor).ToArray();
+            Beats = Bpm.Select((x) => BeatCell.ConvertFromBpm(x, Source)).ToArray();
         }
     }
 }
