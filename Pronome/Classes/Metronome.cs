@@ -20,7 +20,7 @@ namespace Pronome
         /** <sumarry>Mix the output from all audio sources.</sumarry> */
         protected MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(16000, 2));
         /** <summary>Access the sound output device.</summary> */
-        protected DirectSoundOut Player = new DirectSoundOut();
+        public DirectSoundOut Player = new DirectSoundOut();
 
         /** <summary>The singleton instance.</summary> */
         static Metronome Instance;
@@ -198,6 +198,8 @@ namespace Pronome
 
                 Recorder.Stop();
 
+                ElapsedTime = TimeSpan.Zero;
+
                 PlayState = State.Stopped;
             }
         }
@@ -274,10 +276,13 @@ namespace Pronome
             return fileName;
         }
 
-        /** <summary>Get the elapsed playing time.</summary> */
-        public TimeSpan GetElapsedTime()
+        /**<summary>The current time of the playback.</summary>*/
+        public TimeSpan ElapsedTime;
+        Timer timer;
+
+        public void UpdateTime()
         {
-            return Player.PlaybackPosition;
+            timer = new Timer((object state) => { ElapsedTime = Player.PlaybackPosition; }, null, 0, 1);
         }
 
         /**<summary>Get the quarter note value of a complete beat cycle.</summary>*/

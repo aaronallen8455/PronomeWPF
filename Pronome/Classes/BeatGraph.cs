@@ -16,6 +16,8 @@ namespace Pronome
 
         public static double tickSize;
 
+        public static double cycleLength;
+
         /**
          * <summary>Get an array of array of Point objects describing the tick marks for the beatcells in each layer.</summary>
          */
@@ -23,12 +25,12 @@ namespace Pronome
         {
             Metronome met = Metronome.GetInstance();
 
-            double cycleLength = met.GetQuartersForCompleteCycle();
+            cycleLength = met.GetQuartersForCompleteCycle();
             // todo: check symetry.
 
             int layerCount = met.Layers.Count;
 
-            tickSize = graphRadius / layerCount / 2;
+            tickSize = graphRadius / (layerCount + 1);
 
             var result = new BeatGraphLayer[layerCount];
 
@@ -36,7 +38,7 @@ namespace Pronome
             for (int i=0; i<layerCount; i++)
             {
                 // calculate the radius of ring
-                double r = graphRadius / layerCount * (i + 1);
+                double r = graphRadius / (layerCount + 1) * (i + 1);
 
                 result[i] = getTickPoints(r, met.Layers[i], cycleLength);
             }
@@ -92,8 +94,8 @@ namespace Pronome
                     // get line points
                     double centering = graphRadius;
                     Point inner = new Point(
-                        xLeg - normX * tickSize + centering, 
-                        yLeg - normY * tickSize + centering
+                        xLeg - normX + centering,
+                        yLeg - normY + centering
                     );
                     Point outer = new Point(
                         xLeg + normX * tickSize + centering,

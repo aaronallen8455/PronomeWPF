@@ -44,6 +44,9 @@ namespace Pronome
 
         public int Read(float[] buffer, int offset, int count)
         {
+            // apprehend the elapsed time for use by animations
+            //Metronome.GetInstance().ElapsedTime = Metronome.GetInstance().Player.PlaybackPosition;
+
             int result = 0;
             try
             {

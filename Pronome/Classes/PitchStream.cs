@@ -372,11 +372,15 @@ namespace Pronome
 
         double previousSample;
 
+        public static TimeSpan elapsedTime;
+
         /**<summary>Reads from the audio stream.</summary>
          * <param name="buffer">Sample array buffer.</param>
          */
         public int Read(float[] buffer, int offset, int count)
         {
+            elapsedTime = Metronome.GetInstance().Player.PlaybackPosition;
+
             if (count == 2560) { return count; } // account for the occasional blip at start up.
 
             int outIndex = offset;

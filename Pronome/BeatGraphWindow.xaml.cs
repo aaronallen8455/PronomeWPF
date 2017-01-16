@@ -20,7 +20,7 @@ namespace Pronome
     /// </summary>
     public partial class BeatGraphWindow : Window
     {
-        
+        protected RotateTransform needleRotation;
 
         public BeatGraphWindow()
         {
@@ -37,13 +37,14 @@ namespace Pronome
             drawingGroup.Children.Clear();
             rgbSeed = Metronome.GetRandomNum();
 
+            Point center = new Point(BeatGraph.graphRadius, BeatGraph.graphRadius);
+
             BeatGraphLayer[] graphLayers = BeatGraph.DrawGraph();
 
             int index = 0;
             // pick a color and draw the ticks for each layer
             foreach (BeatGraphLayer layer in graphLayers)
             {
-                Point center = new Point(BeatGraph.graphRadius, BeatGraph.graphRadius);
 
                 // draw halo circle
                 EllipseGeometry halo = new EllipseGeometry(
@@ -53,7 +54,7 @@ namespace Pronome
                 //var haloColor1 = GetRgb(index);
                 //haloColor1.ScA = .2f;
                 var haloColor = GetRgb(index);
-                var grad = MakeGradient(center, layer.Radius - BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize, haloColor);
+                var grad = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, haloColor);
                 //grad.ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation;
                 //grad.Center = center;
                 //grad.GradientOrigin = center;
@@ -81,7 +82,7 @@ namespace Pronome
 
                 var geoDrawing = new GeometryDrawing();
                 geoDrawing.Pen = new Pen(
-                    MakeGradient(center, layer.Radius - BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize, color),
+                    MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, color),
                     2
                 );
 
@@ -114,6 +115,48 @@ namespace Pronome
                 
 
                 index++;
+            }
+
+            // draw the needle
+            RectangleGeometry needle = new RectangleGeometry(
+                new Rect(BeatGraph.graphRadius - 1.5, 0, 3, BeatGraph.graphRadius)
+                );
+            needleRotation = new RotateTransform(0, BeatGraph.graphRadius, BeatGraph.graphRadius);
+            needle.Transform = needleRotation;
+            var needleDrawing = new GeometryDrawing(Brushes.Aqua, new Pen(), needle);
+            drawingGroup.Children.Add(needleDrawing);
+
+            // Animate
+            Metronome.GetInstance().UpdateTime();
+            CompositionTarget.Rendering += GraphAnimationFrame;
+        }
+
+        double lastAngle;
+        private void GraphAnimationFrame(object sender, EventArgs e)
+        {
+            if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
+            {
+                try
+                {
+                    double curTime = Metronome.GetInstance().ElapsedTime.TotalSeconds;
+                    //double timeDiff = curTime - lastTime;
+                    double quarterNotes = Metronome.GetInstance().Tempo * (curTime / 60);
+                    double portion = quarterNotes / BeatGraph.cycleLength;
+                    double angle = 360 * portion;
+                    // rotate needle
+                    if (needleRotation.Angle == angle)
+                    {
+                        needleRotation.Angle += Metronome.GetInstance().Tempo / 10 / BeatGraph.cycleLength;
+                    }
+                    else
+                    {
+                        //lastAngle = Math.Abs(needleRotation.Angle - angle);
+                        needleRotation.Angle = angle;
+                    }
+                    //needleRotation.Angle += Metronome.GetInstance().Tempo / 10 / BeatGraph.cycleLength;
+                    //lastTime = curTime;
+                }
+                catch (Exception err) { }
             }
         }
 
@@ -190,6 +233,8 @@ namespace Pronome
                 Hide();
                 e.Cancel = true;
             }
+
+            CompositionTarget.Rendering -= GraphAnimationFrame;
         }
 
     }
