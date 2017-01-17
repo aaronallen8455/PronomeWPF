@@ -18,7 +18,8 @@ namespace Pronome
 
         public static void Stop()
         {
-            _stopwatch.Stop();
+            //_stopwatch.Stop();
+            _stopwatch.Reset();
         }
 
         public static void Start()
@@ -39,7 +40,10 @@ namespace Pronome
             {
                 lastTime = _stopwatch.ElapsedMilliseconds;
             }
-            else lastTime = 0;
+            else
+            {
+                lastTime = 0;
+            }
         }
 
         public double GetElapsedTime()

@@ -174,6 +174,18 @@ namespace Pronome
         {
             if (Layers.Count > 0 && (PlayState == State.Stopped || PlayState == State.Paused))
             {
+                // this timer is used to keep track of elapsed 1/4 notes so that if graph is opened, it will by synced.
+                if (_timer == null)
+                {
+                    _timer = new AnimationTimer();
+                }
+                else
+                {
+                    _timer.Reset();
+                    AnimationTimer.Start();
+                }
+
+                // start playing
                 Player.Play();
                 PlayState = State.Playing;
 
@@ -199,6 +211,9 @@ namespace Pronome
                 Recorder.Stop();
 
                 PlayState = State.Stopped;
+
+                AnimationTimer.Stop(); // reset the stopwatch
+                ElapsedQuarters = 0;
             }
         }
 
@@ -210,6 +225,8 @@ namespace Pronome
                 Player.Pause();
 
                 PlayState = State.Paused;
+
+                UpdateElapsedQuarters(); // flush the elapsed beat timer
             }
         }
 
@@ -274,9 +291,12 @@ namespace Pronome
             return fileName;
         }
 
+        /**<summary>Used to accumulate elapsed quarter notes to start prior animations in sync</summary>*/
         protected AnimationTimer _timer;
 
-        protected double ElapsedQuarters = 0;
+        /**<summary>Number of quarter notes that have been accumulated since the beat started playing.</summary>*/
+        public double ElapsedQuarters { get; protected set; }
+        /**<summary>Sums up the elapsed quarter notes occuring since the last time ElapsedQuarters was run.</summary>*/
         public void UpdateElapsedQuarters()
         {
             ElapsedQuarters += _timer.GetElapsedTime() / 60 * tempo;
@@ -319,6 +339,12 @@ namespace Pronome
 
             if (PlayState != State.Stopped)
             {
+                // add the elapsed 1/4s at current tempo
+                if (PlayState == State.Playing)
+                {
+                    UpdateElapsedQuarters();
+                }
+
                 // modify the beat values and current byte intervals for all layers and audio sources.
                 float ratio = oldTempo / newTempo;
                 Layers.ForEach(x =>
@@ -338,9 +364,7 @@ namespace Pronome
                     }
                 });
             }
-            
-
-            if (PlayState == State.Stopped) // set new tempo by recalculating all the beatCollections
+            else //(if stopped) set new tempo by recalculating all the beatCollections
             {
                 Layers.ForEach(x => x.SetBeatCollectionOnSources());
             }
@@ -504,11 +528,9 @@ namespace Pronome
         void BeforeDeserialization(StreamingContext sc)
         {
             Instance.Dispose();
+            PlayState = State.Paused;
+
             // remove all UI layers
-            //foreach(LayerUI ui in LayerUI.Items)
-            //{
-            //    ui.Remove();
-            //}
             while (LayerUI.Items.Count != 0)
             {
                 LayerUI.Items.First().Remove();

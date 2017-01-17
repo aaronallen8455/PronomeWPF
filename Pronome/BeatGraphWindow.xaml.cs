@@ -24,6 +24,8 @@ namespace Pronome
 
         protected AnimationTimer Timer;
 
+        protected GradientBrush[] blinkBrushes;
+
         public BeatGraphWindow()
         {
             InitializeComponent();
@@ -43,32 +45,28 @@ namespace Pronome
 
             BeatGraphLayer[] graphLayers = BeatGraph.DrawGraph();
 
+            blinkBrushes = new GradientBrush[graphLayers.Length];
+
             int index = 0;
             // pick a color and draw the ticks for each layer
             foreach (BeatGraphLayer layer in graphLayers)
             {
-
-                // draw halo circle
                 EllipseGeometry halo = new EllipseGeometry(
                     center,
                     layer.Radius + BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize);
+
+                // draw background 'blink' layer
+                var blinkGeo = new GeometryDrawing();
+                var blinkBrush = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, Color.FromRgb(250, 100, 100));
+                blinkGeo.Brush = blinkBrush;
+                blinkGeo.Geometry = halo;
+                blinkBrush.Opacity = 0;
+                drawingGroup.Children.Add(blinkGeo);
+                blinkBrushes[index] = blinkBrush;
+
+                // draw halo circle
                 var haloGeo = new GeometryDrawing();
-                //var haloColor1 = GetRgb(index);
-                //haloColor1.ScA = .2f;
-                var haloColor = GetRgb(index);
-                var grad = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, haloColor);
-                //grad.ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation;
-                //grad.Center = center;
-                //grad.GradientOrigin = center;
-                //grad.MappingMode = BrushMappingMode.Absolute;
-                //grad.RadiusX = grad.RadiusY = layer.Radius + BeatGraph.tickSize;
-                //grad.GradientStops = new GradientStopCollection(new GradientStop[]
-                //{
-                //    new GradientStop(Color.FromArgb(0, 0, 0, 0), 0),
-                //    new GradientStop(Color.FromArgb(0, 0, 0, 0), (layer.Radius - BeatGraph.tickSize) / (layer.Radius + BeatGraph.tickSize)),
-                //    new GradientStop(haloColor1, (layer.Radius - BeatGraph.tickSize) / (layer.Radius + BeatGraph.tickSize)),
-                //    new GradientStop(haloColor2, 1),
-                //});
+                var grad = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, GetRgb(index));
                 haloGeo.Brush = grad;
                 haloGeo.Geometry = halo;
                 drawingGroup.Children.Add(haloGeo);
@@ -103,7 +101,6 @@ namespace Pronome
 
                 drawingGroup.Children.Add(geoDrawing);
 
-
                 //// draw center circle
                 //EllipseGeometry circle = new EllipseGeometry(
                 //    center, 
@@ -113,8 +110,6 @@ namespace Pronome
                 //circleGeo.Pen = new Pen(stroke, 3);
                 //circleGeo.Geometry = circle;
                 //drawingGroup.Children.Add(circleGeo);
-
-                
 
                 index++;
             }
@@ -129,7 +124,17 @@ namespace Pronome
             drawingGroup.Children.Add(needleDrawing);
 
             // Animate
-            //Metronome.GetInstance().UpdateTime();
+            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+            {
+                // set the initial position (if beat was playing before graph opened)
+                if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
+                {
+                    Metronome.GetInstance().UpdateElapsedQuarters();
+                }
+                double portion = Metronome.GetInstance().ElapsedQuarters / BeatGraph.cycleLength;
+                needleRotation.Angle = 360 * portion;
+            }
+
             Timer = new AnimationTimer();
             CompositionTarget.Rendering += GraphAnimationFrame;
         }
@@ -140,33 +145,13 @@ namespace Pronome
 
             if (playstate == Metronome.State.Playing)
             {
-                //try
-                //{
-                    //double curTime = Metronome.GetInstance().ElapsedTime.TotalSeconds;
-                    //double timeDiff = curTime - lastTime;
-
                 double interval = Timer.GetElapsedTime();
 
                 double quarterNotes = Metronome.GetInstance().Tempo * (interval / 60);
                 double portion = quarterNotes / BeatGraph.cycleLength;
-                double angle = 360 * portion;
 
-                needleRotation.Angle += angle;
+                needleRotation.Angle += 360 * portion;
 
-                    //// rotate needle
-                    //if (needleRotation.Angle == angle)
-                    //{
-                    //    needleRotation.Angle += Metronome.GetInstance().Tempo / 10 / BeatGraph.cycleLength;
-                    //}
-                    //else
-                    //{
-                    //    //lastAngle = Math.Abs(needleRotation.Angle - angle);
-                    //    needleRotation.Angle = angle;
-                    //}
-                    //needleRotation.Angle += Metronome.GetInstance().Tempo / 10 / BeatGraph.cycleLength;
-                    //lastTime = curTime;
-                //}
-                //catch (Exception err) { }
             }
             else if (playstate == Metronome.State.Paused)
             {
