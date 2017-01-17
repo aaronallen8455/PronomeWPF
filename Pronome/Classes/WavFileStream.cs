@@ -524,9 +524,11 @@ namespace Pronome
             return string.Empty;
         }
 
+        public const string SilentSourceName = "Pronome.wav.silence.wav";
+
         static public string[,] FileNameIndex = new string[,]
         {
-            { "Pronome.wav.silence.wav", "silentbeat" },                                  //0
+            { SilentSourceName, "silentbeat" },                                  //0
             { "Pronome.wav.crash1_edge_v5.wav", "Crash Edge V1" },                        //1
             { "Pronome.wav.crash1_edge_v8.wav", "Crash Edge V2" },                        //2
             { "Pronome.wav.crash1_edge_v10.wav", "Crash Edge V3" },                       //3

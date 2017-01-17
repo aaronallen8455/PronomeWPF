@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
@@ -24,7 +25,9 @@ namespace Pronome
 
         protected AnimationTimer Timer;
 
-        protected GradientBrush[] blinkBrushes;
+        protected BlinkElement[] blinkElems;
+
+        protected bool isStopped;
 
         public BeatGraphWindow()
         {
@@ -45,7 +48,7 @@ namespace Pronome
 
             BeatGraphLayer[] graphLayers = BeatGraph.DrawGraph();
 
-            blinkBrushes = new GradientBrush[graphLayers.Length];
+            blinkElems = new BlinkElement[graphLayers.Length];
 
             int index = 0;
             // pick a color and draw the ticks for each layer
@@ -55,18 +58,20 @@ namespace Pronome
                     center,
                     layer.Radius + BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize);
 
+                Color haloColor = GetRgb(index);
+
                 // draw background 'blink' layer
                 var blinkGeo = new GeometryDrawing();
-                var blinkBrush = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, Color.FromRgb(250, 100, 100));
+                var blinkBrush = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, haloColor, 1);
                 blinkGeo.Brush = blinkBrush;
                 blinkGeo.Geometry = halo;
                 blinkBrush.Opacity = 0;
                 drawingGroup.Children.Add(blinkGeo);
-                blinkBrushes[index] = blinkBrush;
+                blinkElems[index] = new BlinkElement(blinkBrush, index);
 
                 // draw halo circle
                 var haloGeo = new GeometryDrawing();
-                var grad = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, GetRgb(index));
+                var grad = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, haloColor);
                 haloGeo.Brush = grad;
                 haloGeo.Geometry = halo;
                 drawingGroup.Children.Add(haloGeo);
@@ -130,9 +135,15 @@ namespace Pronome
                 if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
                 {
                     Metronome.GetInstance().UpdateElapsedQuarters();
+                    
                 }
                 double portion = Metronome.GetInstance().ElapsedQuarters / BeatGraph.cycleLength;
                 needleRotation.Angle = 360 * portion;
+                // sync blinkers
+                foreach (BlinkElement el in blinkElems)
+                {
+                    el.Sync(Metronome.GetInstance().ElapsedQuarters);
+                }
             }
 
             Timer = new AnimationTimer();
@@ -145,6 +156,8 @@ namespace Pronome
 
             if (playstate == Metronome.State.Playing)
             {
+                isStopped = false;
+
                 double interval = Timer.GetElapsedTime();
 
                 double quarterNotes = Metronome.GetInstance().Tempo * (interval / 60);
@@ -152,6 +165,17 @@ namespace Pronome
 
                 needleRotation.Angle += 360 * portion;
 
+                // do blinking animations
+                foreach (BlinkElement el in blinkElems)
+                {
+                    el.nextBeat -= quarterNotes;
+                    
+                    if (el.nextBeat <= 0) el.Blink();
+                    if (el.nextBeat <= 0)
+                    {
+                        el.progressBeat();
+                    }
+                }
             }
             else if (playstate == Metronome.State.Paused)
             {
@@ -159,8 +183,13 @@ namespace Pronome
             }
             else if (playstate == Metronome.State.Stopped)
             {
-                needleRotation.Angle = 0;
                 Timer.Reset();
+                if (!isStopped)
+                {
+                    needleRotation.Angle = 0;
+                    ResetBlinks();
+                }
+                isStopped = true;
             }
         }
 
@@ -200,7 +229,7 @@ namespace Pronome
             return color;
         }
 
-        protected RadialGradientBrush MakeGradient(Point center, double innerRadius, double outerRadius, Color color)
+        protected RadialGradientBrush MakeGradient(Point center, double innerRadius, double outerRadius, Color color, float alpha = .2f)
         {
             Color transColor = new Color()
             {
@@ -227,6 +256,14 @@ namespace Pronome
             return grad;
         }
 
+        public void ResetBlinks()
+        {
+            foreach (BlinkElement el in blinkElems)
+            {
+                el.Reset();
+            }
+        }
+
         public bool KeepOpen = true;
 
         protected override void OnClosing(CancelEventArgs e)
@@ -239,6 +276,97 @@ namespace Pronome
             }
 
             CompositionTarget.Rendering -= GraphAnimationFrame;
+        }
+
+        protected class BlinkElement
+        {
+            static DoubleAnimation animation = new DoubleAnimation()
+            {
+                From = .8,
+                To = 0,
+                Duration = TimeSpan.FromSeconds(.15)
+            };
+
+            protected Layer layer;
+            public GradientBrush Brush;
+            public double nextBeat;
+            protected int beatIndex = 0;
+
+            public BlinkElement(GradientBrush brush, int layerIndex)
+            {
+                layer = Metronome.GetInstance().Layers[layerIndex];
+                Brush = brush;
+                nextBeat = layer.Offset;
+
+                // account for silent beats
+                addSilent();
+
+                trim();
+            }
+
+            public void progressBeat()
+            {
+                addNext();
+
+                // account for silent beats
+                addSilent();
+
+                trim();
+            }
+
+            public void Blink()
+            {
+                Brush.BeginAnimation(GradientBrush.OpacityProperty, animation);
+            }
+
+            public void Sync(double bpm)
+            {
+                while (nextBeat < bpm)
+                {
+                    addNext();
+
+                    addSilent();
+                }
+
+                nextBeat -= bpm;
+
+                trim();
+            }
+
+            protected void addNext()
+            {
+                nextBeat += layer.Beat[beatIndex].Bpm;
+                beatIndex++;
+
+                if (beatIndex >= layer.Beat.Count)
+                {
+                    beatIndex -= layer.Beat.Count;
+                }
+            }
+
+            protected void addSilent()
+            {
+                while (layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                {
+                    addNext();
+                }
+            }
+
+            protected void trim()
+            {
+                if (nextBeat >= BeatGraph.cycleLength)
+                {
+                    nextBeat -= BeatGraph.cycleLength * (int)(nextBeat / BeatGraph.cycleLength);
+                }
+            }
+
+            public void Reset()
+            {
+                beatIndex = 0;
+                nextBeat = layer.Offset;
+                addSilent();
+                trim();
+            }
         }
 
     }
