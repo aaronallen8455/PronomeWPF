@@ -198,8 +198,6 @@ namespace Pronome
 
                 Recorder.Stop();
 
-                ElapsedTime = TimeSpan.Zero;
-
                 PlayState = State.Stopped;
             }
         }
@@ -276,13 +274,12 @@ namespace Pronome
             return fileName;
         }
 
-        /**<summary>The current time of the playback.</summary>*/
-        public TimeSpan ElapsedTime;
-        Timer timer;
+        protected AnimationTimer _timer;
 
-        public void UpdateTime()
+        protected double ElapsedQuarters = 0;
+        public void UpdateElapsedQuarters()
         {
-            timer = new Timer((object state) => { ElapsedTime = Player.PlaybackPosition; }, null, 0, 1);
+            ElapsedQuarters += _timer.GetElapsedTime() / 60 * tempo;
         }
 
         /**<summary>Get the quarter note value of a complete beat cycle.</summary>*/

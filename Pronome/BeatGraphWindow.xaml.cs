@@ -22,6 +22,8 @@ namespace Pronome
     {
         protected RotateTransform needleRotation;
 
+        protected AnimationTimer Timer;
+
         public BeatGraphWindow()
         {
             InitializeComponent();
@@ -127,36 +129,53 @@ namespace Pronome
             drawingGroup.Children.Add(needleDrawing);
 
             // Animate
-            Metronome.GetInstance().UpdateTime();
+            //Metronome.GetInstance().UpdateTime();
+            Timer = new AnimationTimer();
             CompositionTarget.Rendering += GraphAnimationFrame;
         }
 
-        double lastAngle;
         private void GraphAnimationFrame(object sender, EventArgs e)
         {
-            if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
+            var playstate = Metronome.GetInstance().PlayState;
+
+            if (playstate == Metronome.State.Playing)
             {
-                try
-                {
-                    double curTime = Metronome.GetInstance().ElapsedTime.TotalSeconds;
+                //try
+                //{
+                    //double curTime = Metronome.GetInstance().ElapsedTime.TotalSeconds;
                     //double timeDiff = curTime - lastTime;
-                    double quarterNotes = Metronome.GetInstance().Tempo * (curTime / 60);
-                    double portion = quarterNotes / BeatGraph.cycleLength;
-                    double angle = 360 * portion;
-                    // rotate needle
-                    if (needleRotation.Angle == angle)
-                    {
-                        needleRotation.Angle += Metronome.GetInstance().Tempo / 10 / BeatGraph.cycleLength;
-                    }
-                    else
-                    {
-                        //lastAngle = Math.Abs(needleRotation.Angle - angle);
-                        needleRotation.Angle = angle;
-                    }
+
+                double interval = Timer.GetElapsedTime();
+
+                double quarterNotes = Metronome.GetInstance().Tempo * (interval / 60);
+                double portion = quarterNotes / BeatGraph.cycleLength;
+                double angle = 360 * portion;
+
+                needleRotation.Angle += angle;
+
+                    //// rotate needle
+                    //if (needleRotation.Angle == angle)
+                    //{
+                    //    needleRotation.Angle += Metronome.GetInstance().Tempo / 10 / BeatGraph.cycleLength;
+                    //}
+                    //else
+                    //{
+                    //    //lastAngle = Math.Abs(needleRotation.Angle - angle);
+                    //    needleRotation.Angle = angle;
+                    //}
                     //needleRotation.Angle += Metronome.GetInstance().Tempo / 10 / BeatGraph.cycleLength;
                     //lastTime = curTime;
-                }
-                catch (Exception err) { }
+                //}
+                //catch (Exception err) { }
+            }
+            else if (playstate == Metronome.State.Paused)
+            {
+                Timer.Reset();
+            }
+            else if (playstate == Metronome.State.Stopped)
+            {
+                needleRotation.Angle = 0;
+                Timer.Reset();
             }
         }
 

@@ -66,6 +66,7 @@
     <Compile Include="BeatGraphWindow.xaml.cs">
       <DependentUpon>BeatGraphWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Classes\AnimationTimer.cs" />
     <Compile Include="Classes\BeatGraph.cs" />
     <Compile Include="Classes\TextMarkerService.cs" />
     <Page Include="BeatGraphWindow.xaml">
