@@ -40,6 +40,9 @@
                     <Setter Property="Margin" Value="5,-7,5,10"/>
                     <Setter Property="TextWrapping" Value="Wrap"/>
                 </Style>
+                <Style TargetType="Separator">
+                    <Setter Property="Margin" Value="0,20,0,20"/>
+                </Style>
             </DockPanel.Resources>
 
         <!--Random Muting-->
@@ -123,6 +126,15 @@
                     <StackPanel Orientation="Horizontal">
                         <Label Target="{Binding ElementName=beatFontSizeTextBox}"></Label>
                         <TextBox Name="beatFontSizeTextBox" LostFocus="beatFontSizeTextBox_LostFocus" Loaded="beatFontSizeTextBox_Loaded" Width="50"/>
+                    </StackPanel>
+                    <Separator/>
+
+                    <TextBlock>
+                        Turn the beat graph's blinking visual effect on or off.
+                    </TextBlock>
+                    <StackPanel>
+                        <Label Target="{Binding ElementName=blinkToggle}">Enable Blinking</Label>
+                        <CheckBox Name="blinkToggle" Checked="blinkToggle_Checked" Unchecked="blinkToggle_Unchecked"  Loaded="blinkToggle_Loaded"/>
                     </StackPanel>
                 </StackPanel>
             </Expander>

@@ -30,7 +30,7 @@
 
         <!--Used for the font size of the beat code input-->
         <sys:Double x:Key="textBoxFontSize">16</sys:Double>
-        
+
         <!--The base panel of the beat layer-->
         <Grid
             x:Key="layerGrid"

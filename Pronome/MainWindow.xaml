@@ -22,12 +22,11 @@
         <Style TargetType="Border" x:Key="headerBorder">
             <Setter Property="Background" Value="#7F000000"/>
         </Style>
+        
     </Window.Resources>
     <Border BorderBrush="Black" BorderThickness="1,1,1,1" CornerRadius="8,8,8,8" Background="#B200008B">
 
         <Grid>
-            <!--The background element
-            <Rectangle Fill="DarkBlue" Opacity=".7"/>-->
             <!--The base panel-->
             <DockPanel>
                 <!--Header element. Draggable-->

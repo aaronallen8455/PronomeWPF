@@ -189,7 +189,6 @@ namespace Pronome
 
         protected void textEditor_LostFocus(object sender, RoutedEventArgs e)
         {
-            // TODO: validate the beat string
             if (textEditor.Text == "")
             {
                 textEditor.Text = "1";
@@ -204,6 +203,9 @@ namespace Pronome
                     if (errorMsg == string.Empty)
                     {
                         Layer.Parse(textEditor.Text);
+
+                        // redraw beat graph if necessary
+                        Metronome.GetInstance().TriggerAfterBeatParsed();
                     }
                     else throw new BeatSyntaxException(errorMsg);
                 }

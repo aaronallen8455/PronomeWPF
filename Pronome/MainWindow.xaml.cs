@@ -73,6 +73,9 @@ namespace Pronome
         private void addLayerButton_Click(object sender, RoutedEventArgs e)
         {
             LayerUI layerUI = new LayerUI(layerStack);
+
+            // redraw the beat graph
+            Metronome.GetInstance().TriggerAfterBeatParsed();
         }
 
         /**<summary>Play the beat.</summary>*/
@@ -221,6 +224,8 @@ namespace Pronome
             else Settings.Add("winY", Top);
             if (Settings.ContainsKey("beatFontSize")) Settings["beatFontSize"] = (double)Application.Current.Resources["textBoxFontSize"];
             else Settings.Add("beatFontSize", (double)Application.Current.Resources["textBoxFontSize"]);
+            if (Settings.ContainsKey("blinkingEnabled")) Settings["blinkingEnabled"] = BeatGraphWindow.BlinkingIsEnabled ? 1 : 0;
+            else Settings.Add("blinkingEnabled", BeatGraphWindow.BlinkingIsEnabled ? 1 : 0);
 
             // Write window size and position to storage
             IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
@@ -234,6 +239,9 @@ namespace Pronome
             }
 
             f.Dispose();
+
+            // dispose the metronome
+            Metronome.GetInstance().Dispose();
         }
 
         protected override void OnInitialized(EventArgs e)
@@ -257,7 +265,6 @@ namespace Pronome
 
                     line = reader.ReadLine();
                 }
-
             }
             // apply settings
             if (Settings.ContainsKey("winX")) Left = Settings["winX"];
@@ -265,6 +272,7 @@ namespace Pronome
             if (Settings.ContainsKey("winWidth")) Width = Settings["winWidth"];
             if (Settings.ContainsKey("winHeight")) Height = Settings["winHeight"];
             if (Settings.ContainsKey("beatFontSize")) Application.Current.Resources["textBoxFontSize"] = Settings["beatFontSize"];
+            if (Settings.ContainsKey("blinkingEnabled")) BeatGraphWindow.BlinkingIsEnabled = Settings["blinkingEnabled"] == 1 ? true : false;
 
             f.Dispose();
         }
@@ -283,7 +291,10 @@ namespace Pronome
                 var graph = Resources["graphWindow"] as BeatGraphWindow;
                 graph.Show();
                 graph.Activate();
-                graph.DrawGraph();
+                if (!graph.GraphIsDrawn)
+                {
+                    graph.DrawGraph();
+                }
             }
         }
 

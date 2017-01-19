@@ -262,7 +262,7 @@ namespace Pronome
 
             SetBeat(cells);
         }
-        
+
         /**<summary>Apply a new base source to the layer.</summary>*/
         public void NewBaseSource(string baseSourceName)
         {

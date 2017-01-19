@@ -18,7 +18,6 @@ namespace Pronome
 
         public static void Stop()
         {
-            //_stopwatch.Stop();
             _stopwatch.Reset();
         }
 

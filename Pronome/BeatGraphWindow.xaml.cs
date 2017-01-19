@@ -21,20 +21,41 @@ namespace Pronome
     /// </summary>
     public partial class BeatGraphWindow : Window
     {
+        /**<summary>Whether the blinking effect is rendered</summary>*/
+        public static bool BlinkingIsEnabled = true;
+
+        /**<summary>Used to rotate the needle element.</summary>*/
         protected RotateTransform needleRotation;
 
         protected AnimationTimer Timer;
 
+        /**<summary>Array of blinking elements and related beat data.</summary>*/
         protected BlinkElement[] blinkElems;
 
+        /**<summary>Whether is graph is stopped or is actively running.</summary>*/
         protected bool isStopped;
+
+        /**<summary>Whether is graph is currently shown on screen.</summary>*/
+        public bool GraphIsDrawn = false;
 
         public BeatGraphWindow()
         {
             InitializeComponent();
+            Metronome.AfterBeatParsed += new EventHandler(DrawGraph);
         }
 
-        public void DrawGraph()
+        protected void DrawGraph(object sender, EventArgs e)
+        {
+            // draw graph when triggered by beat parsed event
+            if (GraphIsDrawn)
+                DrawGraph(false);
+        }
+
+        /// <summary>
+        /// Draw the beat graph and start animation if beat is currently playing.
+        /// </summary>
+        /// <param name="changeColor">Whether to reset the color pallette</param>
+        public void DrawGraph(bool changeColor = true)
         {
             if (Metronome.GetInstance().Layers.Count == 0)
             {
@@ -42,7 +63,10 @@ namespace Pronome
             }
 
             drawingGroup.Children.Clear();
-            rgbSeed = Metronome.GetRandomNum();
+            if (changeColor)
+            {
+                rgbSeed = Metronome.GetRandomNum();
+            }
 
             Point center = new Point(BeatGraph.graphRadius, BeatGraph.graphRadius);
 
@@ -129,15 +153,17 @@ namespace Pronome
             drawingGroup.Children.Add(needleDrawing);
 
             // Animate
+
             if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
             {
                 // set the initial position (if beat was playing before graph opened)
                 if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
                 {
                     Metronome.GetInstance().UpdateElapsedQuarters();
-                    
                 }
+
                 double portion = Metronome.GetInstance().ElapsedQuarters / BeatGraph.cycleLength;
+
                 needleRotation.Angle = 360 * portion;
                 // sync blinkers
                 foreach (BlinkElement el in blinkElems)
@@ -148,8 +174,13 @@ namespace Pronome
 
             Timer = new AnimationTimer();
             CompositionTarget.Rendering += GraphAnimationFrame;
+
+            GraphIsDrawn = true;
         }
 
+        /// <summary>
+        /// Draw an animation frame. Rotates needle and triggers blink effects.
+        /// </summary>
         private void GraphAnimationFrame(object sender, EventArgs e)
         {
             var playstate = Metronome.GetInstance().PlayState;
@@ -170,9 +201,9 @@ namespace Pronome
                 {
                     el.nextBeat -= quarterNotes;
                     
-                    if (el.nextBeat <= 0) el.Blink();
                     if (el.nextBeat <= 0)
                     {
+                        if (BlinkingIsEnabled) el.Blink();
                         el.progressBeat();
                     }
                 }
@@ -193,8 +224,13 @@ namespace Pronome
             }
         }
 
+        /**<summary>The RNG seed for determining colors.</summary>*/
         private double rgbSeed;
 
+        /// <summary>
+        /// Get a color based on the layer index.
+        /// </summary>
+        /// <param name="index">Index of the layer</param>
         protected Color GetRgb(int index)
         {
             float i = 3f / 8f * (index % 8f);
@@ -229,6 +265,14 @@ namespace Pronome
             return color;
         }
 
+        /// <summary>
+        /// Creates a gradient brush for the concentric layer elements
+        /// </summary>
+        /// <param name="center">Center point</param>
+        /// <param name="innerRadius">Inner radius</param>
+        /// <param name="outerRadius">Outer radius</param>
+        /// <param name="color">Base color</param>
+        /// <param name="alpha">Alpha value to fade to</param>
         protected RadialGradientBrush MakeGradient(Point center, double innerRadius, double outerRadius, Color color, float alpha = .2f)
         {
             Color transColor = new Color()
@@ -256,6 +300,9 @@ namespace Pronome
             return grad;
         }
 
+        /// <summary>
+        /// Reset the blink element's internal values
+        /// </summary>
         public void ResetBlinks()
         {
             foreach (BlinkElement el in blinkElems)
@@ -275,6 +322,7 @@ namespace Pronome
                 e.Cancel = true;
             }
 
+            GraphIsDrawn = false;
             CompositionTarget.Rendering -= GraphAnimationFrame;
         }
 

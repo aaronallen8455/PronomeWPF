@@ -183,5 +183,20 @@ namespace Pronome
         {
             beatFontSizeTextBox.Text = Application.Current.Resources["textBoxFontSize"].ToString();
         }
+
+        private void blinkToggle_Checked(object sender, RoutedEventArgs e)
+        {
+            BeatGraphWindow.BlinkingIsEnabled = true;
+        }
+
+        private void blinkToggle_Loaded(object sender, RoutedEventArgs e)
+        {
+            blinkToggle.IsChecked = BeatGraphWindow.BlinkingIsEnabled;
+        }
+
+        private void blinkToggle_Unchecked(object sender, RoutedEventArgs e)
+        {
+            BeatGraphWindow.BlinkingIsEnabled = false;
+        }
     }
 }

@@ -178,11 +178,15 @@ namespace Pronome
                 if (_timer == null)
                 {
                     _timer = new AnimationTimer();
+                    AnimationTimer.Start();
                 }
                 else
                 {
-                    _timer.Reset();
-                    AnimationTimer.Start();
+                    if (PlayState == State.Stopped)
+                    {
+                        AnimationTimer.Init();
+                        _timer.Reset();
+                    }
                 }
 
                 // start playing
@@ -246,9 +250,6 @@ namespace Pronome
          */
         public void ExportAsWav(double seconds, string fileName)
         {
-            //fileName = ValidateFileName(fileName);
-            //if (fileName.Substring(fileName.Length-4).ToLower() != ".wav") // append wav extension
-            //    fileName += ".wav";
             Writer = new WaveFileWriter(fileName, Mixer.WaveFormat);
 
             // if no seconds param, use the complete cycle
@@ -523,6 +524,19 @@ namespace Pronome
             return Directory.GetFiles("saves/").Select(x => x.Replace(".beat", "").Replace("saves/", "")).ToArray();
         }
 
+        /**<summary>Triggered after the beat code is changed and parsed</summary>*/
+        public static event EventHandler AfterBeatParsed;
+
+        protected virtual void onAfterBeatParsed()
+        {
+            AfterBeatParsed?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void TriggerAfterBeatParsed()
+        {
+            onAfterBeatParsed();
+        }
+
         /** <summary>Prepare to deserialize. Used in loading a saved beat.</summary> */
         [OnDeserializing]
         void BeforeDeserialization(StreamingContext sc)
@@ -562,11 +576,9 @@ namespace Pronome
                 SetSilentInterval(AudibleInterval, SilentInterval);
             if (IsRandomMute)
                 SetRandomMute(RandomMutePercent, RandomMuteSeconds);
-        }
 
-        ~Metronome()
-        {
-            Dispose();
+            // trigger beat parsed
+            onAfterBeatParsed();
         }
 
         /** <summary>Dispose of resoures from all members.</summary> */
