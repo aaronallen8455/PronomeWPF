@@ -311,6 +311,8 @@ namespace Pronome
             // dispose the layer
             Layer.Dispose();
             Remove();
+            // redraw graph
+            Metronome.GetInstance().TriggerAfterBeatParsed();
         }
 
         /**<summary>Remove this item from the interface.</summary>*/
