@@ -105,6 +105,9 @@ namespace Pronome
                     points.Add(inner);
                     points.Add(outer);
 
+                    // timeout if beat is asymmetrical
+                    if (points.Count > 1000) throw new TimeoutException();
+
                     angleAccumulator += angle;
                 }
             }

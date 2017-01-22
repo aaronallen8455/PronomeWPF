@@ -62,6 +62,8 @@ namespace Pronome
                 throw new Exception("No layers to graph.");
             }
 
+            timeoutError.Visibility = Visibility.Hidden; // hide the asymmetry error message.
+
             drawingGroup.Children.Clear();
             if (changeColor)
             {
@@ -70,111 +72,113 @@ namespace Pronome
 
             Point center = new Point(BeatGraph.graphRadius, BeatGraph.graphRadius);
 
-            BeatGraphLayer[] graphLayers = BeatGraph.DrawGraph();
-
-            blinkElems = new BlinkElement[graphLayers.Length];
-
-            int index = 0;
-            // pick a color and draw the ticks for each layer
-            foreach (BeatGraphLayer layer in graphLayers)
+            try
             {
-                EllipseGeometry halo = new EllipseGeometry(
-                    center,
-                    layer.Radius + BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize);
+                BeatGraphLayer[] graphLayers = BeatGraph.DrawGraph();
 
-                Color haloColor = ColorWheel(index);
-                Color blinkColor = ColorWheel(index, .5f);
+                blinkElems = new BlinkElement[graphLayers.Length];
 
-                // draw background 'blink' layer
-                var blinkGeo = new GeometryDrawing();
-                var blinkBrush = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, blinkColor, .6f);
-                blinkGeo.Brush = blinkBrush;
-                blinkGeo.Geometry = halo;
-                blinkBrush.Opacity = 0;
-                drawingGroup.Children.Add(blinkGeo);
-                blinkElems[index] = new BlinkElement(blinkBrush, index);
-
-                // draw halo circle
-                var haloGeo = new GeometryDrawing();
-                var grad = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, haloColor);
-                haloGeo.Brush = grad;
-                haloGeo.Geometry = halo;
-                drawingGroup.Children.Add(haloGeo);
-
-                // stroke color
-                Color tickColor = new Color();
-                tickColor.ScR = 1f;
-                tickColor.ScB = 1f;
-                tickColor.ScG = 1f;
-                tickColor.ScA = 1f;
-
-                var geoDrawing = new GeometryDrawing();
-                geoDrawing.Pen = new Pen(
-                    MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, tickColor),
-                    1.4
-                );
-
-                var streamGeo = new StreamGeometry();
-                using (StreamGeometryContext context = streamGeo.Open())
+                int index = 0;
+                // pick a color and draw the ticks for each layer
+                foreach (BeatGraphLayer layer in graphLayers)
                 {
+                    EllipseGeometry halo = new EllipseGeometry(
+                        center,
+                        layer.Radius + BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize);
 
-                    for (int i=0; i<layer.Ticks.Length; i += 2)
+                    Color haloColor = ColorWheel(index);
+                    Color blinkColor = ColorWheel(index, .75f);
+
+                    // draw background 'blink' layer
+                    var blinkGeo = new GeometryDrawing();
+                    var blinkBrush = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, blinkColor, .6f);
+                    blinkGeo.Brush = blinkBrush;
+                    blinkGeo.Geometry = halo;
+                    blinkBrush.Opacity = 0;
+                    drawingGroup.Children.Add(blinkGeo);
+                    blinkElems[index] = new BlinkElement(blinkBrush, index);
+
+                    // draw halo circle
+                    var haloGeo = new GeometryDrawing();
+                    var grad = MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, haloColor);
+                    haloGeo.Brush = grad;
+                    haloGeo.Geometry = halo;
+                    drawingGroup.Children.Add(haloGeo);
+
+                    // stroke color
+                    Color tickColor = new Color();
+                    tickColor.ScR = 1f;
+                    tickColor.ScB = 1f;
+                    tickColor.ScG = 1f;
+                    tickColor.ScA = 1f;
+
+                    var geoDrawing = new GeometryDrawing();
+                    geoDrawing.Pen = new Pen(
+                        MakeGradient(center, layer.Radius, layer.Radius + BeatGraph.tickSize, tickColor),
+                        1.4
+                    );
+
+                    var streamGeo = new StreamGeometry();
+                    using (StreamGeometryContext context = streamGeo.Open())
                     {
-                        context.BeginFigure(layer.Ticks[i], false, false);
-                        context.LineTo(layer.Ticks[i + 1], true, false);
+                        for (int i=0; i<layer.Ticks.Length; i += 2)
+                        {
+                            context.BeginFigure(layer.Ticks[i], false, false);
+                            context.LineTo(layer.Ticks[i + 1], true, false);
+                        }
+                    }
+
+                    geoDrawing.Geometry = streamGeo;
+
+                    drawingGroup.Children.Add(geoDrawing);
+
+                    index++;
+                }
+
+                // draw the needle
+                RectangleGeometry needle = new RectangleGeometry(
+                    new Rect(BeatGraph.graphRadius - 1.5, 0, 3, BeatGraph.graphRadius)
+                    );
+                needleRotation = new RotateTransform(0, BeatGraph.graphRadius, BeatGraph.graphRadius);
+                needle.Transform = needleRotation;
+                var needleDrawing = new GeometryDrawing(Brushes.Aqua, new Pen(), needle);
+                drawingGroup.Children.Add(needleDrawing);
+
+                // Animate
+
+                if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+                {
+                    // set the initial position (if beat was playing before graph opened)
+                    if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
+                    {
+                        Metronome.GetInstance().UpdateElapsedQuarters();
+                    }
+
+                    double portion = Metronome.GetInstance().ElapsedQuarters / BeatGraph.cycleLength;
+
+                    needleRotation.Angle = 360 * portion;
+                    // sync blinkers
+                    foreach (BlinkElement el in blinkElems)
+                    {
+                        el.Sync(Metronome.GetInstance().ElapsedQuarters);
                     }
                 }
 
-                geoDrawing.Geometry = streamGeo;
+                Timer = new AnimationTimer();
+                CompositionTarget.Rendering += GraphAnimationFrame;
 
-                drawingGroup.Children.Add(geoDrawing);
+                GraphIsDrawn = true;
 
-                //// draw center circle
-                //EllipseGeometry circle = new EllipseGeometry(
-                //    center, 
-                //    layer.Radius, layer.Radius
-                //);
-                //var circleGeo = new GeometryDrawing();
-                //circleGeo.Pen = new Pen(stroke, 3);
-                //circleGeo.Geometry = circle;
-                //drawingGroup.Children.Add(circleGeo);
-
-                index++;
             }
-
-            // draw the needle
-            RectangleGeometry needle = new RectangleGeometry(
-                new Rect(BeatGraph.graphRadius - 1.5, 0, 3, BeatGraph.graphRadius)
-                );
-            needleRotation = new RotateTransform(0, BeatGraph.graphRadius, BeatGraph.graphRadius);
-            needle.Transform = needleRotation;
-            var needleDrawing = new GeometryDrawing(Brushes.Aqua, new Pen(), needle);
-            drawingGroup.Children.Add(needleDrawing);
-
-            // Animate
-
-            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+            catch (TimeoutException e)
             {
-                // set the initial position (if beat was playing before graph opened)
-                if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
-                {
-                    Metronome.GetInstance().UpdateElapsedQuarters();
-                }
-
-                double portion = Metronome.GetInstance().ElapsedQuarters / BeatGraph.cycleLength;
-
-                needleRotation.Angle = 360 * portion;
-                // sync blinkers
-                foreach (BlinkElement el in blinkElems)
-                {
-                    el.Sync(Metronome.GetInstance().ElapsedQuarters);
-                }
+                DrawAsymError();
             }
+        }
 
-            Timer = new AnimationTimer();
-            CompositionTarget.Rendering += GraphAnimationFrame;
-
-            GraphIsDrawn = true;
+        protected void DrawAsymError()
+        {
+            timeoutError.Visibility = Visibility.Visible;
         }
 
         /// <summary>

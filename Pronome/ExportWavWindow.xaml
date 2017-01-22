@@ -23,7 +23,7 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal" Grid.Column="1">
-                <TextBox Name="seconds" TextChanged="seconds_TextChanged" VerticalAlignment="Top" Width="40"/>
+                <TextBox Name="seconds" Style="{x:Null}" TextChanged="seconds_TextChanged" VerticalAlignment="Top" Width="40"/>
                 <TextBlock Text=" seconds"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Center">

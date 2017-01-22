@@ -16,5 +16,13 @@
                 </DrawingImage>
             </Image.Source>
         </Image>
+        <TextBlock HorizontalAlignment="Center" 
+                   VerticalAlignment="Center" 
+                   Background="Red" Foreground="White"
+                   Padding="10"
+                   Visibility="Hidden"
+                   Name="timeoutError">            
+            This beat is too complex to be graphed.
+        </TextBlock>
     </Grid>
 </Window>
