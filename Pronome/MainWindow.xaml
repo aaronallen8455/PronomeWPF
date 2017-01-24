@@ -13,6 +13,8 @@
         <local:OptionsWindow x:Key="optionsWindow"/>
         <!--window for displaying the graph-->
         <local:BeatGraphWindow x:Key="graphWindow"/>
+        <!-- window for the bounce animation-->
+        <local:BounceWindow x:Key="bounceWindow"/>
         <!--Boolean inverter-->
         <local:InverseBooleanConverter x:Key="inverseBooleanConverter"/>
         <Style TargetType="Rectangle">
@@ -100,6 +102,7 @@
                             <!--Open options-->
                             <Button Name="openOptionsButton" Click="openOptionsButton_Click">Options</Button>
                             <Button Name="openGraphButton" Click="openGraphButton_Click">Graph</Button>
+                            <Button Name="openBounceButton" Click="openBounceButton_Click">Bounce</Button>
                         </WrapPanel>
 
                         <!--Window Resizer-->

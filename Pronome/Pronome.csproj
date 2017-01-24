@@ -83,10 +83,18 @@
     <Compile Include="BeatGraphWindow.xaml.cs">
       <DependentUpon>BeatGraphWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="BounceWindow.xaml.cs">
+      <DependentUpon>BounceWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Classes\AnimationTimer.cs" />
     <Compile Include="Classes\BeatGraph.cs" />
+    <Compile Include="Classes\ColorHelper.cs" />
     <Compile Include="Classes\TextMarkerService.cs" />
     <Page Include="BeatGraphWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="BounceWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

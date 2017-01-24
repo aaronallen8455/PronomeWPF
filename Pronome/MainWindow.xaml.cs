@@ -213,6 +213,10 @@ namespace Pronome
             graph.KeepOpen = false;
             graph.Close();
 
+            BounceWindow bounce = Resources["bounceWindow"] as BounceWindow;
+            bounce.KeepOpen = false;
+            bounce.Close();
+
             // save user settings
             if (Settings.ContainsKey("winWidth")) Settings["winWidth"] = Width;
             else Settings.Add("winWidth", Width);
@@ -301,6 +305,18 @@ namespace Pronome
         private void minimizeButton_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
+        }
+
+        private void openBounceButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Metronome.GetInstance().Layers.Count > 0)
+            {
+                var bounceWindow = Resources["bounceWindow"] as BounceWindow;
+                bounceWindow.Show();
+                bounceWindow.Activate();
+
+                bounceWindow.DrawScene();
+            }
         }
     }
 

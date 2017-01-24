@@ -38,6 +38,9 @@ namespace Pronome
         /**<summary>Whether is graph is currently shown on screen.</summary>*/
         public bool GraphIsDrawn = false;
 
+        /**<summary>The RNG seed for determining colors.</summary>*/
+        private int rgbSeed;
+
         public BeatGraphWindow()
         {
             InitializeComponent();
@@ -86,8 +89,8 @@ namespace Pronome
                         center,
                         layer.Radius + BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize);
 
-                    Color haloColor = ColorWheel(index);
-                    Color blinkColor = ColorWheel(index, .75f);
+                    Color haloColor = ColorHelper.ColorWheel(index, 1, rgbSeed);
+                    Color blinkColor = ColorHelper.ColorWheel(index, .75f, rgbSeed);
 
                     // draw background 'blink' layer
                     var blinkGeo = new GeometryDrawing();
@@ -227,9 +230,6 @@ namespace Pronome
             }
         }
 
-        /**<summary>The RNG seed for determining colors.</summary>*/
-        private double rgbSeed;
-
         /// <summary>
         /// Get a color based on the layer index.
         /// </summary>
@@ -266,71 +266,6 @@ namespace Pronome
             }
 
             return color;
-        }
-
-        protected Color ColorWheel(int index, float saturation = 1f)
-        {
-            int degrees = ((25 * index) + (int)(360 * rgbSeed / 100)) % 360;
-            byte min = (byte)(255 - 255 * saturation);
-            int degreesMod = degrees == 0 ? 0 : degrees % 60 == 0 ? 60 : degrees % 60;
-            float stepSize = (255 - min) / 60;
-            byte red, green, blue;
-
-            if (degrees <= 60)
-            {
-                red = 255;
-                green = Convert.ToByte(min + Math.Round(degreesMod * stepSize));
-                blue = min;
-            }
-            else if (degrees <= 120)
-            {
-                red = Convert.ToByte(255 - Math.Round(degreesMod * stepSize));
-                green = 255;
-                blue = min;
-            }
-            else if (degrees <= 180)
-            {
-                red = min;
-                green = 255;
-                blue = Convert.ToByte(min + Math.Round(degreesMod * stepSize));
-            }
-            else if (degrees <= 240)
-            {
-                red = min;
-                green = Convert.ToByte(255 - Math.Round(degreesMod * stepSize));
-                blue = 255;
-            }
-            else if (degrees <= 300)
-            {
-                red = Convert.ToByte(min + Math.Round(degreesMod * stepSize));
-                green = min;
-                blue = 255;
-            }
-            else
-            {
-                red = 255;
-                green = min;
-                blue = Convert.ToByte(255 - Math.Round(degreesMod * stepSize));
-            }
-
-            return new Color()
-            {
-                R = red,
-                G = green,
-                B = blue,
-                A = 255,
-            };
-        }
-
-        protected Color InvertColor(Color color)
-        {
-            return new Color()
-            {
-                R = (byte)(255 - color.R),
-                G = (byte)(255 - color.G),
-                B = (byte)(255 - color.B),
-                A = 255
-            };
         }
 
         /// <summary>
