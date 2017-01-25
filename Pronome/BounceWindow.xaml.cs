@@ -21,6 +21,7 @@ namespace Pronome
     public partial class BounceWindow : Window
     {
         private int width;
+        const double widthPad = 350; // difference in width between foreground and horizon
         public const int height = 900;
         private int layerCount;
         protected int[] layerIndexes;
@@ -50,11 +51,24 @@ namespace Pronome
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
 
             // draw sizer element
-            var size = new RectangleGeometry(new Rect(0, 0, width, height));
-            drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, new Pen(), size));
+            var size = new RectangleGeometry(new Rect(0, 0, width + 2 * widthPad, height));
+            drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, new Pen(Brushes.White, 5), size));
+
+            // draw lanes
+            Pen lanePen = new Pen(Brushes.White, 3);
+            var leftBound = new LineGeometry(new Point(0, height), new Point(widthPad, height / 2));
+            drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, leftBound));
+            double xCoord = (width + 2 * widthPad) / layerCount;
+            for (int i=0; i<layerCount; i++)
+            {
+                var start = new Point(xCoord * (i + 1), height);
+                var end = new Point(widthPad + width/layerCount * (i + 1), height / 2);
+
+                drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, new LineGeometry(start, end)));
+            }
 
             // draw horizon
-            var horizonLine = new LineGeometry(new Point(0, height/2), new Point(width, height/2));
+            var horizonLine = new LineGeometry(new Point(0, height/2), new Point(width + 2 * widthPad, height/2));
             drawingGroup.Children.Add(new GeometryDrawing(null, new Pen(Brushes.Aqua, 1), horizonLine));
 
             // draw balls
@@ -65,16 +79,28 @@ namespace Pronome
                 drawingGroup.Children.Add(ball);
             }
 
+            Title = FindSlopeOfLanes().ToString();
+
             timer = new AnimationTimer();
+
+            // make test line
+            testLine = new LineGeometry(new Point(0, height), new Point(200, height));
+            var testTrans = new TranslateTransform();
+            testLine.Transform = testTrans;
+            drawingGroup.Children.Add(new GeometryDrawing(null, new Pen(Brushes.Aqua, 3), testLine));
 
             CompositionTarget.Rendering += DrawFrame;
         }
+
+        LineGeometry testLine;
 
         protected void DrawFrame(object sender, EventArgs e)
         {
             if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
             {
                 double elapsed = timer.GetElapsedTime();
+
+                MoveLine(testLine, elapsed);
 
                 foreach (Ball ball in Balls)
                 {
@@ -86,10 +112,27 @@ namespace Pronome
                 timer.Reset();
             }
         }
+        // Draw the lanes and ticks on the face of a 3D plane and rotate the plane to match
+        // y= (2sqrt(x) + x) / 3
+        double elapsedTime = 0;
+        double endTime = 3; // this should be a BPM value. show 6 quarter notes ?
+        protected void MoveLine(LineGeometry line, double interval)
+        {
+            TranslateTransform transform = line.Transform as TranslateTransform;
+
+            elapsedTime += interval;
+
+            double fraction = elapsedTime / endTime;
+            double transY = Math.Sqrt(fraction);
+
+            transform.Y = -height / 2 * transY;
+
+            //transform.Y = -elapsedTime * 159 + Math.Pow(elapsedTime * 3.5, 2);// - Math.Sqrt(elapsedTime/100) * 1500; //-Math.Log(elapsedTime) * 20;// + offset;
+        }
 
         protected GeometryDrawing MakeBall(int index)
         {
-            Point center = new Point(width / (layerCount * 2) * (index * 2 + 1), horizon);
+            Point center = new Point(width / (layerCount * 2) * (index * 2 + 1) + widthPad, horizon);
             EllipseGeometry ball = new EllipseGeometry(center, ballRadius, ballRadius);
             Balls[index] = new Ball(index, ball);
             Color color = ColorHelper.ColorWheel(index);
@@ -98,6 +141,14 @@ namespace Pronome
                 null, ball);//new Pen(Brushes.Red, 2), ball);
 
             return result;
+        }
+
+        protected double FindSlopeOfLanes()
+        {
+            var bottom = (width + 2 * widthPad) / layerCount;
+            var top = width / layerCount;
+            var diff = bottom - top;
+            return (height / 2) / diff;
         }
 
         public bool KeepOpen = true;
