@@ -79,28 +79,16 @@ namespace Pronome
                 drawingGroup.Children.Add(ball);
             }
 
-            Title = FindSlopeOfLanes().ToString();
-
             timer = new AnimationTimer();
-
-            // make test line
-            testLine = new LineGeometry(new Point(0, height), new Point(200, height));
-            var testTrans = new TranslateTransform();
-            testLine.Transform = testTrans;
-            drawingGroup.Children.Add(new GeometryDrawing(null, new Pen(Brushes.Aqua, 3), testLine));
 
             CompositionTarget.Rendering += DrawFrame;
         }
-
-        LineGeometry testLine;
 
         protected void DrawFrame(object sender, EventArgs e)
         {
             if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
             {
                 double elapsed = timer.GetElapsedTime();
-
-                MoveLine(testLine, elapsed);
 
                 foreach (Ball ball in Balls)
                 {
@@ -111,23 +99,6 @@ namespace Pronome
             {
                 timer.Reset();
             }
-        }
-        // Draw the lanes and ticks on the face of a 3D plane and rotate the plane to match
-        // y= (2sqrt(x) + x) / 3
-        double elapsedTime = 0;
-        double endTime = 3; // this should be a BPM value. show 6 quarter notes ?
-        protected void MoveLine(LineGeometry line, double interval)
-        {
-            TranslateTransform transform = line.Transform as TranslateTransform;
-
-            elapsedTime += interval;
-
-            double fraction = elapsedTime / endTime;
-            double transY = Math.Sqrt(fraction);
-
-            transform.Y = -height / 2 * transY;
-
-            //transform.Y = -elapsedTime * 159 + Math.Pow(elapsedTime * 3.5, 2);// - Math.Sqrt(elapsedTime/100) * 1500; //-Math.Log(elapsedTime) * 20;// + offset;
         }
 
         protected GeometryDrawing MakeBall(int index)
@@ -143,14 +114,6 @@ namespace Pronome
             return result;
         }
 
-        protected double FindSlopeOfLanes()
-        {
-            var bottom = (width + 2 * widthPad) / layerCount;
-            var top = width / layerCount;
-            var diff = bottom - top;
-            return (height / 2) / diff;
-        }
-
         public bool KeepOpen = true;
 
         protected override void OnClosing(CancelEventArgs e)
@@ -162,6 +125,170 @@ namespace Pronome
                 e.Cancel = true;
 
                 CompositionTarget.Rendering -= DrawFrame;
+            }
+        }
+
+        protected class Lane
+        {
+            protected double LaneWidth = 0;
+
+            protected Layer Layer; // the layer represented by this lane
+
+            protected double LeftXDiff; // difference in X coords of the two left end points
+            protected double RightXDiff;
+            protected int Index;
+
+            protected Queue<Tick> Ticks;
+
+            protected double CurInterval; // when this is zero, it's time to cue a new tick
+            protected int beatIndex = 0;
+
+            public Lane(Layer layer, double leftXDiff, double rightXDiff, int index)
+            {
+                Layer = layer;
+                LeftXDiff = leftXDiff;
+                RightXDiff = rightXDiff;
+                Index = index;
+
+                double _width = (widthPad * 2 + Instance.width) / Instance.layerCount;
+                LaneWidth = _width;
+
+                // generate initial ticks and find current interval
+                double accumulator = Layer.Offset;
+                while (accumulator <= Tick.EndPoint)
+                {
+                    if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+
+                    accumulator += Layer.Beat[beatIndex].Bpm;
+                    if (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                    {
+                        beatIndex++;
+                        continue;
+                    }
+
+                    // create tick
+                    if (accumulator <= Tick.EndPoint)
+                    {
+                        double factor = Math.Sqrt((Tick.EndPoint - accumulator) / Tick.EndPoint);
+                        var startPoint = new Point(_width * index + factor * leftXDiff, height);
+                        var endPoint = new Point(_width * (index + 1) + factor * rightXDiff, height);
+                        var line = new LineGeometry(startPoint, endPoint);
+                        var lineTrans = new TranslateTransform(0, -height / 2 * factor);
+                        line.Transform = lineTrans;
+                        var geoDrawing = new GeometryDrawing(null, new Pen(Brushes.White, 2), line);
+                        Instance.drawingGroup.Children.Add(geoDrawing);
+
+                        Ticks.Enqueue(new Tick(leftXDiff, rightXDiff, line, geoDrawing, this, Tick.EndPoint - accumulator));
+                    }
+                    else
+                    {
+                        accumulator -= Layer.Beat[beatIndex].Bpm;
+                    }
+
+                    beatIndex++;
+                }
+                if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+
+                // get current interval.
+                CurInterval = Layer.Beat[beatIndex - 1].Bpm - (Tick.EndPoint - accumulator);
+            }
+
+            public void DequeueTick()
+            {
+                Tick t = Ticks.Dequeue();
+            }
+
+            public void ProcFrame(double elapsedTime)
+            {
+                // animate ticks
+                foreach (Tick tick in Ticks.ToArray())
+                {
+                    tick.Move(elapsedTime);
+                }
+
+                CurInterval -= elapsedTime * (Metronome.GetInstance().Tempo / 60);
+
+                // queue new tick if its time
+                if (CurInterval <= 0)
+                {
+                    //if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+
+                    double factor = Math.Sqrt(-CurInterval) / Tick.EndPoint;
+                    var startPoint = new Point(LaneWidth * Index + factor * LeftXDiff, height);
+                    var endPoint = new Point(LaneWidth * (Index + 1) + factor * RightXDiff, height);
+                    var line = new LineGeometry(startPoint, endPoint);
+                    var lineTrans = new TranslateTransform(0, -height / 2 * factor);
+                    line.Transform = lineTrans;
+                    var geoDrawing = new GeometryDrawing(null, new Pen(Brushes.White, 2), line);
+                    Instance.drawingGroup.Children.Add(geoDrawing);
+
+                    Ticks.Enqueue(new Tick(LeftXDiff, RightXDiff, line, geoDrawing, this, CurInterval + Tick.EndPoint));
+
+                    do
+                    {
+                        CurInterval += Layer.Beat[beatIndex].Bpm;
+                        beatIndex++;
+                        if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+                    }
+                    while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName);
+                }
+            }
+        }
+
+        protected class Tick
+        {
+            public const double EndPoint = 6; // number of qtr notes to show. Duration of animation for each tick
+
+            protected double ElapsedInterval = 0;
+
+            protected double LeftDisplace; // the distance that left point needs to move inwards over course of animation.
+            protected double RightDisplace;
+
+            protected GeometryDrawing GeoDrawing;
+            protected TranslateTransform LineTranslate;
+            protected LineGeometry Line;
+
+            protected Lane Lane;
+
+            public Tick(
+                double leftDisplace,
+                double rightDisplace, 
+                LineGeometry line, 
+                GeometryDrawing geoDrawing,
+                Lane lane,
+                double elapsedInterval = 0)
+            {
+                LeftDisplace = leftDisplace;
+                RightDisplace = rightDisplace;
+                Line = line;
+                LineTranslate = line.Transform as TranslateTransform;
+                GeoDrawing = geoDrawing;
+                Lane = lane;
+                ElapsedInterval = elapsedInterval;
+            }
+
+            public void Move(double timeChange)
+            {
+                // add elapsed qtr notes to interval
+                ElapsedInterval = timeChange * (Metronome.GetInstance().Tempo / 60);
+
+                double fraction = ElapsedInterval / EndPoint;
+                double transY = Math.Sqrt(fraction);
+
+                // move line up
+                LineTranslate.Y = -height / 2 * transY;
+
+                if (fraction >= 1)
+                {
+                    // remove element when animation finished
+                    Instance.drawingGroup.Children.Remove(GeoDrawing);
+                    Lane.DequeueTick();
+                }
+                else
+                {
+                    // reposition end points
+
+                }
             }
         }
 
