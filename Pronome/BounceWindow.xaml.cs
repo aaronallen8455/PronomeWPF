@@ -21,10 +21,11 @@ namespace Pronome
     public partial class BounceWindow : Window
     {
         private int width;
-        const double widthPad = 350; // difference in width between foreground and horizon
+        const double widthPad = 0;//350; // difference in width between foreground and horizon
         public const int height = 900;
         private int layerCount;
         protected int[] layerIndexes;
+        protected Lane[] Lanes;
 
         public static BounceWindow Instance;
         protected Ball[] Balls;
@@ -48,11 +49,12 @@ namespace Pronome
             layerCount = met.Layers.Count;
             Balls = new Ball[layerCount];
             layerIndexes = new int[layerCount];
+            Lanes = new Lane[layerCount];
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
 
             // draw sizer element
             var size = new RectangleGeometry(new Rect(0, 0, width + 2 * widthPad, height));
-            drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, new Pen(Brushes.White, 5), size));
+            drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, null, size));
 
             // draw lanes
             Pen lanePen = new Pen(Brushes.White, 3);
@@ -65,11 +67,15 @@ namespace Pronome
                 var end = new Point(widthPad + width/layerCount * (i + 1), height / 2);
 
                 drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, new LineGeometry(start, end)));
+
+                Lanes[i] = new Lane(met.Layers[i], ColorHelper.ColorWheel(i), 
+                    widthPad + (width / layerCount) * i - xCoord * i, 
+                    widthPad + (width / layerCount) * (i + 1) - xCoord * (i + 1), i);
             }
 
             // draw horizon
-            var horizonLine = new LineGeometry(new Point(0, height/2), new Point(width + 2 * widthPad, height/2));
-            drawingGroup.Children.Add(new GeometryDrawing(null, new Pen(Brushes.Aqua, 1), horizonLine));
+            //var horizonLine = new LineGeometry(new Point(0, height/2), new Point(width + 2 * widthPad, height/2));
+            //drawingGroup.Children.Add(new GeometryDrawing(null, new Pen(Brushes.Aqua, 2), horizonLine));
 
             // draw balls
             for (int i=0; i<layerCount; i++)
@@ -93,6 +99,11 @@ namespace Pronome
                 foreach (Ball ball in Balls)
                 {
                     ball.SetPosition(elapsed);
+                }
+
+                foreach (Lane lane in Lanes)
+                {
+                    lane.ProcFrame(elapsed);
                 }
             }
             else
@@ -133,6 +144,7 @@ namespace Pronome
             protected double LaneWidth = 0;
 
             protected Layer Layer; // the layer represented by this lane
+            protected SolidColorBrush Brush;
 
             protected double LeftXDiff; // difference in X coords of the two left end points
             protected double RightXDiff;
@@ -143,15 +155,18 @@ namespace Pronome
             protected double CurInterval; // when this is zero, it's time to cue a new tick
             protected int beatIndex = 0;
 
-            public Lane(Layer layer, double leftXDiff, double rightXDiff, int index)
+            public Lane(Layer layer, Color color, double leftXDiff, double rightXDiff, int index)
             {
                 Layer = layer;
+                Brush = new SolidColorBrush(color);
                 LeftXDiff = leftXDiff;
                 RightXDiff = rightXDiff;
                 Index = index;
 
                 double _width = (widthPad * 2 + Instance.width) / Instance.layerCount;
                 LaneWidth = _width;
+
+                Ticks = new Queue<Tick>();
 
                 // generate initial ticks and find current interval
                 double accumulator = Layer.Offset;
@@ -169,33 +184,38 @@ namespace Pronome
                     // create tick
                     if (accumulator <= Tick.EndPoint)
                     {
-                        double factor = Math.Sqrt((Tick.EndPoint - accumulator) / Tick.EndPoint);
+                        double factor = Tick.Ease((Tick.EndPoint - accumulator) / Tick.EndPoint);
                         var startPoint = new Point(_width * index + factor * leftXDiff, height);
                         var endPoint = new Point(_width * (index + 1) + factor * rightXDiff, height);
                         var line = new LineGeometry(startPoint, endPoint);
                         var lineTrans = new TranslateTransform(0, -height / 2 * factor);
                         line.Transform = lineTrans;
-                        var geoDrawing = new GeometryDrawing(null, new Pen(Brushes.White, 2), line);
+                        var geoDrawing = new GeometryDrawing(null, new Pen(Brush, 2), line);
                         Instance.drawingGroup.Children.Add(geoDrawing);
 
-                        Ticks.Enqueue(new Tick(leftXDiff, rightXDiff, line, geoDrawing, this, Tick.EndPoint - accumulator));
+                        var tick = new Tick(leftXDiff, rightXDiff, line, geoDrawing, this, Tick.EndPoint - accumulator);
+
+                        Ticks.Enqueue(tick);
                     }
-                    else
-                    {
-                        accumulator -= Layer.Beat[beatIndex].Bpm;
-                    }
+                    //else
+                    //{
+                    //    accumulator -= Layer.Beat[beatIndex].Bpm;
+                    //}
 
                     beatIndex++;
                 }
-                if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+
+                //if (beatIndex == 0) beatIndex = Layer.Beat.Count;
+                //else if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
                 // get current interval.
-                CurInterval = Layer.Beat[beatIndex - 1].Bpm - (Tick.EndPoint - accumulator);
+                accumulator -= Layer.Beat[beatIndex == Layer.Beat.Count ? 0 : beatIndex].Bpm;
+                CurInterval = Layer.Beat[beatIndex == Layer.Beat.Count ? 0 : beatIndex].Bpm - (Tick.EndPoint - accumulator);
             }
 
             public void DequeueTick()
             {
-                Tick t = Ticks.Dequeue();
+                Ticks.Dequeue();
             }
 
             public void ProcFrame(double elapsedTime)
@@ -213,16 +233,18 @@ namespace Pronome
                 {
                     //if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
-                    double factor = Math.Sqrt(-CurInterval) / Tick.EndPoint;
+                    double factor = Tick.Ease(-CurInterval) / Tick.EndPoint;
                     var startPoint = new Point(LaneWidth * Index + factor * LeftXDiff, height);
                     var endPoint = new Point(LaneWidth * (Index + 1) + factor * RightXDiff, height);
                     var line = new LineGeometry(startPoint, endPoint);
                     var lineTrans = new TranslateTransform(0, -height / 2 * factor);
                     line.Transform = lineTrans;
-                    var geoDrawing = new GeometryDrawing(null, new Pen(Brushes.White, 2), line);
+                    var geoDrawing = new GeometryDrawing(null, new Pen(Brush, 2), line);
                     Instance.drawingGroup.Children.Add(geoDrawing);
 
-                    Ticks.Enqueue(new Tick(LeftXDiff, RightXDiff, line, geoDrawing, this, CurInterval + Tick.EndPoint));
+                    Ticks.Enqueue(new Tick(LeftXDiff, RightXDiff, line, geoDrawing, this, -CurInterval));
+
+                    if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
                     do
                     {
@@ -240,9 +262,12 @@ namespace Pronome
             public const double EndPoint = 6; // number of qtr notes to show. Duration of animation for each tick
 
             protected double ElapsedInterval = 0;
+            protected bool IsComplete = false;
 
             protected double LeftDisplace; // the distance that left point needs to move inwards over course of animation.
             protected double RightDisplace;
+            protected double LeftStart;
+            protected double RightStart;
 
             protected GeometryDrawing GeoDrawing;
             protected TranslateTransform LineTranslate;
@@ -265,15 +290,17 @@ namespace Pronome
                 GeoDrawing = geoDrawing;
                 Lane = lane;
                 ElapsedInterval = elapsedInterval;
+                LeftStart = line.StartPoint.X - Ease(ElapsedInterval / EndPoint) * LeftDisplace;
+                RightStart = line.EndPoint.X - Ease(ElapsedInterval / EndPoint) * RightDisplace;
             }
 
             public void Move(double timeChange)
             {
                 // add elapsed qtr notes to interval
-                ElapsedInterval = timeChange * (Metronome.GetInstance().Tempo / 60);
+                ElapsedInterval += timeChange * (Metronome.GetInstance().Tempo / 60);
 
                 double fraction = ElapsedInterval / EndPoint;
-                double transY = Math.Sqrt(fraction);
+                double transY = Ease(fraction);
 
                 // move line up
                 LineTranslate.Y = -height / 2 * transY;
@@ -282,13 +309,24 @@ namespace Pronome
                 {
                     // remove element when animation finished
                     Instance.drawingGroup.Children.Remove(GeoDrawing);
-                    Lane.DequeueTick();
+                    if (!IsComplete) { Lane.DequeueTick(); }
+                    else IsComplete = true;
                 }
                 else
                 {
                     // reposition end points
-
+                    Line.StartPoint = new Point(LeftStart + transY * LeftDisplace, Line.StartPoint.Y);
+                    Line.EndPoint = new Point(RightStart + transY * RightDisplace, Line.EndPoint.Y);
                 }
+            }
+
+            static double max = Math.Sin(.85 / 2 * Math.PI);
+            static public double Ease(double fraction)
+            {
+                return fraction;
+                //var input = (fraction * .85) / 2 * Math.PI;
+                //
+                //return Math.Sin(input) / max;
             }
         }
 
@@ -298,24 +336,35 @@ namespace Pronome
             public EllipseGeometry Geometry;
             protected TranslateTransform Transform;
             protected Layer Layer;
-            public double currentInterval = 0; // in seconds
-            protected double countDown = 0; // in seconds
-            const double defaultFactor = 4500;
-            protected double factor = defaultFactor; // control the max height of the bounce
+            public double currentInterval = 0; // in bpm //seconds
+            protected double countDown = 0; // in bpm //seconds
+            protected double defaultFactor; //4500
+            protected float currentTempo;
+            protected double factor;// = defaultFactor; // control the max height of the bounce
 
             public Ball(int index, EllipseGeometry geometry)
             {
                 Geometry = geometry;
                 Layer = Metronome.GetInstance().Layers[index];
-                countDown += BpmToSec(Layer.Offset);
+                countDown += Layer.Offset;//BpmToSec(Layer.Offset);
                 AddSilence(); // account for silent beats at start
                 currentInterval = countDown * 2; // put it at the apex
                 Transform = new TranslateTransform();
                 Geometry.Transform = Transform;
+
+                currentTempo = Metronome.GetInstance().Tempo;
+                defaultFactor = 1000 * (120 / Metronome.GetInstance().Tempo);
+                factor = defaultFactor;
             }
 
             public void AddNext()
             {
+                if (Metronome.GetInstance().Tempo != currentTempo)
+                {
+                    defaultFactor = 1000 * (120 / Metronome.GetInstance().Tempo);
+                    currentTempo = Metronome.GetInstance().Tempo;
+                }
+
                 double bpm = 0;
 
                 bpm += Layer.Beat[Index].Bpm;
@@ -326,7 +375,7 @@ namespace Pronome
 
                 double silence = AddSilence();
 
-                double time = BpmToSec(bpm);
+                double time = bpm;//BpmToSec(bpm);
                 countDown += time;
 
                 currentInterval = time + silence;
@@ -346,7 +395,7 @@ namespace Pronome
 
             public void SetPosition(double elapsedTime)
             {
-                countDown -= elapsedTime;
+                countDown -= elapsedTime * (Metronome.GetInstance().Tempo / 60);
 
                 if (countDown <= 0)
                 {
@@ -370,7 +419,7 @@ namespace Pronome
 
                 if (bpm > 0)
                 {
-                    double time = BpmToSec(bpm);
+                    double time = bpm;//BpmToSec(bpm);
                     countDown += time;
                     return time;
                 }
