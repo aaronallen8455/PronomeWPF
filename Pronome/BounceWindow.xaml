@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="BounceWindow" Height="300" Width="300">
+        Title="Bounce Window" Height="900" Width="900">
     <Grid Background="Black">
         <Image Margin="10">
             <Image.Source>

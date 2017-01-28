@@ -302,11 +302,6 @@ namespace Pronome
             }
         }
 
-        private void minimizeButton_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
-        }
-
         private void openBounceButton_Click(object sender, RoutedEventArgs e)
         {
             if (Metronome.GetInstance().Layers.Count > 0)
@@ -314,9 +309,16 @@ namespace Pronome
                 var bounceWindow = Resources["bounceWindow"] as BounceWindow;
                 bounceWindow.Show();
                 bounceWindow.Activate();
-
-                bounceWindow.DrawScene();
+                if (!bounceWindow.SceneDrawn)
+                {
+                    bounceWindow.DrawScene();
+                }
             }
+        }
+
+        private void minimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
         }
     }
 

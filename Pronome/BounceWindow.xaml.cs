@@ -1,17 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.ComponentModel;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace Pronome
 {
@@ -28,8 +19,10 @@ namespace Pronome
         protected Lane[] Lanes;
 
         public static BounceWindow Instance;
+        public bool SceneDrawn = false;
         protected Ball[] Balls;
         protected AnimationTimer timer;
+        protected bool IsStopped = true;
 
         const double ballRadius = 70;
         const double ballPadding = 20;
@@ -39,6 +32,15 @@ namespace Pronome
         {
             Instance = this;
             InitializeComponent();
+            Metronome.AfterBeatParsed += new EventHandler(DrawScene);
+        }
+
+        protected void DrawScene(object sender, EventArgs e)
+        {
+            if (SceneDrawn)
+            {
+                DrawScene();
+            }
         }
 
         public void DrawScene()
@@ -85,9 +87,33 @@ namespace Pronome
                 drawingGroup.Children.Add(ball);
             }
 
+            // Animate
+
+            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+            {
+                // set the initial position (if beat was playing before graph opened)
+                if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
+                {
+                    Metronome.GetInstance().UpdateElapsedQuarters();
+                }
+
+                // sync balls and lanes to elapsed time
+                foreach (Ball ball in Balls)
+                {
+                    ball.Sync(Metronome.GetInstance().ElapsedQuarters);
+                }
+
+                foreach (Lane lane in Lanes)
+                {
+                    lane.Sync(Metronome.GetInstance().ElapsedQuarters);
+                }
+            }
+
             timer = new AnimationTimer();
 
             CompositionTarget.Rendering += DrawFrame;
+
+            SceneDrawn = true;
         }
 
         protected void DrawFrame(object sender, EventArgs e)
@@ -105,10 +131,22 @@ namespace Pronome
                 {
                     lane.ProcFrame(elapsed);
                 }
+
+                IsStopped = false;
             }
-            else
+            else if (Metronome.GetInstance().PlayState == Metronome.State.Paused)
             {
                 timer.Reset();
+            }
+            else if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+            {
+                timer.Reset();
+
+                if (!IsStopped)
+                {
+                    DrawScene();
+                }
+                IsStopped = true;
             }
         }
 
@@ -135,6 +173,7 @@ namespace Pronome
                 Hide();
                 e.Cancel = true;
 
+                SceneDrawn = false;
                 CompositionTarget.Rendering -= DrawFrame;
             }
         }
@@ -169,44 +208,43 @@ namespace Pronome
                 Ticks = new Queue<Tick>();
 
                 // generate initial ticks and find current interval
-                double accumulator = Layer.Offset;
+                InitTicks(Layer.Offset);
+            }
+
+            protected void InitTicks(double offset)
+            {
+                double accumulator = offset;
                 while (accumulator <= Tick.EndPoint)
                 {
                     if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
-                    accumulator += Layer.Beat[beatIndex].Bpm;
                     if (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
                     {
-                        beatIndex++;
+                        while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                        {
+                            accumulator += Layer.Beat[beatIndex].Bpm;
+                            beatIndex++;
+                        }
                         continue;
                     }
-
                     // create tick
-                    if (accumulator <= Tick.EndPoint)
-                    {
-                        double factor = Tick.Ease((Tick.EndPoint - accumulator) / Tick.EndPoint);
-                        var startPoint = new Point(_width * index + factor * leftXDiff, height);
-                        var endPoint = new Point(_width * (index + 1) + factor * rightXDiff, height);
-                        var line = new LineGeometry(startPoint, endPoint);
-                        var lineTrans = new TranslateTransform(0, -height / 2 * factor);
-                        line.Transform = lineTrans;
-                        var geoDrawing = new GeometryDrawing(null, new Pen(Brush, 2), line);
-                        Instance.drawingGroup.Children.Add(geoDrawing);
+                    double factor = Tick.Ease((Tick.EndPoint - accumulator) / Tick.EndPoint);
+                    var startPoint = new Point(LaneWidth * Index + factor * LeftXDiff, height);
+                    var endPoint = new Point(LaneWidth * (Index + 1) + factor * RightXDiff, height);
+                    var line = new LineGeometry(startPoint, endPoint);
+                    var lineTrans = new TranslateTransform(0, -height / 2 * factor);
+                    line.Transform = lineTrans;
+                    var geoDrawing = new GeometryDrawing(null, new Pen(Brush, 2), line);
+                    Instance.drawingGroup.Children.Add(geoDrawing);
 
-                        var tick = new Tick(leftXDiff, rightXDiff, line, geoDrawing, this, Tick.EndPoint - accumulator);
+                    var tick = new Tick(LeftXDiff, RightXDiff, line, geoDrawing, this, Tick.EndPoint - accumulator);
 
-                        Ticks.Enqueue(tick);
-                    }
-                    //else
-                    //{
-                    //    accumulator -= Layer.Beat[beatIndex].Bpm;
-                    //}
+                    Ticks.Enqueue(tick);
+
+                    accumulator += Layer.Beat[beatIndex].Bpm;
 
                     beatIndex++;
                 }
-
-                //if (beatIndex == 0) beatIndex = Layer.Beat.Count;
-                //else if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
                 // get current interval.
                 accumulator -= Layer.Beat[beatIndex == Layer.Beat.Count ? 0 : beatIndex].Bpm;
@@ -255,6 +293,34 @@ namespace Pronome
                     while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName);
                 }
             }
+
+            public void Sync(double elapsedBpm)
+            {
+                beatIndex = 0;
+
+                // Remove existing ticks
+                foreach(Tick tick in Ticks)
+                {
+                    Instance.drawingGroup.Children.Remove(tick.GeoDrawing);
+                }
+
+                Ticks.Clear();
+
+                // sync up to elapsed
+                //if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+                double bpm = 0;
+                while (bpm <= elapsedBpm || Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                {
+                    bpm += Layer.Beat[beatIndex].Bpm;
+                    beatIndex++;
+                    if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+                }
+                //beatIndex--;
+                //if (beatIndex == -1) beatIndex = Layer.Beat.Count - 1;
+
+                // fill in initial ticks
+                InitTicks(bpm - elapsedBpm);
+            }
         }
 
         protected class Tick
@@ -269,7 +335,7 @@ namespace Pronome
             protected double LeftStart;
             protected double RightStart;
 
-            protected GeometryDrawing GeoDrawing;
+            public GeometryDrawing GeoDrawing;
             protected TranslateTransform LineTranslate;
             protected LineGeometry Line;
 
@@ -336,8 +402,8 @@ namespace Pronome
             public EllipseGeometry Geometry;
             protected TranslateTransform Transform;
             protected Layer Layer;
-            public double currentInterval = 0; // in bpm //seconds
-            protected double countDown = 0; // in bpm //seconds
+            public double currentInterval = 0; // length in quarters of the current beat interval
+            protected double countDown = 0; // quarter notes remaining before going to next interval
             protected double defaultFactor; //4500
             protected float currentTempo;
             protected double factor;// = defaultFactor; // control the max height of the bounce
@@ -354,7 +420,8 @@ namespace Pronome
 
                 currentTempo = Metronome.GetInstance().Tempo;
                 defaultFactor = 1000 * (120 / Metronome.GetInstance().Tempo);
-                factor = defaultFactor;
+                SetFactor();
+                SetPosition(0);
             }
 
             public void AddNext()
@@ -381,16 +448,7 @@ namespace Pronome
                 currentInterval = time + silence;
 
                 // check if factor needs to be changed
-                double halfInterval = currentInterval / 2;
-                double bounceHeight = horizon - defaultFactor * (-halfInterval * halfInterval + currentInterval * halfInterval);
-                if (bounceHeight < ballRadius)
-                {
-                    factor = (horizon - ballRadius) / (-halfInterval * halfInterval + currentInterval * halfInterval);
-                }
-                else
-                {
-                    factor = defaultFactor;
-                }
+                SetFactor();
             }
 
             public void SetPosition(double elapsedTime)
@@ -427,9 +485,51 @@ namespace Pronome
                 return 0;
             }
 
-            protected double BpmToSec(double bpm)
+            public void Sync(double elapsedBpm)
             {
-                return bpm * (60 / Metronome.GetInstance().Tempo);
+                double bpm = 0;
+                double curIntv = 0;
+                Index = 0;
+
+                // catch up with elapsed bpm
+                //if (Index == Layer.Beat.Count) Index = 0;
+                while (bpm <= elapsedBpm || Layer.Beat[Index].SourceName == WavFileStream.SilentSourceName)
+                {
+
+                    if (Layer.Beat[Index].SourceName == WavFileStream.SilentSourceName)
+                    {
+                        curIntv += Layer.Beat[Index].Bpm; // count consecutive silences as one interval
+                    }
+                    else
+                    {
+                        curIntv = Layer.Beat[Index].Bpm;
+                    }
+
+                    bpm += Layer.Beat[Index].Bpm;
+                    Index++;
+                    if (Index == Layer.Beat.Count) Index = 0;
+                }
+
+                currentInterval = curIntv;
+                countDown = bpm - elapsedBpm;
+
+                // set the current interval and countdown interval appropriately
+                SetFactor();
+                SetPosition(0);
+            }
+
+            protected void SetFactor()
+            {
+                double halfInterval = currentInterval / 2;
+                double bounceHeight = horizon - defaultFactor * (-halfInterval * halfInterval + currentInterval * halfInterval);
+                if (bounceHeight < ballRadius)
+                {
+                    factor = (horizon - ballRadius) / (-halfInterval * halfInterval + currentInterval * halfInterval);
+                }
+                else
+                {
+                    factor = defaultFactor;
+                }
             }
         }
     }
