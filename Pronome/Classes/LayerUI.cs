@@ -287,6 +287,8 @@ namespace Pronome
             {
                 Layer.SetOffset(BeatCell.Parse(offsetInput.Text));
                 Layer.ParsedOffset = offsetInput.Text;
+
+                Metronome.GetInstance().TriggerAfterBeatParsed();
             }
         }
 

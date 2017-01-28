@@ -162,7 +162,7 @@ namespace Pronome
                     while (refBeat.Contains('$'))
                     {
                         if (Regex.IsMatch(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*"))
-                            refBeat = Regex.Replace(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*", "");
+                            refBeat = Regex.Replace(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*", "$s");
                         else
                             refBeat = Regex.Replace(refBeat, @"\$[\ds]+,?", ""); // straight up replace
                     }

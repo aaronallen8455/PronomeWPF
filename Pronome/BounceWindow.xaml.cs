@@ -45,9 +45,12 @@ namespace Pronome
 
         public void DrawScene()
         {
+            Metronome met = Metronome.GetInstance();
+            if (met.Layers.Count == 0) return; // do nothing if beat is empty
+
+            // remove existing graphics
             drawingGroup.Children.Clear();
 
-            Metronome met = Metronome.GetInstance();
             layerCount = met.Layers.Count;
             Balls = new Ball[layerCount];
             layerIndexes = new int[layerCount];
