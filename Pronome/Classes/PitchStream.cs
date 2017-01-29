@@ -434,7 +434,6 @@ namespace Pronome
                         Frequency = curFreq; //retain frequency if random/interval muting occurs.
                         // if first note is getting muted, set gain to 0
                         if (Gain == Volume) Gain = 0;
-
                     }
                 }
 

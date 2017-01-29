@@ -183,6 +183,9 @@ namespace Pronome
 
         protected class Lane
         {
+            const double topTickWidth = 3.5;
+            const double normTickWidth = 2;
+
             protected double LaneWidth = 0;
 
             protected Layer Layer; // the layer represented by this lane
@@ -217,6 +220,7 @@ namespace Pronome
             protected void InitTicks(double offset)
             {
                 double accumulator = offset;
+                bool isFirst = true;
                 while (accumulator <= Tick.EndPoint)
                 {
                     if (beatIndex == Layer.Beat.Count) beatIndex = 0;
@@ -237,8 +241,11 @@ namespace Pronome
                     var line = new LineGeometry(startPoint, endPoint);
                     var lineTrans = new TranslateTransform(0, -height / 2 * factor);
                     line.Transform = lineTrans;
-                    var geoDrawing = new GeometryDrawing(null, new Pen(Brush, 2), line);
+                    var geoDrawing = new GeometryDrawing(null, 
+                        new Pen(Brush, isFirst ? topTickWidth : normTickWidth), // make first tick thicker
+                        line);
                     Instance.drawingGroup.Children.Add(geoDrawing);
+                    isFirst = false;
 
                     var tick = new Tick(LeftXDiff, RightXDiff, line, geoDrawing, this, Tick.EndPoint - accumulator);
 
@@ -247,6 +254,17 @@ namespace Pronome
                     accumulator += Layer.Beat[beatIndex].Bpm;
 
                     beatIndex++;
+                    if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+                    if (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                    {
+                        while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                        {
+                            accumulator += Layer.Beat[beatIndex].Bpm;
+                            beatIndex++;
+                            if (beatIndex == Layer.Beat.Count) beatIndex = 0;
+                        }
+
+                    }
                 }
 
                 // get current interval.
@@ -257,6 +275,17 @@ namespace Pronome
             public void DequeueTick()
             {
                 Ticks.Dequeue();
+
+                if (Ticks.Count != 0)
+                {
+                    Tick tick = Ticks.Peek();
+
+                    if (tick != null)
+                    {
+                        tick.GeoDrawing.Pen.Thickness = topTickWidth;
+                    }
+                }
+
             }
 
             public void ProcFrame(double elapsedTime)
@@ -280,7 +309,9 @@ namespace Pronome
                     var line = new LineGeometry(startPoint, endPoint);
                     var lineTrans = new TranslateTransform(0, -height / 2 * factor);
                     line.Transform = lineTrans;
-                    var geoDrawing = new GeometryDrawing(null, new Pen(Brush, 2), line);
+                    var geoDrawing = new GeometryDrawing(null, 
+                        new Pen(Brush, Ticks.Count == 0 ? topTickWidth : normTickWidth), 
+                        line);
                     Instance.drawingGroup.Children.Add(geoDrawing);
 
                     Ticks.Enqueue(new Tick(LeftXDiff, RightXDiff, line, geoDrawing, this, -CurInterval));
@@ -299,6 +330,7 @@ namespace Pronome
 
             public void Sync(double elapsedBpm)
             {
+                elapsedBpm = elapsedBpm % Layer.GetTotalBpmValue();
                 beatIndex = 0;
 
                 // Remove existing ticks
@@ -378,7 +410,10 @@ namespace Pronome
                 {
                     // remove element when animation finished
                     Instance.drawingGroup.Children.Remove(GeoDrawing);
-                    if (!IsComplete) { Lane.DequeueTick(); }
+                    if (!IsComplete)
+                    {
+                        Lane.DequeueTick();
+                    }
                     else IsComplete = true;
                 }
                 else
@@ -490,6 +525,8 @@ namespace Pronome
 
             public void Sync(double elapsedBpm)
             {
+                elapsedBpm = elapsedBpm % Layer.GetTotalBpmValue();
+
                 double bpm = 0;
                 double curIntv = 0;
                 Index = 0;

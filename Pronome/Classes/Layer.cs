@@ -240,7 +240,7 @@ namespace Pronome
             }
 
             // fix instances of a pitch modifier being following by +0 from repeater
-            beat = Regex.Replace(beat, $@"({pitchModifier})(\+[\d.\-+/*]+)", "$2$1");
+            beat = Regex.Replace(beat, $@"(@[a-gA-G]?[#b]?[pP]?[0-9.]+)(\+[\d.\-+/*]+)", "$2$1");
             
             BeatCell[] cells = beat.Split(',').Select((x) =>
             {
@@ -261,6 +261,14 @@ namespace Pronome
             }).ToArray();
 
             SetBeat(cells);
+
+            // reparse any layers that reference this one
+            int index = Metronome.GetInstance().Layers.IndexOf(this) + 1;
+            var layers = Metronome.GetInstance().Layers.Where(x => x != this && x.ParsedString.Contains($"${index}"));
+            foreach (Layer layer in layers)
+            {
+                layer.Parse(layer.ParsedString);
+            }
         }
 
         /**<summary>Apply a new base source to the layer.</summary>*/
@@ -290,7 +298,7 @@ namespace Pronome
                     {
                         BaseFrequency = PitchStream.ConvertFromSymbol(baseSourceName),
                         Layer = this,
-                        Volume = Volume,
+                        Volume = Volume * met.Volume,
                     };
 
                     if (IsPitch)
@@ -348,7 +356,7 @@ namespace Pronome
                     WavFileStream newSource = new WavFileStream(baseSourceName)
                     {
                         Layer = this,
-                        Volume = Volume
+                        Volume = Volume * met.Volume
                     };
 
                     foreach (BeatCell bc in Beat.Where(x => x.SourceName == ""))
@@ -370,7 +378,7 @@ namespace Pronome
                             var newPitchSource = new PitchStream()
                             {
                                 Layer = this,
-                                Volume = Volume
+                                Volume = Volume * met.Volume
                             };
 
                             // build its Beat collection and freq enum
