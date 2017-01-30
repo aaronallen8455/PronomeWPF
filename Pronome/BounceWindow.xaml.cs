@@ -12,7 +12,7 @@ namespace Pronome
     public partial class BounceWindow : Window
     {
         private int width;
-        const double widthPad = 0;//350; // difference in width between foreground and horizon
+        const double widthPad = 350;//350; // difference in width between foreground and horizon
         public const int height = 900;
         private int layerCount;
         protected int[] layerIndexes;
@@ -219,6 +219,8 @@ namespace Pronome
 
             protected void InitTicks(double offset)
             {
+                Tick.Reset();
+
                 double accumulator = offset;
                 bool isFirst = true;
                 while (accumulator <= Tick.EndPoint)
@@ -424,13 +426,57 @@ namespace Pronome
                 }
             }
 
-            static double max = Math.Sin(.85 / 2 * Math.PI);
+            static public void Reset()
+            {
+                apex = leftSlope = denominator = factor = default(double);
+            }
+
+            //static double max = Math.Sin(.85 / 2 * Math.PI);
+            //static double apex;
+            //static double ratio;
+            //static double startingVal = .05; // this is the starting position of the sqrt function. Not too fast close to bottom.
+            //static double shim;
+            static double leftSlope;
+            static double apex;
+            static double denominator = -Math.Pow(2, -1.2) + 1;
+            static double factor;
             static public double Ease(double fraction)
             {
-                return fraction;
-                //var input = (fraction * .85) / 2 * Math.PI;
-                //
-                //return Math.Sin(input) / max;
+                if (widthPad == 0)
+                {
+                    return fraction;
+                }
+
+                if (leftSlope == default(double))
+                {
+                    leftSlope = (height / 2) / widthPad;
+                    apex = leftSlope * (widthPad + Instance.width / 2);
+                    factor = -Math.Log(1 - (1 / (apex / (height / 2))), 2);
+                    denominator = -Math.Pow(2, -factor) + 1;
+                }
+
+                //var input = fraction * (1 - startingVal) + startingVal;
+                // find vanishing point
+
+                // init these values
+                //if (apex == default(double))
+                //{
+                //}
+                //if (shim == default(double))
+                //{
+                //    shim = Math.Sqrt(startingVal * (height / 2) / apex);
+                //}
+                //if (ratio == default(double))
+                //{
+                //    ratio = Math.Sqrt(height / 2 / apex) - shim;
+                //}
+
+                //var position = Math.Sqrt(input * (height / 2) / apex) - shim;
+
+                //return position / ratio;
+                // 1 / (-Math.Pow(2, x) + 1) = apex / .5height
+                // -2^-x + 1
+                return (-1 / (Math.Pow(2, fraction*factor))+1) / denominator; //2.3 for 1, 1.55 for 2
             }
         }
 

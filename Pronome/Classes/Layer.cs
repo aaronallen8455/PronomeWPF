@@ -267,7 +267,11 @@ namespace Pronome
             var layers = Metronome.GetInstance().Layers.Where(x => x != this && x.ParsedString.Contains($"${index}"));
             foreach (Layer layer in layers)
             {
-                layer.Parse(layer.ParsedString);
+                // account for deserializing a beat
+                if (layer.Beat != null && layer.Beat.Count > 0)
+                {
+                    layer.Parse(layer.ParsedString);
+                }
             }
         }
 
