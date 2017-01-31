@@ -6,15 +6,28 @@ namespace Pronome
     public class ColorHelper
     {
         /// <summary>
+        /// A random number to offset the color wheel by.
+        /// </summary>
+        static int RgbSeed;
+
+        static bool seedSet = false;
+
+        /// <summary>
         /// Gets a color from color wheel based on index and rgbSeed.
         /// </summary>
         /// <param name="index">Index of the layer</param>
         /// <param name="saturation">Saturation value</param>
-        /// <param name="rgbSeed">Amount to offset the wheel by</param>
+        /// <param name="RgbSeed">Amount to offset the wheel by</param>
         /// <returns></returns>
-        public static Color ColorWheel(int index, float saturation = 1f, int rgbSeed = 0)
+        public static Color ColorWheel(int index, float saturation = 1f)
         {
-            int degrees = ((25 * index) + (int)(360 * rgbSeed / 100)) % 360;
+            if(!seedSet)
+            {
+                RgbSeed = Metronome.GetRandomNum();
+                seedSet = true;
+            }
+
+            int degrees = ((25 * index) + (int)(360 * RgbSeed / 100)) % 360;
             byte min = (byte)(255 - 255 * saturation);
             int degreesMod = degrees == 0 ? 0 : degrees % 60 == 0 ? 60 : degrees % 60;
             float stepSize = (255 - min) / 60;
@@ -64,6 +77,14 @@ namespace Pronome
                 B = blue,
                 A = 255,
             };
+        }
+
+        /// <summary>
+        /// Get new colors the next time ColorWheel is called.
+        /// </summary>
+        static public void ResetRgbSeed()
+        {
+            seedSet = false;
         }
     }
 }

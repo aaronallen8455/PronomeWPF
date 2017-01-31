@@ -297,6 +297,11 @@ namespace Pronome
                 graph.Activate();
                 if (!graph.GraphIsDrawn)
                 {
+                    if (BounceWindow.Instance == null || !BounceWindow.Instance.IsVisible)
+                    {
+                        ColorHelper.ResetRgbSeed();
+                    }
+
                     graph.DrawGraph();
                 }
             }
@@ -311,6 +316,11 @@ namespace Pronome
                 bounceWindow.Activate();
                 if (!bounceWindow.SceneDrawn)
                 {
+                    if (BeatGraphWindow.Instance == null || !BeatGraphWindow.Instance.IsVisible)
+                    {
+                        ColorHelper.ResetRgbSeed();
+                    }
+
                     bounceWindow.DrawScene();
                 }
             }

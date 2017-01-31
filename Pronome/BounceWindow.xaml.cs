@@ -11,22 +11,80 @@ namespace Pronome
     /// </summary>
     public partial class BounceWindow : Window
     {
+        /// <summary>
+        /// The width of the ball area
+        /// </summary>
         private int width;
+
+        /// <summary>
+        /// The amount of space between the edge of the screen and the bounds of the ball area.
+        /// </summary>
         const double widthPad = 350;//350; // difference in width between foreground and horizon
+
+        /// <summary>
+        /// The height of the drawing.
+        /// </summary>
         public const int height = 900;
+
+        /// <summary>
+        /// Where the screen is divided between the lanes area and the ball area. 0 to 1.
+        /// </summary>
+        public static double divisionPoint = .38;
+
+        /// <summary>
+        /// The number of layers in the beat
+        /// </summary>
         private int layerCount;
-        protected int[] layerIndexes;
+
+        /// <summary>
+        /// Holds the Lane objects.
+        /// </summary>
         protected Lane[] Lanes;
 
+        /// <summary>
+        /// The window instance.
+        /// </summary>
         public static BounceWindow Instance;
+
+        /// <summary>
+        /// Is true if the window is not hidden.
+        /// </summary>
         public bool SceneDrawn = false;
+
+        /// <summary>
+        /// Holds the ball objects
+        /// </summary>
         protected Ball[] Balls;
+
+        /// <summary>
+        /// Timer for syncing animation
+        /// </summary>
         protected AnimationTimer timer;
+
+        /// <summary>
+        /// True if beat is not playing.
+        /// </summary>
         protected bool IsStopped = true;
 
+        /// <summary>
+        /// The radius of the ball drawings.
+        /// </summary>
         const double ballRadius = 70;
+
+        /// <summary>
+        /// The amount of padding on the left of right of each ball.
+        /// </summary>
         const double ballPadding = 20;
-        const double horizon = height / 2 - ballRadius;
+
+        /// <summary>
+        /// The unit position of the line that seperates the lanes and balls.
+        /// </summary>
+        protected static double divisionLine = height / (1 / divisionPoint);
+
+        /// <summary>
+        /// The position of the center line of the balls when at base level.
+        /// </summary>
+        protected static double ballBase = height - divisionLine - ballRadius;
 
         public BounceWindow()
         {
@@ -43,6 +101,9 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// Draw the scene components
+        /// </summary>
         public void DrawScene()
         {
             Metronome met = Metronome.GetInstance();
@@ -53,7 +114,6 @@ namespace Pronome
 
             layerCount = met.Layers.Count;
             Balls = new Ball[layerCount];
-            layerIndexes = new int[layerCount];
             Lanes = new Lane[layerCount];
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
 
@@ -62,21 +122,7 @@ namespace Pronome
             drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, null, size));
 
             // draw lanes
-            Pen lanePen = new Pen(Brushes.White, 3);
-            var leftBound = new LineGeometry(new Point(0, height), new Point(widthPad, height / 2));
-            drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, leftBound));
-            double xCoord = (width + 2 * widthPad) / layerCount;
-            for (int i=0; i<layerCount; i++)
-            {
-                var start = new Point(xCoord * (i + 1), height);
-                var end = new Point(widthPad + width/layerCount * (i + 1), height / 2);
-
-                drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, new LineGeometry(start, end)));
-
-                Lanes[i] = new Lane(met.Layers[i], ColorHelper.ColorWheel(i), 
-                    widthPad + (width / layerCount) * i - xCoord * i, 
-                    widthPad + (width / layerCount) * (i + 1) - xCoord * (i + 1), i);
-            }
+            DrawLanes();
 
             // draw horizon
             //var horizonLine = new LineGeometry(new Point(0, height/2), new Point(width + 2 * widthPad, height/2));
@@ -114,11 +160,39 @@ namespace Pronome
 
             timer = new AnimationTimer();
 
+            // attach to frame rendering event
             CompositionTarget.Rendering += DrawFrame;
 
             SceneDrawn = true;
         }
 
+        /// <summary>
+        /// Make the lane drawing and instantiate Lane objects for each layer.
+        /// </summary>
+        protected void DrawLanes()
+        {
+            Pen lanePen = new Pen(Brushes.White, 3);
+            var leftBound = new LineGeometry(new Point(0, height), new Point(widthPad, height - divisionLine));
+            drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, leftBound));
+            double xCoord = (width + 2 * widthPad) / layerCount;
+            for (int i = 0; i < layerCount; i++)
+            {
+                var start = new Point(xCoord * (i + 1), height);
+                var end = new Point(widthPad + width / layerCount * (i + 1), height - divisionLine);
+
+                drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, new LineGeometry(start, end)));
+
+                Lanes[i] = new Lane(Metronome.GetInstance().Layers[i], ColorHelper.ColorWheel(i),
+                    widthPad + (width / layerCount) * i - xCoord * i,
+                    widthPad + (width / layerCount) * (i + 1) - xCoord * (i + 1), i);
+            }
+        }
+
+        /// <summary>
+        /// Handle the frame render event.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         protected void DrawFrame(object sender, EventArgs e)
         {
             if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
@@ -153,14 +227,27 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// Create a ball drawing.
+        /// </summary>
+        /// <param name="index">Index of layer</param>
+        /// <returns>Ball geometry</returns>
         protected GeometryDrawing MakeBall(int index)
         {
-            Point center = new Point(width / (layerCount * 2) * (index * 2 + 1) + widthPad, horizon);
+            Point center = new Point(width / (layerCount * 2) * (index * 2 + 1) + widthPad, ballBase);
             EllipseGeometry ball = new EllipseGeometry(center, ballRadius, ballRadius);
             Balls[index] = new Ball(index, ball);
             Color color = ColorHelper.ColorWheel(index);
             GeometryDrawing result = new GeometryDrawing(
-                new SolidColorBrush(color),
+                new RadialGradientBrush(color, Colors.Transparent) {
+                    GradientStops = new GradientStopCollection(new GradientStop[] {
+                        new GradientStop(color, .15),
+                        new GradientStop(Colors.Black, 1.75)
+                    }),
+                    GradientOrigin = new Point(.25, .25),
+                    Center = new Point(.25, .25),
+                    ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
+                },//new SolidColorBrush(color),
                 null, ball);//new Pen(Brushes.Red, 2), ball);
 
             return result;
@@ -181,12 +268,25 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// A class to represent a lane.
+        /// </summary>
         protected class Lane
         {
+            /// <summary>
+            /// Thickness of the top tick
+            /// </summary>
             const double topTickWidth = 3.5;
+
+            /// <summary>
+            /// Thickness of non-top tick
+            /// </summary>
             const double normTickWidth = 2;
 
-            protected double LaneWidth = 0;
+            /// <summary>
+            /// Width of a lane at the base.
+            /// </summary>
+            protected double LaneWidth;
 
             protected Layer Layer; // the layer represented by this lane
             protected SolidColorBrush Brush;
@@ -219,7 +319,7 @@ namespace Pronome
 
             protected void InitTicks(double offset)
             {
-                Tick.Reset();
+                Tick.InitConstants(); // calculate the constants used for tick positioning
 
                 double accumulator = offset;
                 bool isFirst = true;
@@ -241,7 +341,7 @@ namespace Pronome
                     var startPoint = new Point(LaneWidth * Index + factor * LeftXDiff, height);
                     var endPoint = new Point(LaneWidth * (Index + 1) + factor * RightXDiff, height);
                     var line = new LineGeometry(startPoint, endPoint);
-                    var lineTrans = new TranslateTransform(0, -height / 2 * factor);
+                    var lineTrans = new TranslateTransform(0, -divisionLine * factor);
                     line.Transform = lineTrans;
                     var geoDrawing = new GeometryDrawing(null, 
                         new Pen(Brush, isFirst ? topTickWidth : normTickWidth), // make first tick thicker
@@ -309,7 +409,7 @@ namespace Pronome
                     var startPoint = new Point(LaneWidth * Index + factor * LeftXDiff, height);
                     var endPoint = new Point(LaneWidth * (Index + 1) + factor * RightXDiff, height);
                     var line = new LineGeometry(startPoint, endPoint);
-                    var lineTrans = new TranslateTransform(0, -height / 2 * factor);
+                    var lineTrans = new TranslateTransform(0, -divisionLine * factor);
                     line.Transform = lineTrans;
                     var geoDrawing = new GeometryDrawing(null, 
                         new Pen(Brush, Ticks.Count == 0 ? topTickWidth : normTickWidth), 
@@ -406,7 +506,7 @@ namespace Pronome
                 double transY = Ease(fraction);
 
                 // move line up
-                LineTranslate.Y = -height / 2 * transY;
+                LineTranslate.Y = -divisionLine * transY;
 
                 if (fraction >= 1)
                 {
@@ -426,33 +526,23 @@ namespace Pronome
                 }
             }
 
-            static public void Reset()
+            static public void InitConstants()
             {
-                apex = leftSlope = denominator = factor = default(double);
+                leftSlope = divisionLine / widthPad;
+                apex = leftSlope * (widthPad + Instance.width / 2);
+                factor = -Math.Log(1 - (1 / (apex / divisionLine)), 2);
+                denominator = -Math.Pow(2, -factor) + 1;
             }
 
-            //static double max = Math.Sin(.85 / 2 * Math.PI);
-            //static double apex;
-            //static double ratio;
-            //static double startingVal = .05; // this is the starting position of the sqrt function. Not too fast close to bottom.
-            //static double shim;
             static double leftSlope;
             static double apex;
-            static double denominator = -Math.Pow(2, -1.2) + 1;
+            static double denominator;
             static double factor;
             static public double Ease(double fraction)
             {
                 if (widthPad == 0)
                 {
                     return fraction;
-                }
-
-                if (leftSlope == default(double))
-                {
-                    leftSlope = (height / 2) / widthPad;
-                    apex = leftSlope * (widthPad + Instance.width / 2);
-                    factor = -Math.Log(1 - (1 / (apex / (height / 2))), 2);
-                    denominator = -Math.Pow(2, -factor) + 1;
                 }
 
                 //var input = fraction * (1 - startingVal) + startingVal;
@@ -607,10 +697,10 @@ namespace Pronome
             protected void SetFactor()
             {
                 double halfInterval = currentInterval / 2;
-                double bounceHeight = horizon - defaultFactor * (-halfInterval * halfInterval + currentInterval * halfInterval);
+                double bounceHeight = ballBase - defaultFactor * (-halfInterval * halfInterval + currentInterval * halfInterval);
                 if (bounceHeight < ballRadius)
                 {
-                    factor = (horizon - ballRadius) / (-halfInterval * halfInterval + currentInterval * halfInterval);
+                    factor = (ballBase - ballRadius) / (-halfInterval * halfInterval + currentInterval * halfInterval);
                 }
                 else
                 {

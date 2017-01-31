@@ -38,27 +38,33 @@ namespace Pronome
         /**<summary>Whether is graph is currently shown on screen.</summary>*/
         public bool GraphIsDrawn = false;
 
-        /**<summary>The RNG seed for determining colors.</summary>*/
-        private int rgbSeed;
+        /// <summary>
+        /// The window instance.
+        /// </summary>
+        public static BeatGraphWindow Instance;
+
+        ////**<summary>The RNG seed for determining colors.</summary>*/
+        //private int rgbSeed;
 
         public BeatGraphWindow()
         {
             InitializeComponent();
             Metronome.AfterBeatParsed += new EventHandler(DrawGraph);
+            Instance = this;
         }
 
         protected void DrawGraph(object sender, EventArgs e)
         {
             // draw graph when triggered by beat parsed event
             if (GraphIsDrawn)
-                DrawGraph(false);
+                DrawGraph();
         }
 
         /// <summary>
         /// Draw the beat graph and start animation if beat is currently playing.
         /// </summary>
         /// <param name="changeColor">Whether to reset the color pallette</param>
-        public void DrawGraph(bool changeColor = true)
+        public void DrawGraph()
         {
             if (Metronome.GetInstance().Layers.Count == 0)
             {
@@ -68,10 +74,10 @@ namespace Pronome
             timeoutError.Visibility = Visibility.Hidden; // hide the asymmetry error message.
 
             drawingGroup.Children.Clear();
-            if (changeColor)
-            {
-                rgbSeed = Metronome.GetRandomNum();
-            }
+            //if (changeColor)
+            //{
+            //    rgbSeed = Metronome.GetRandomNum();
+            //}
 
             Point center = new Point(BeatGraph.graphRadius, BeatGraph.graphRadius);
 
@@ -89,8 +95,8 @@ namespace Pronome
                         center,
                         layer.Radius + BeatGraph.tickSize, layer.Radius + BeatGraph.tickSize);
 
-                    Color haloColor = ColorHelper.ColorWheel(index, 1, rgbSeed);
-                    Color blinkColor = ColorHelper.ColorWheel(index, .75f, rgbSeed);
+                    Color haloColor = ColorHelper.ColorWheel(index, 1);
+                    Color blinkColor = ColorHelper.ColorWheel(index, .75f);
 
                     // draw background 'blink' layer
                     var blinkGeo = new GeometryDrawing();
@@ -230,43 +236,43 @@ namespace Pronome
             }
         }
 
-        /// <summary>
-        /// Get a color based on the layer index.
-        /// </summary>
-        /// <param name="index">Index of the layer</param>
-        protected Color GetRgb(int index)
-        {
-            float i = 3f / 8f * (index % 8f);
-            i += 3f * (float)(rgbSeed / 100);
-            if (i > 3f) i -= 3f;
-
-            Color color = new Color() { ScA = 1f };
-
-            // find RGB based on layer index
-            if (i >= 2.5f)
-            {
-                color.ScG = .5f + (i - 2.5f);
-                color.ScR = i - 2.5f;
-
-            }
-            else if (i >= 1.5f)
-            {
-                color.ScB = .5f + (i - 1.5f);
-                color.ScG = i - 1.5f;
-            }
-            else if (i >= .5f)
-            {
-                color.ScR = .5f + (i - .5f);
-                color.ScB = i - .5f;
-            }
-            else
-            {
-                color.ScR = .5f + i;
-                color.ScG = .5f - i;
-            }
-
-            return color;
-        }
+        ///// <summary>
+        ///// Get a color based on the layer index.
+        ///// </summary>
+        ///// <param name="index">Index of the layer</param>
+        //protected Color GetRgb(int index)
+        //{
+        //    float i = 3f / 8f * (index % 8f);
+        //    i += 3f * (float)(rgbSeed / 100);
+        //    if (i > 3f) i -= 3f;
+        //
+        //    Color color = new Color() { ScA = 1f };
+        //
+        //    // find RGB based on layer index
+        //    if (i >= 2.5f)
+        //    {
+        //        color.ScG = .5f + (i - 2.5f);
+        //        color.ScR = i - 2.5f;
+        //
+        //    }
+        //    else if (i >= 1.5f)
+        //    {
+        //        color.ScB = .5f + (i - 1.5f);
+        //        color.ScG = i - 1.5f;
+        //    }
+        //    else if (i >= .5f)
+        //    {
+        //        color.ScR = .5f + (i - .5f);
+        //        color.ScB = i - .5f;
+        //    }
+        //    else
+        //    {
+        //        color.ScR = .5f + i;
+        //        color.ScG = .5f - i;
+        //    }
+        //
+        //    return color;
+        //}
 
         /// <summary>
         /// Creates a gradient brush for the concentric layer elements
