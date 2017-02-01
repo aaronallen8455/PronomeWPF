@@ -20,6 +20,11 @@ namespace Pronome
         // Const Math
         private const double TwoPi = 2 * Math.PI;
 
+        /// <summary>
+        /// Determines how fast the notes decay
+        /// </summary>
+        public static double DecayFactor = .00035;
+
         /**<summary>The number of bytes/Second for this audio stream.</summary>*/
         public int BytesPerSec { get; set; }
 
@@ -220,7 +225,7 @@ namespace Pronome
             {
                 double ratio = value / _volume;
                 _volume = value;
-                newGainStep = value * .0003;
+                newGainStep = value * DecayFactor;
             }
         }
         double _volume = 1;

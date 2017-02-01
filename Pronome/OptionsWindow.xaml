@@ -43,6 +43,16 @@
                 <Style TargetType="Separator">
                     <Setter Property="Margin" Value="0,20,0,20"/>
                 </Style>
+                <Style TargetType="GroupBox">
+                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontSize="10"/>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
             </DockPanel.Resources>
 
         <!--Random Muting-->
@@ -118,6 +128,51 @@
                     </WrapPanel>
                 </StackPanel>
             </Expander>
+            <Expander Header="Visuals">
+                <StackPanel>
+                    <GroupBox Header="Graph">
+                        <StackPanel>
+                            <TextBlock>
+                                Turn the beat graph's blinking visual effect on or off.
+                            </TextBlock>
+                            <StackPanel>
+                                <Label Target="{Binding ElementName=blinkToggle}">Enable Blinking</Label>
+                                <CheckBox Name="blinkToggle" Checked="blinkToggle_Checked" Unchecked="blinkToggle_Unchecked"  Loaded="blinkToggle_Loaded"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Bounce">
+                        <StackPanel>
+                            <TextBlock>
+                                The number of quarter-notes to show in the queue.
+                            </TextBlock>
+                            <StackPanel>
+                                <Label Target="{Binding ElementName=queueSize}">Queue Size</Label>
+                                <TextBox Name="queueSizeInput" LostFocus="queueSizeInput_LostFocus" Loaded="queueSizeInput_Loaded"/>
+                            </StackPanel>
+                            <Separator/>
+                            
+                            <TextBlock>
+                                Set where to divide the screen.
+                            </TextBlock>
+                            <Slider Name="bounceDivideSlider" 
+                                    ValueChanged="bounceDivideSlider_ValueChanged" 
+                                    Loaded="bounceDivideSlider_Loaded"
+                                    Minimum="0" Maximum="1"/>
+                            <Separator/>
+
+                            <TextBlock>
+                                Set the amount of taper in the queue lanes.
+                            </TextBlock>
+                            <Slider Name="bounceLaneTaperSlider" 
+                                    ValueChanged="bounceLaneTaperSlider_ValueChanged" 
+                                    Loaded="bounceLaneTaperSlider_Loaded"
+                                    Minimum="0" Maximum="600"/>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </Expander>
             <Expander Header="Additional Settings">
                 <StackPanel>
                     <TextBlock>
@@ -126,15 +181,6 @@
                     <StackPanel Orientation="Horizontal">
                         <Label Target="{Binding ElementName=beatFontSizeTextBox}"></Label>
                         <TextBox Name="beatFontSizeTextBox" LostFocus="beatFontSizeTextBox_LostFocus" Loaded="beatFontSizeTextBox_Loaded" Width="50"/>
-                    </StackPanel>
-                    <Separator/>
-
-                    <TextBlock>
-                        Turn the beat graph's blinking visual effect on or off.
-                    </TextBlock>
-                    <StackPanel>
-                        <Label Target="{Binding ElementName=blinkToggle}">Enable Blinking</Label>
-                        <CheckBox Name="blinkToggle" Checked="blinkToggle_Checked" Unchecked="blinkToggle_Unchecked"  Loaded="blinkToggle_Loaded"/>
                     </StackPanel>
                 </StackPanel>
             </Expander>

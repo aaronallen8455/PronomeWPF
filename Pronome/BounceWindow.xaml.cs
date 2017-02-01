@@ -19,7 +19,7 @@ namespace Pronome
         /// <summary>
         /// The amount of space between the edge of the screen and the bounds of the ball area.
         /// </summary>
-        const double widthPad = 350;//350; // difference in width between foreground and horizon
+        public static double widthPad = 350;//350; // difference in width between foreground and horizon
 
         /// <summary>
         /// The height of the drawing.
@@ -116,6 +116,8 @@ namespace Pronome
             Balls = new Ball[layerCount];
             Lanes = new Lane[layerCount];
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
+            divisionLine = height / (1 / divisionPoint);
+            ballBase = height - divisionLine - ballRadius;
 
             // draw sizer element
             var size = new RectangleGeometry(new Rect(0, 0, width + 2 * widthPad, height));
@@ -271,7 +273,7 @@ namespace Pronome
         /// <summary>
         /// A class to represent a lane.
         /// </summary>
-        protected class Lane
+        public class Lane
         {
             /// <summary>
             /// Thickness of the top tick
@@ -460,9 +462,9 @@ namespace Pronome
             }
         }
 
-        protected class Tick
+        public class Tick
         {
-            public const double EndPoint = 6; // number of qtr notes to show. Duration of animation for each tick
+            public static double EndPoint = 6; // number of qtr notes to show. Duration of animation for each tick
 
             protected double ElapsedInterval = 0;
             protected bool IsComplete = false;

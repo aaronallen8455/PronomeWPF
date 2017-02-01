@@ -198,5 +198,54 @@ namespace Pronome
         {
             BeatGraphWindow.BlinkingIsEnabled = false;
         }
+
+        private void bounceDivideSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            BounceWindow.divisionPoint = (sender as Slider).Value;
+            if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
+            {
+                BounceWindow.Instance.DrawScene();
+            }
+        }
+
+        private void bounceDivideSlider_Loaded(object sender, RoutedEventArgs e)
+        {
+            (sender as Slider).Value = BounceWindow.divisionPoint;
+        }
+
+        private void queueSizeInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox input = sender as TextBox;
+            double value = double.Parse(input.Text);
+            if (value > 0 && value < 1000)
+            {
+                BounceWindow.Tick.EndPoint = value;
+                if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
+                {
+                    BounceWindow.Instance.DrawScene();
+                }
+            }
+        }
+
+        private void queueSizeInput_Loaded(object sender, RoutedEventArgs e)
+        {
+            (sender as TextBox).Text = BounceWindow.Tick.EndPoint.ToString();
+        }
+
+        private void bounceLaneTaperSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            BounceWindow.widthPad = (sender as Slider).Value;
+            if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
+            {
+                BounceWindow.Instance.DrawScene();
+            }
+        }
+
+        private void bounceLaneTaperSlider_Loaded(object sender, RoutedEventArgs e)
+        {
+            (sender as Slider).Value = BounceWindow.widthPad;
+        }
+
+
     }
 }
