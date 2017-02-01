@@ -310,8 +310,7 @@ namespace Pronome
                 RightXDiff = rightXDiff;
                 Index = index;
 
-                double _width = (widthPad * 2 + Instance.width) / Instance.layerCount;
-                LaneWidth = _width;
+                LaneWidth = (widthPad * 2 + Instance.width) / Instance.layerCount;
 
                 Ticks = new Queue<Tick>();
 
@@ -319,6 +318,10 @@ namespace Pronome
                 InitTicks(Layer.Offset);
             }
 
+            /// <summary>
+            /// Fill the queue with the first batch of ticks.
+            /// </summary>
+            /// <param name="offset">Amount of bpm before first tick</param>
             protected void InitTicks(double offset)
             {
                 Tick.InitConstants(); // calculate the constants used for tick positioning
@@ -376,6 +379,9 @@ namespace Pronome
                 CurInterval = Layer.Beat[beatIndex == Layer.Beat.Count ? 0 : beatIndex].Bpm - (Tick.EndPoint - accumulator);
             }
 
+            /// <summary>
+            /// Remove the expired tick and shift highlight to new top beat.
+            /// </summary>
             public void DequeueTick()
             {
                 Ticks.Dequeue();
@@ -392,6 +398,10 @@ namespace Pronome
 
             }
 
+            /// <summary>
+            /// Move ticks in queue, decrement the current interval, and add any new ticks.
+            /// </summary>
+            /// <param name="elapsedTime">Amount of time since last frame</param>
             public void ProcFrame(double elapsedTime)
             {
                 // animate ticks
@@ -431,7 +441,10 @@ namespace Pronome
                     while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName);
                 }
             }
-
+            /// <summary>
+            /// Set state of the drawing to match the position of the playing/paused beat.
+            /// </summary>
+            /// <param name="elapsedBpm">Number of Bpm that have elapsed.</param>
             public void Sync(double elapsedBpm)
             {
                 elapsedBpm = elapsedBpm % Layer.GetTotalBpmValue();

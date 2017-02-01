@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="ProNome Options" Height="300" Width="530"
+        Title="ProNome Options" Height="600" Width="530"
         Name="optionsWindow">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -27,12 +27,19 @@
                     <Setter Property="HorizontalAlignment" Value="Stretch"/>
                     <Setter Property="VerticalAlignment" Value="Top"/>
                     <Setter Property="BorderBrush" Value="Black"/>
-                    <Setter Property="BorderThickness" Value="3"/>
+                    <Setter Property="BorderThickness" Value="1"/>
                     <Setter Property="DockPanel.Dock" Value="Top"/>
-                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontSize="15" FontWeight="Bold" Padding="7,0,0,0"/>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
                     <Style.Triggers>
                         <Trigger Property="IsExpanded" Value="True">
-                            <Setter Property="Padding" Value="0,0,0,20"/>
+                            <Setter Property="Padding" Value="10,10,10,20"/>
                         </Trigger>
                     </Style.Triggers>
                 </Style>
@@ -62,15 +69,15 @@
                     <WrapPanel>
                         <StackPanel>
                             <Label Target="{Binding ElementName=randomMuteToggle}">Enable</Label>
-                            <CheckBox x:Name="randomMuteToggle" Checked="applyMuting" Unchecked="applyMuting"/>
+                            <CheckBox x:Name="randomMuteToggle" Checked="applyMuting" Unchecked="applyMuting" HorizontalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel>
                             <Label Target="{Binding ElementName=randomMuteInput}">Percentage</Label>
-                            <TextBox x:Name="randomMuteInput" LostFocus="applyMuting"  Text="0"/>
+                            <TextBox x:Name="randomMuteInput" LostFocus="applyMuting"  Text="0" HorizontalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel>
                             <Label Target="{Binding ElementName=randomMuteTimerInput}">Ramp Duration (seconds)</Label>
-                            <TextBox x:Name="randomMuteTimerInput" LostFocus="applyMuting"  Text="0"/>
+                            <TextBox x:Name="randomMuteTimerInput" LostFocus="applyMuting" Text="0" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </WrapPanel>
                 </StackPanel>
@@ -84,21 +91,23 @@
                     <WrapPanel IsEnabled="{Binding Path=IsEnabled}">
                         <StackPanel>
                             <Label Target="{Binding ElementName=intervalMuteToggle}">Enable</Label>
-                            <CheckBox x:Name="intervalMuteToggle" Checked="applyIntervalMuting" Unchecked="applyIntervalMuting"/>
+                            <CheckBox x:Name="intervalMuteToggle" Checked="applyIntervalMuting" Unchecked="applyIntervalMuting" HorizontalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel>
                             <Label Target="{Binding ElementName=intervalAudibleInput}">Audible Interval</Label>
                             <TextBox x:Name="intervalAudibleInput" 
                                         Text="0" 
                                         ToolTip="A value representing the number of audible quarter notes."
-                                        LostFocus="applyIntervalMuting"/>
+                                        LostFocus="applyIntervalMuting"
+                                     HorizontalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel>
                             <Label Target="{Binding ElementName=intervalSilentInput}">Silent Interval</Label>
                             <TextBox x:Name="intervalSilentInput"
                                         Text="0"
                                         ToolTip="A value representing the number of silent quarter notes."
-                                        LostFocus="applyIntervalMuting"/>
+                                        LostFocus="applyIntervalMuting"
+                                     HorizontalAlignment="Center"/>
                         </StackPanel>
                     </WrapPanel>
                 </StackPanel>
@@ -135,10 +144,14 @@
                             <TextBlock>
                                 Turn the beat graph's blinking visual effect on or off.
                             </TextBlock>
-                            <StackPanel>
+                            <WrapPanel Orientation="Vertical">
                                 <Label Target="{Binding ElementName=blinkToggle}">Enable Blinking</Label>
-                                <CheckBox Name="blinkToggle" Checked="blinkToggle_Checked" Unchecked="blinkToggle_Unchecked"  Loaded="blinkToggle_Loaded"/>
-                            </StackPanel>
+                                <CheckBox Name="blinkToggle" 
+                                          Checked="blinkToggle_Checked" 
+                                          Unchecked="blinkToggle_Unchecked"  
+                                          Loaded="blinkToggle_Loaded"
+                                          HorizontalAlignment="Center"/>
+                            </WrapPanel>
                         </StackPanel>
                     </GroupBox>
 
@@ -147,10 +160,13 @@
                             <TextBlock>
                                 The number of quarter-notes to show in the queue.
                             </TextBlock>
-                            <StackPanel>
+                            <WrapPanel Orientation="Vertical">
                                 <Label Target="{Binding ElementName=queueSize}">Queue Size</Label>
-                                <TextBox Name="queueSizeInput" LostFocus="queueSizeInput_LostFocus" Loaded="queueSizeInput_Loaded"/>
-                            </StackPanel>
+                                <TextBox Name="queueSizeInput" 
+                                         LostFocus="queueSizeInput_LostFocus" 
+                                         Loaded="queueSizeInput_Loaded"
+                                         HorizontalAlignment="Center"/>
+                            </WrapPanel>
                             <Separator/>
                             
                             <TextBlock>
@@ -159,7 +175,7 @@
                             <Slider Name="bounceDivideSlider" 
                                     ValueChanged="bounceDivideSlider_ValueChanged" 
                                     Loaded="bounceDivideSlider_Loaded"
-                                    Minimum="0" Maximum="1"/>
+                                    Minimum="0" Maximum=".80"/>
                             <Separator/>
 
                             <TextBlock>
@@ -180,7 +196,11 @@
                     </TextBlock>
                     <StackPanel Orientation="Horizontal">
                         <Label Target="{Binding ElementName=beatFontSizeTextBox}"></Label>
-                        <TextBox Name="beatFontSizeTextBox" LostFocus="beatFontSizeTextBox_LostFocus" Loaded="beatFontSizeTextBox_Loaded" Width="50"/>
+                        <TextBox Name="beatFontSizeTextBox"
+                                 LostFocus="beatFontSizeTextBox_LostFocus" 
+                                 Loaded="beatFontSizeTextBox_Loaded" 
+                                 Width="50"
+                                 HorizontalAlignment="Center"/>
                     </StackPanel>
                 </StackPanel>
             </Expander>
