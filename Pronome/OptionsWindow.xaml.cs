@@ -205,6 +205,7 @@ namespace Pronome
             if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
             {
                 BounceWindow.Instance.DrawScene();
+                //BounceWindow.Instance.ResetConsts();
             }
         }
 
@@ -237,7 +238,9 @@ namespace Pronome
             BounceWindow.widthPad = (sender as Slider).Value;
             if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
             {
+                //Dispatcher.BeginInvoke(new Action(() => BounceWindow.Instance.DrawScene()));
                 BounceWindow.Instance.DrawScene();
+                //BounceWindow.Instance.ResetConsts();
             }
         }
 

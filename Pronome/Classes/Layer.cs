@@ -457,7 +457,15 @@ namespace Pronome
                 BaseAudioSource = newBaseSource;
 
                 // set initial offset
-                double offset = Beat.TakeWhile(x => x.SourceName != "").Select(x => x.Bpm).Sum() + Offset;
+                double offset;
+                if (!IsPitch)
+                {
+                    offset = Beat.TakeWhile(x => x.SourceName != "").Select(x => x.Bpm).Sum() + Offset;
+                }
+                else
+                {
+                    offset = Beat.TakeWhile(x => x.SourceName == WavFileStream.SilentSourceName).Select(x => x.Bpm).Sum() + Offset;
+                }
                 offset = BeatCell.ConvertFromBpm(offset, BaseAudioSource);
                 BaseAudioSource.SetOffset(offset);
 

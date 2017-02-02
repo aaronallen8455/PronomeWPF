@@ -41,6 +41,8 @@ namespace Pronome
         /// </summary>
         protected Lane[] Lanes;
 
+        protected GeometryDrawing[] LaneGeometries;
+
         /// <summary>
         /// The window instance.
         /// </summary>
@@ -93,6 +95,39 @@ namespace Pronome
             Metronome.AfterBeatParsed += new EventHandler(DrawScene);
         }
 
+        public void ResetConsts()
+        {
+            width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
+            divisionLine = height / (1 / divisionPoint);
+            ballBase = height - divisionLine - ballRadius;
+
+            // remove old lanes
+            foreach (GeometryDrawing lane in LaneGeometries)
+            {
+                drawingGroup.Children.Remove(lane);
+            }
+            // draw new lanes
+            DrawLanes(false);
+            Tick.InitConstants();
+
+            // reposition balls
+            for (int i=0; i<Balls.Length; i++)
+            {
+                Point center = new Point(width / (layerCount * 2) * (i * 2 + 1) + widthPad, ballBase);
+                Balls[i].Geometry.Center = center;
+            }
+            //foreach (Ball ball in Balls)
+            //{
+            //    ball.Sync(Metronome.GetInstance().ElapsedQuarters);
+            //}
+            //
+            //foreach (Lane lane in Lanes)
+            //{
+            //    lane.Sync(Metronome.GetInstance().ElapsedQuarters);
+            //}
+
+        }
+
         protected void DrawScene(object sender, EventArgs e)
         {
             if (SceneDrawn)
@@ -115,6 +150,7 @@ namespace Pronome
             layerCount = met.Layers.Count;
             Balls = new Ball[layerCount];
             Lanes = new Lane[layerCount];
+            LaneGeometries = new GeometryDrawing[layerCount + 1];
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
             divisionLine = height / (1 / divisionPoint);
             ballBase = height - divisionLine - ballRadius;
@@ -171,22 +207,30 @@ namespace Pronome
         /// <summary>
         /// Make the lane drawing and instantiate Lane objects for each layer.
         /// </summary>
-        protected void DrawLanes()
+        protected void DrawLanes(bool instantiateLayers = true)
         {
             Pen lanePen = new Pen(Brushes.White, 3);
             var leftBound = new LineGeometry(new Point(0, height), new Point(widthPad, height - divisionLine));
-            drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, leftBound));
+            var initialGeo = new GeometryDrawing(null, lanePen, leftBound);
+            drawingGroup.Children.Add(initialGeo);
+            LaneGeometries[layerCount] = initialGeo;
             double xCoord = (width + 2 * widthPad) / layerCount;
             for (int i = 0; i < layerCount; i++)
             {
                 var start = new Point(xCoord * (i + 1), height);
                 var end = new Point(widthPad + width / layerCount * (i + 1), height - divisionLine);
 
-                drawingGroup.Children.Add(new GeometryDrawing(null, lanePen, new LineGeometry(start, end)));
+                var laneGeometry = new GeometryDrawing(null, lanePen, new LineGeometry(start, end));
 
-                Lanes[i] = new Lane(Metronome.GetInstance().Layers[i], ColorHelper.ColorWheel(i),
-                    widthPad + (width / layerCount) * i - xCoord * i,
-                    widthPad + (width / layerCount) * (i + 1) - xCoord * (i + 1), i);
+                drawingGroup.Children.Add(laneGeometry);
+                LaneGeometries[i] = laneGeometry;
+
+                if (instantiateLayers)
+                {
+                    Lanes[i] = new Lane(Metronome.GetInstance().Layers[i], ColorHelper.ColorWheel(i),
+                        widthPad + (width / layerCount) * i - xCoord * i,
+                        widthPad + (width / layerCount) * (i + 1) - xCoord * (i + 1), i);
+                }
             }
         }
 
@@ -249,7 +293,8 @@ namespace Pronome
                     GradientOrigin = new Point(.25, .25),
                     Center = new Point(.25, .25),
                     ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
-                },//new SolidColorBrush(color),
+                },
+                //new SolidColorBrush(color),
                 null, ball);//new Pen(Brushes.Red, 2), ball);
 
             return result;
@@ -555,32 +600,11 @@ namespace Pronome
             static double factor;
             static public double Ease(double fraction)
             {
-                if (widthPad == 0)
+                if (widthPad <= 10)
                 {
                     return fraction;
                 }
 
-                //var input = fraction * (1 - startingVal) + startingVal;
-                // find vanishing point
-
-                // init these values
-                //if (apex == default(double))
-                //{
-                //}
-                //if (shim == default(double))
-                //{
-                //    shim = Math.Sqrt(startingVal * (height / 2) / apex);
-                //}
-                //if (ratio == default(double))
-                //{
-                //    ratio = Math.Sqrt(height / 2 / apex) - shim;
-                //}
-
-                //var position = Math.Sqrt(input * (height / 2) / apex) - shim;
-
-                //return position / ratio;
-                // 1 / (-Math.Pow(2, x) + 1) = apex / .5height
-                // -2^-x + 1
                 return (-1 / (Math.Pow(2, fraction*factor))+1) / denominator; //2.3 for 1, 1.55 for 2
             }
         }
