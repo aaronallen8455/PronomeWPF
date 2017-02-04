@@ -230,6 +230,12 @@ namespace Pronome
             else Settings.Add("beatFontSize", (double)Application.Current.Resources["textBoxFontSize"]);
             if (Settings.ContainsKey("blinkingEnabled")) Settings["blinkingEnabled"] = BeatGraphWindow.BlinkingIsEnabled ? 1 : 0;
             else Settings.Add("blinkingEnabled", BeatGraphWindow.BlinkingIsEnabled ? 1 : 0);
+            if (Settings.ContainsKey("bounceQueueSize")) Settings["bounceQueueSize"] = BounceWindow.Tick.EndPoint;
+            else Settings.Add("bounceQueueSize", BounceWindow.Tick.EndPoint);
+            if (Settings.ContainsKey("bounceDivision")) Settings["bounceDivision"] = BounceWindow.divisionPoint;
+            else Settings.Add("bounceDivision", BounceWindow.divisionPoint);
+            if (Settings.ContainsKey("bounceWidthPad")) Settings["bounceWidthPad"] = BounceWindow.widthPad;
+            else Settings.Add("bounceWidthPad", BounceWindow.widthPad);
 
             // Write window size and position to storage
             IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
@@ -277,6 +283,9 @@ namespace Pronome
             if (Settings.ContainsKey("winHeight")) Height = Settings["winHeight"];
             if (Settings.ContainsKey("beatFontSize")) Application.Current.Resources["textBoxFontSize"] = Settings["beatFontSize"];
             if (Settings.ContainsKey("blinkingEnabled")) BeatGraphWindow.BlinkingIsEnabled = Settings["blinkingEnabled"] == 1 ? true : false;
+            if (Settings.ContainsKey("bounceQueueSize")) BounceWindow.Tick.EndPoint = Settings["bounceQueueSize"];
+            if (Settings.ContainsKey("bounceDivision")) BounceWindow.divisionPoint = Settings["bounceDivision"];
+            if (Settings.ContainsKey("bounceWidthPad")) BounceWindow.widthPad = Settings["bounceWidthPad"];
 
             f.Dispose();
         }

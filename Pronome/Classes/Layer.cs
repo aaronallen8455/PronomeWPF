@@ -303,6 +303,7 @@ namespace Pronome
                         BaseFrequency = PitchStream.ConvertFromSymbol(baseSourceName),
                         Layer = this,
                         Volume = Volume * met.Volume,
+                        Pan = Pan
                     };
 
                     if (IsPitch)
@@ -360,7 +361,8 @@ namespace Pronome
                     WavFileStream newSource = new WavFileStream(baseSourceName)
                     {
                         Layer = this,
-                        Volume = Volume * met.Volume
+                        Volume = Volume * met.Volume,
+                        Pan = Pan
                     };
 
                     foreach (BeatCell bc in Beat.Where(x => x.SourceName == ""))
@@ -382,7 +384,8 @@ namespace Pronome
                             var newPitchSource = new PitchStream()
                             {
                                 Layer = this,
-                                Volume = Volume * met.Volume
+                                Volume = Volume * met.Volume,
+                                Pan = Pan
                             };
 
                             // build its Beat collection and freq enum
@@ -591,6 +594,7 @@ namespace Pronome
                     src.Dispose();
                 }
                 AudioSources.Clear();
+                BaseAudioSource.SetOffset(0);
             
                 if (IsPitch) // need to rebuild the pitch source
                 {

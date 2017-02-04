@@ -62,14 +62,13 @@ namespace Pronome
         /**<summary>The pan control for this sound. -1 to 1</summary>*/
         public float Pan
         {
-            get { return Channel.Pan; }
-            set { Channel.Pan = value; }
+            get => Channel.Pan; set => Channel.Pan = value;
         }
 
         /**<summary>Gets the wave format object for this stream.</summary>*/
         public override WaveFormat WaveFormat
         {
-            get { return sourceStream.WaveFormat; }
+            get => sourceStream.WaveFormat;
         }
 
         /**<summary>Reset this sound so that it will play from the start.</summary>*/
@@ -111,7 +110,7 @@ namespace Pronome
         /**<summary>Get the length of the source file in bytes.</summary>*/
         public override long Length
         {
-            get { return sourceStream.Length; }
+            get => sourceStream.Length;
         }
 
         /**<summary>Not used for wav streams.</summary>*/

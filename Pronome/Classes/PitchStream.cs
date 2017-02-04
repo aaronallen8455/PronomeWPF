@@ -426,7 +426,7 @@ namespace Pronome
                             if (Frequency != curFreq)
                                 multiple = TwoPi * Frequency / waveFormat.SampleRate;
                             nSample = Convert.ToSingle(Math.Asin(previousSample / Volume) / multiple);
-                            nSample += .5f; // seems to help
+                            //nSample += .5f; // seems to help
                         }
                         else nSample = 0;
                         freqChanged = true;

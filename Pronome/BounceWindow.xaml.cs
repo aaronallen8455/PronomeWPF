@@ -95,38 +95,38 @@ namespace Pronome
             Metronome.AfterBeatParsed += new EventHandler(DrawScene);
         }
 
-        public void ResetConsts()
-        {
-            width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
-            divisionLine = height / (1 / divisionPoint);
-            ballBase = height - divisionLine - ballRadius;
-
-            // remove old lanes
-            foreach (GeometryDrawing lane in LaneGeometries)
-            {
-                drawingGroup.Children.Remove(lane);
-            }
-            // draw new lanes
-            DrawLanes(false);
-            Tick.InitConstants();
-
-            // reposition balls
-            for (int i=0; i<Balls.Length; i++)
-            {
-                Point center = new Point(width / (layerCount * 2) * (i * 2 + 1) + widthPad, ballBase);
-                Balls[i].Geometry.Center = center;
-            }
-            //foreach (Ball ball in Balls)
-            //{
-            //    ball.Sync(Metronome.GetInstance().ElapsedQuarters);
-            //}
-            //
-            //foreach (Lane lane in Lanes)
-            //{
-            //    lane.Sync(Metronome.GetInstance().ElapsedQuarters);
-            //}
-
-        }
+        //public void ResetConsts()
+        //{
+        //    width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
+        //    divisionLine = height / (1 / divisionPoint);
+        //    ballBase = height - divisionLine - ballRadius;
+        //
+        //    // remove old lanes
+        //    foreach (GeometryDrawing lane in LaneGeometries)
+        //    {
+        //        drawingGroup.Children.Remove(lane);
+        //    }
+        //    // draw new lanes
+        //    DrawLanes(false);
+        //    Tick.InitConstants();
+        //
+        //    // reposition balls
+        //    for (int i=0; i<Balls.Length; i++)
+        //    {
+        //        Point center = new Point(width / (layerCount * 2) * (i * 2 + 1) + widthPad, ballBase);
+        //        Balls[i].Geometry.Center = center;
+        //    }
+        //    //foreach (Ball ball in Balls)
+        //    //{
+        //    //    ball.Sync(Metronome.GetInstance().ElapsedQuarters);
+        //    //}
+        //    //
+        //    //foreach (Lane lane in Lanes)
+        //    //{
+        //    //    lane.Sync(Metronome.GetInstance().ElapsedQuarters);
+        //    //}
+        //
+        //}
 
         protected void DrawScene(object sender, EventArgs e)
         {
@@ -492,6 +492,7 @@ namespace Pronome
             /// <param name="elapsedBpm">Number of Bpm that have elapsed.</param>
             public void Sync(double elapsedBpm)
             {
+                elapsedBpm -= Layer.Offset;
                 elapsedBpm = elapsedBpm % Layer.GetTotalBpmValue();
                 beatIndex = 0;
 
@@ -700,6 +701,7 @@ namespace Pronome
 
             public void Sync(double elapsedBpm)
             {
+                elapsedBpm -= Layer.Offset;
                 elapsedBpm = elapsedBpm % Layer.GetTotalBpmValue();
 
                 double bpm = 0;
