@@ -120,7 +120,7 @@ namespace Pronome
 
         /** <summary>Parse the beat code, generating beat cells.</summary>
          * <param name="beat">Beat code.</param> */
-        public void Parse(string beat)
+        public void Parse(string beat, HashSet<int> parsedReferences = null)
         {
             ParsedString = beat;
             // remove comments
@@ -128,7 +128,7 @@ namespace Pronome
             // remove whitespace
             beat = Regex.Replace(beat, @"\s", "");
 
-            string pitchModifier = "@[a-gA-G]?[#b]?[pP]?[1-9.]+";
+            string pitchModifier = @"@[a-gA-G]?[#b]?[pP]?[1-9.]+";
 
             if (beat.Contains('$'))
             {
@@ -138,42 +138,53 @@ namespace Pronome
                 //resolve beat referencing
                 while (beat.Contains('$'))
                 {
-                    string refBeat;
-                    // is a self reference?
-                    if (beat[beat.IndexOf('$') + 1].ToString().ToLower() == "s" ||
-                        Regex.Match(beat, @"\$(\d+)").Groups[1].Value == (Metronome.GetInstance().Layers.Count + 1).ToString())
-                    {
-                        refBeat = Regex.Replace(ParsedString, @"!.*?!|\s", "");
-                    }
-                    else
-                    {
-                        //get the index of the referenced beat, if exists
-                        int refIndex = int.Parse(Regex.Match(beat, @"\$[\d]+").Value.Substring(1)) - 1;
-                        // does referenced beat exist?
-                        refIndex = Metronome.GetInstance().Layers.ElementAtOrDefault(refIndex) == null ? 0 : refIndex;
-                        refBeat = Regex.Replace(Metronome.GetInstance().Layers[refIndex].ParsedString, @"!.*?!|\s", "");
+                    var match = Regex.Match(beat, @"\$(\d+|s)");
+                    string indexString = match.Groups[1].Value;
+                    int refIndex;
+                    int selfIndex = Metronome.GetInstance().Layers.IndexOf(this);
+                    if (indexString == "s") refIndex = selfIndex;
+                    else refIndex = int.Parse(indexString) - 1;
+                    // perform the replacement
+                    beat = beat.Substring(0, match.Index) + 
+                        ResolveReferences(refIndex, new HashSet<int>(new int[] { selfIndex })) + 
+                        beat.Substring(match.Index + match.Length);
 
-                        // remove sound source modifiers for non self references, unless its @0
-                        refBeat = Regex.Replace(refBeat, pitchModifier, ""); // get rid of this?
-                    }
-                    // remove single cell repeat on references
-                    refBeat = Regex.Replace(refBeat, @"(\$[\ds]+)\(\d\)", "$1");
-                    // remove references and their innermost nest from the referenced beat
-                    while (refBeat.Contains('$'))
-                    {
-                        if (Regex.IsMatch(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*"))
-                            refBeat = Regex.Replace(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*", "$s");
-                        else
-                            refBeat = Regex.Replace(refBeat, @"\$[\ds]+,?", ""); // straight up replace
-                    }
-                    // clean out empty cells
-                    refBeat = Regex.Replace(refBeat, @",,", ",");
-                    //refBeat = Regex.Replace(refBeat, @",$", "");
-                    refBeat = refBeat.Trim(',');
-
-                    // replace in the refBeat
-                    var match = Regex.Match(beat, @"\$[\ds]+");
-                    beat = beat.Substring(0, match.Index) + refBeat + beat.Substring(match.Index + match.Length);
+                    //string refBeat;
+                    //// is a self reference?
+                    //if (beat[beat.IndexOf('$') + 1].ToString().ToLower() == "s" ||
+                    //    Regex.Match(beat, @"\$(\d+)").Groups[1].Value == (Metronome.GetInstance().Layers.Count + 1).ToString())
+                    //{
+                    //    refBeat = Regex.Replace(ParsedString, @"!.*?!|\s", "");
+                    //}
+                    //else
+                    //{
+                    //    //get the index of the referenced beat, if exists
+                    //    int refIndex = int.Parse(Regex.Match(beat, @"\$[\d]+").Value.Substring(1)) - 1;
+                    //    // does referenced beat exist?
+                    //    refIndex = Metronome.GetInstance().Layers.ElementAtOrDefault(refIndex) == null ? 0 : refIndex;
+                    //    refBeat = Regex.Replace(Metronome.GetInstance().Layers[refIndex].ParsedString, @"!.*?!|\s", "");
+                    //
+                    //    // remove sound source modifiers for non self references, unless its @0
+                    //    refBeat = Regex.Replace(refBeat, pitchModifier, ""); // get rid of this?
+                    //}
+                    //// remove single cell repeat on references
+                    //refBeat = Regex.Replace(refBeat, @"(\$[\ds]+)\(\d\)", "$1");
+                    //// remove references and their innermost nest from the referenced beat
+                    //while (refBeat.Contains('$'))
+                    //{
+                    //    if (Regex.IsMatch(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*"))
+                    //        refBeat = Regex.Replace(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*", "$s");
+                    //    else
+                    //        refBeat = Regex.Replace(refBeat, @"\$[\ds]+,?", ""); // straight up replace
+                    //}
+                    //// clean out empty cells
+                    //refBeat = Regex.Replace(refBeat, @",,", ",");
+                    ////refBeat = Regex.Replace(refBeat, @",$", "");
+                    //refBeat = refBeat.Trim(',');
+                    //
+                    //// replace in the refBeat
+                    //var match = Regex.Match(beat, @"\$[\ds]+");
+                    //beat = beat.Substring(0, match.Index) + refBeat + beat.Substring(match.Index + match.Length);
                 }
             }
             
@@ -263,16 +274,92 @@ namespace Pronome
             SetBeat(cells);
 
             // reparse any layers that reference this one
-            int index = Metronome.GetInstance().Layers.IndexOf(this) + 1;
-            var layers = Metronome.GetInstance().Layers.Where(x => x != this && x.ParsedString.Contains($"${index}"));
+            Metronome met = Metronome.GetInstance();
+            int index = met.Layers.IndexOf(this);
+            if (parsedReferences == null)
+            {
+                parsedReferences = new HashSet<int>();
+            }
+            parsedReferences.Add(index);
+            var layers = met.Layers.Where(
+                x => x != this 
+                && x.ParsedString.Contains($"${index + 1}") 
+                && !parsedReferences.Contains(met.Layers.IndexOf(x)));
             foreach (Layer layer in layers)
             {
                 // account for deserializing a beat
                 if (layer.Beat != null && layer.Beat.Count > 0)
                 {
-                    layer.Parse(layer.ParsedString);
+                    layer.Parse(layer.ParsedString, parsedReferences);
                 }
             }
+        }
+
+        /// <summary>
+        /// Recursively build a beat string based on the reference index.
+        /// </summary>
+        /// <param name="reference">Referenced beat index</param>
+        /// <param name="visitedIndexes">Holds the previously visited beats</param>
+        /// <returns>The replacement string</returns>
+        protected string ResolveReferences(int reference, HashSet<int> visitedIndexes = null)
+        {
+            Metronome met = Metronome.GetInstance();
+
+            if (visitedIndexes == null) visitedIndexes = new HashSet<int>();
+
+            if (reference >= met.Layers.Count || reference < 0) reference = 0;
+
+
+            string refString = met.Layers[reference].ParsedString;
+            // remove comments
+            refString = Regex.Replace(refString, @"!.*?!", "");
+            // remove whitespace
+            refString = Regex.Replace(refString, @"\s", "");
+            // remove source modifiers if not @0
+            refString = Regex.Replace(refString, @"@[a-gA-G]?[#b]?[pP]?[1-9.]+", "");
+            // prep single cell repeats
+            refString = Regex.Replace(refString, @"(\$[\ds]+)(\(\d\))", "[$1]$2");
+
+            if (refString.IndexOf('$') > -1 && visitedIndexes.Contains(reference))
+            {
+                // strip references and their inner nests
+                while (refString.Contains('$'))
+                {
+                    if (Regex.IsMatch(refString, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*"))
+                        refString = Regex.Replace(refString, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*", "$s");
+                    else
+                        refString = Regex.Replace(refString, @"\$[\ds]+,?", ""); // straight up replace
+                }
+                // clean out empty cells
+                refString = Regex.Replace(refString, @",,", ",");
+                //refBeat = Regex.Replace(refBeat, @",$", "");
+                refString = refString.Trim(',');
+            }
+            else
+            {
+                visitedIndexes.Add(reference);
+
+                while (refString.IndexOf('$') > -1)
+                {
+                    int refIndex;
+                    var match = Regex.Match(refString, @"\$(\d+|s)");
+                    string embedIndex = match.Groups[1].Value;
+                    if (embedIndex == "s")
+                    {
+                        refIndex = reference;
+                    }
+                    else
+                    {
+                        refIndex = int.Parse(embedIndex) - 1;
+                    }
+
+                    refString = refString.Substring(0, match.Index) +
+                        ResolveReferences(refIndex, new HashSet<int>(visitedIndexes)) +
+                        refString.Substring(match.Index + match.Length);
+                }
+            }
+
+            return refString;
         }
 
         /**<summary>Apply a new base source to the layer.</summary>*/

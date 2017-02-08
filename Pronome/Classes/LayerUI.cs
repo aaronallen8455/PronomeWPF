@@ -304,15 +304,22 @@ namespace Pronome
 
         protected void deleteButton_Click(object sender, RoutedEventArgs e)
         {
-            // if no more layers, stop the playback
-            if (Metronome.GetInstance().Layers.Count == 1)
-            {
-                (Application.Current.MainWindow as MainWindow).stopButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            }
+            //// if no more layers, stop the playback
+            //if (Metronome.GetInstance().Layers.Count == 1)
+            //{
+            //    (Application.Current.MainWindow as MainWindow).stopButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            //}
 
             // dispose the layer
+            int index = Metronome.GetInstance().Layers.IndexOf(Layer);
             Layer.Dispose();
             Remove();
+            // reparse layers that referenced this one
+            var layers = Metronome.GetInstance().Layers.Where(x => x.ParsedString.Contains($"${index + 1}"));
+            foreach(Layer layer in layers)
+            {
+                layer.Parse(layer.ParsedString);
+            }
             // redraw graph
             Metronome.GetInstance().TriggerAfterBeatParsed();
         }

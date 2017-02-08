@@ -187,7 +187,9 @@
             Grid.Column="2"
             Margin="4"
             Width="23"
-            Height="23">
+            Height="23"
+            DataContext="{DynamicResource disableDuringPlay}"
+            IsEnabled="{Binding Path=IsEnabled}">
             X
         </Button>
         
