@@ -119,8 +119,10 @@ namespace Pronome
         }
 
         /** <summary>Parse the beat code, generating beat cells.</summary>
-         * <param name="beat">Beat code.</param> */
-        public void Parse(string beat, HashSet<int> parsedReferences = null)
+         * <param name="beat">Beat code.</param> 
+         * <param name="parsedReferencers">Indexes of referencer layers that have been parsed already.</param>
+         */
+        public void Parse(string beat, HashSet<int> parsedReferencers = null)
         {
             ParsedString = beat;
             // remove comments
@@ -276,21 +278,21 @@ namespace Pronome
             // reparse any layers that reference this one
             Metronome met = Metronome.GetInstance();
             int index = met.Layers.IndexOf(this);
-            if (parsedReferences == null)
+            if (parsedReferencers == null)
             {
-                parsedReferences = new HashSet<int>();
+                parsedReferencers = new HashSet<int>();
             }
-            parsedReferences.Add(index);
+            parsedReferencers.Add(index);
             var layers = met.Layers.Where(
                 x => x != this 
                 && x.ParsedString.Contains($"${index + 1}") 
-                && !parsedReferences.Contains(met.Layers.IndexOf(x)));
+                && !parsedReferencers.Contains(met.Layers.IndexOf(x)));
             foreach (Layer layer in layers)
             {
                 // account for deserializing a beat
                 if (layer.Beat != null && layer.Beat.Count > 0)
                 {
-                    layer.Parse(layer.ParsedString, parsedReferences);
+                    layer.Parse(layer.ParsedString, parsedReferencers);
                 }
             }
         }
@@ -316,7 +318,7 @@ namespace Pronome
             // remove whitespace
             refString = Regex.Replace(refString, @"\s", "");
             // remove source modifiers if not @0
-            refString = Regex.Replace(refString, @"@[a-gA-G]?[#b]?[pP]?[1-9.]+", "");
+            //refString = Regex.Replace(refString, @"@[a-gA-G]?[#b]?[pP]?[1-9.]+", "");
             // prep single cell repeats
             refString = Regex.Replace(refString, @"(\$[\ds]+)(\(\d\))", "[$1]$2");
 
@@ -337,6 +339,7 @@ namespace Pronome
             }
             else
             {
+                // recurse over references of the reference
                 visitedIndexes.Add(reference);
 
                 while (refString.IndexOf('$') > -1)
