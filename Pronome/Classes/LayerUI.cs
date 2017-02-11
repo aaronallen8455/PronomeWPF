@@ -499,6 +499,7 @@ namespace Pronome
             },
             {
                 @"\$[^\ds]|"+
+                @"^[{[]*\$s[}\]()\d+\-/*Xx]*$|"+ // empty self reference
                 @"\$[\ds]+[^,|\]}(]", "Invalid beat reference."
             }
         };

@@ -130,7 +130,7 @@ namespace Pronome
             // remove whitespace
             beat = Regex.Replace(beat, @"\s", "");
 
-            string pitchModifier = @"@[a-gA-G]?[#b]?[pP]?[1-9.]+";
+            //string pitchModifier = @"@[a-gA-G]?[#b]?[pP]?[1-9.]+";
 
             if (beat.Contains('$'))
             {
@@ -254,45 +254,48 @@ namespace Pronome
 
             // fix instances of a pitch modifier being following by +0 from repeater
             beat = Regex.Replace(beat, $@"(@[a-gA-G]?[#b]?[pP]?[0-9.]+)(\+[\d.\-+/*]+)", "$2$1");
-            
-            BeatCell[] cells = beat.Split(',').Select((x) =>
-            {
-                var match = Regex.Match(x, @"([\d.+\-/*]+)@?(.*)");
-                string source = match.Groups[2].Value;
 
-                //if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}$|^[pP][\d.]+$"))
-                if (!Regex.IsMatch(source, @"^\d{1,2}$"))
+            if (beat != string.Empty)
+            {
+                BeatCell[] cells = beat.Split(',').Select((x) =>
                 {
-                    // is a pitch reference
-                    return new BeatCell(match.Groups[1].Value, source);
+                    var match = Regex.Match(x, @"([\d.+\-/*]+)@?(.*)");
+                    string source = match.Groups[2].Value;
+
+                    //if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}$|^[pP][\d.]+$"))
+                    if (!Regex.IsMatch(source, @"^\d{1,2}$"))
+                    {
+                        // is a pitch reference
+                        return new BeatCell(match.Groups[1].Value, source);
+                    }
+                    else // ref is a plain number (wav source) or "" base source.
+                    {
+                        return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
+                    }
+
+                }).ToArray();
+
+                SetBeat(cells);
+
+                // reparse any layers that reference this one
+                Metronome met = Metronome.GetInstance();
+                int index = met.Layers.IndexOf(this);
+                if (parsedReferencers == null)
+                {
+                    parsedReferencers = new HashSet<int>();
                 }
-                else // ref is a plain number (wav source) or "" base source.
+                parsedReferencers.Add(index);
+                var layers = met.Layers.Where(
+                    x => x != this 
+                    && x.ParsedString.Contains($"${index + 1}") 
+                    && !parsedReferencers.Contains(met.Layers.IndexOf(x)));
+                foreach (Layer layer in layers)
                 {
-                    return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
-                }
-
-            }).ToArray();
-
-            SetBeat(cells);
-
-            // reparse any layers that reference this one
-            Metronome met = Metronome.GetInstance();
-            int index = met.Layers.IndexOf(this);
-            if (parsedReferencers == null)
-            {
-                parsedReferencers = new HashSet<int>();
-            }
-            parsedReferencers.Add(index);
-            var layers = met.Layers.Where(
-                x => x != this 
-                && x.ParsedString.Contains($"${index + 1}") 
-                && !parsedReferencers.Contains(met.Layers.IndexOf(x)));
-            foreach (Layer layer in layers)
-            {
-                // account for deserializing a beat
-                if (layer.Beat != null && layer.Beat.Count > 0)
-                {
-                    layer.Parse(layer.ParsedString, parsedReferencers);
+                    // account for deserializing a beat
+                    if (layer.Beat != null && layer.Beat.Count > 0)
+                    {
+                        layer.Parse(layer.ParsedString, parsedReferencers);
+                    }
                 }
             }
         }
@@ -310,7 +313,6 @@ namespace Pronome
             if (visitedIndexes == null) visitedIndexes = new HashSet<int>();
 
             if (reference >= met.Layers.Count || reference < 0) reference = 0;
-
 
             string refString = met.Layers[reference].ParsedString;
             // remove comments
