@@ -220,7 +220,7 @@ namespace Pronome
             double value = double.Parse(input.Text);
             if (value > 0 && value < 1000)
             {
-                BounceWindow.Tick.EndPoint = value;
+                BounceWindow.Tick.QueueSize = value;
                 if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
                 {
                     BounceWindow.Instance.DrawScene();
@@ -230,7 +230,7 @@ namespace Pronome
 
         private void queueSizeInput_Loaded(object sender, RoutedEventArgs e)
         {
-            (sender as TextBox).Text = BounceWindow.Tick.EndPoint.ToString();
+            (sender as TextBox).Text = BounceWindow.Tick.QueueSize.ToString();
         }
 
         private void bounceLaneTaperSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

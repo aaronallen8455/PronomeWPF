@@ -71,12 +71,16 @@ namespace Pronome
         /// <summary>
         /// The radius of the ball drawings.
         /// </summary>
-        const double ballRadius = 70;
+        const double baseBallRadius = 70;
+
+        protected static double ballRadius;
 
         /// <summary>
         /// The amount of padding on the left of right of each ball.
         /// </summary>
-        const double ballPadding = 20;
+        const double baseBallPadding = 20;
+
+        protected static double ballPadding;
 
         /// <summary>
         /// The unit position of the line that seperates the lanes and balls.
@@ -88,10 +92,21 @@ namespace Pronome
         /// </summary>
         protected static double ballBase = height - divisionLine - ballRadius;
 
+        protected DrawingVisual Drawing;
+
+        protected static double imageRatio = 1;
+
+        protected static double imageWidthPad = 0;
+
+        protected static double imageHeightPad = 0;
+
         public BounceWindow()
         {
             Instance = this;
             InitializeComponent();
+            DrawScene();
+            AddVisualChild(Drawing);
+            AddLogicalChild(Drawing);
             Metronome.AfterBeatParsed += new EventHandler(DrawScene);
         }
 
@@ -145,7 +160,9 @@ namespace Pronome
             if (met.Layers.Count == 0) return; // do nothing if beat is empty
 
             // remove existing graphics
-            drawingGroup.Children.Clear();
+            //drawingGroup.Children.Clear();
+            ballRadius = baseBallRadius;
+            ballPadding = baseBallPadding;
 
             layerCount = met.Layers.Count;
             Balls = new Ball[layerCount];
@@ -155,46 +172,53 @@ namespace Pronome
             divisionLine = height / (1 / divisionPoint);
             ballBase = height - divisionLine - ballRadius;
 
-            // draw sizer element
-            var size = new RectangleGeometry(new Rect(0, 0, width + 2 * widthPad, height));
-            drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, null, size));
+            // calculate imageRatio values
+            SetImageRatio();
 
-            // draw lanes
-            DrawLanes();
+            // draw sizer element
+            //var size = new RectangleGeometry(new Rect(0, 0, width + 2 * widthPad, height));
+            //drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, null, size));
+
+            if (Drawing == null) Drawing = new DrawingVisual();
+
+            using (DrawingContext dc = Drawing.RenderOpen())
+            {
+                // draw lanes
+                DrawLanes(dc);
+
+                // draw balls
+                for (int i=0; i<layerCount; i++)
+                {
+                    MakeBall(i, dc);
+
+                    //drawingGroup.Children.Add(ball);
+                }
+
+                if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+                {
+                    // set the initial position (if beat was playing before graph opened)
+                    if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
+                    {
+                        Metronome.GetInstance().UpdateElapsedQuarters();
+                    }
+
+                    // sync balls and lanes to elapsed time
+                    foreach (Ball ball in Balls)
+                    {
+                        ball.Sync(Metronome.GetInstance().ElapsedQuarters, dc);
+                    }
+
+                    foreach (Lane lane in Lanes)
+                    {
+                        lane.Sync(Metronome.GetInstance().ElapsedQuarters, dc);
+                    }
+                }
+            }
 
             // draw horizon
             //var horizonLine = new LineGeometry(new Point(0, height/2), new Point(width + 2 * widthPad, height/2));
             //drawingGroup.Children.Add(new GeometryDrawing(null, new Pen(Brushes.Aqua, 2), horizonLine));
 
-            // draw balls
-            for (int i=0; i<layerCount; i++)
-            {
-                var ball = MakeBall(i);
-
-                drawingGroup.Children.Add(ball);
-            }
-
-            // Animate
-
-            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
-            {
-                // set the initial position (if beat was playing before graph opened)
-                if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
-                {
-                    Metronome.GetInstance().UpdateElapsedQuarters();
-                }
-
-                // sync balls and lanes to elapsed time
-                foreach (Ball ball in Balls)
-                {
-                    ball.Sync(Metronome.GetInstance().ElapsedQuarters);
-                }
-
-                foreach (Lane lane in Lanes)
-                {
-                    lane.Sync(Metronome.GetInstance().ElapsedQuarters);
-                }
-            }
 
             timer = new AnimationTimer();
 
@@ -204,34 +228,73 @@ namespace Pronome
             SceneDrawn = true;
         }
 
+        Point[,] laneEndPoints;
+        Pen lanePen = new Pen(Brushes.White, 3);
+
         /// <summary>
         /// Make the lane drawing and instantiate Lane objects for each layer.
         /// </summary>
-        protected void DrawLanes(bool instantiateLayers = true)
+        protected void DrawLanes(DrawingContext dc, bool instantiateLayers = true)
         {
-            Pen lanePen = new Pen(Brushes.White, 3);
-            var leftBound = new LineGeometry(new Point(0, height), new Point(widthPad, height - divisionLine));
-            var initialGeo = new GeometryDrawing(null, lanePen, leftBound);
-            drawingGroup.Children.Add(initialGeo);
-            LaneGeometries[layerCount] = initialGeo;
-            double xCoord = (width + 2 * widthPad) / layerCount;
-            for (int i = 0; i < layerCount; i++)
+            //Pen lanePen = new Pen(Brushes.White, 3);
+            //var leftBound = new LineGeometry(new Point(0, height), new Point(widthPad, height - divisionLine));
+            //var initialGeo = new GeometryDrawing(null, lanePen, leftBound);
+            //drawingGroup.Children.Add(initialGeo);
+            //LaneGeometries[layerCount] = initialGeo;
+
+            // init lane endpoints and lane objects
+            if (instantiateLayers)
             {
-                var start = new Point(xCoord * (i + 1), height);
-                var end = new Point(widthPad + width / layerCount * (i + 1), height - divisionLine);
+                laneEndPoints = new Point[layerCount + 1,2];
 
-                var laneGeometry = new GeometryDrawing(null, lanePen, new LineGeometry(start, end));
+                laneEndPoints[0, 0] = new Point(0 + imageWidthPad, height * imageRatio + imageHeightPad);
+                laneEndPoints[0, 1] = new Point(widthPad * imageRatio + imageWidthPad, (height - divisionLine) * imageRatio + imageHeightPad);
 
-                drawingGroup.Children.Add(laneGeometry);
-                LaneGeometries[i] = laneGeometry;
-
-                if (instantiateLayers)
+                double xCoord = (width + 2 * widthPad) / layerCount;
+                // init each layer's lane endpoints
+                for (int i=1; i<=layerCount; i++)
                 {
-                    Lanes[i] = new Lane(Metronome.GetInstance().Layers[i], ColorHelper.ColorWheel(i),
-                        widthPad + (width / layerCount) * i - xCoord * i,
-                        widthPad + (width / layerCount) * (i + 1) - xCoord * (i + 1), i);
+                    laneEndPoints[i, 0] = new Point(xCoord * i * imageRatio + imageWidthPad, height * imageRatio + imageHeightPad);
+                    laneEndPoints[i, 1] = new Point((widthPad + width / layerCount * i) * imageRatio + imageWidthPad, (height - divisionLine) * imageRatio + imageHeightPad);
+
+                    Lanes[i - 1] = new Lane(
+                        Metronome.GetInstance().Layers[i - 1], ColorHelper.ColorWheel(i - 1),
+                        (widthPad + (width / layerCount) * (i - 1) - xCoord * (i - 1)),
+                        (widthPad + (width / layerCount) * i - xCoord * i),
+                        i - 1, dc
+                    );
                 }
             }
+
+            // draw lanes
+            for (int i=0; i<=layerCount; i++)
+            {
+                dc.DrawLine(lanePen, laneEndPoints[i, 0], laneEndPoints[i, 1]);
+            }
+
+
+            //dc.DrawLine(lanePen, new Point(0, height * imageRatio), new Point(widthPad * imageRatio, (height - divisionLine) * imageRatio));
+            //
+            ////double xCoord = (width + 2 * widthPad) / layerCount;
+            //for (int i = 0; i < layerCount; i++)
+            //{
+            //    var start = new Point(xCoord * (i + 1), height);
+            //    var end = new Point(widthPad + width / layerCount * (i + 1), height - divisionLine);
+            //
+            //    //var laneGeometry = new GeometryDrawing(null, lanePen, new LineGeometry(start, end));
+            //    //
+            //    //drawingGroup.Children.Add(laneGeometry);
+            //    //LaneGeometries[i] = laneGeometry;
+            //
+            //    dc.DrawLine(lanePen, start, end);
+            //
+            //    if (instantiateLayers)
+            //    {
+            //        Lanes[i] = new Lane(Metronome.GetInstance().Layers[i], ColorHelper.ColorWheel(i),
+            //            widthPad + (width / layerCount) * i - xCoord * i,
+            //            widthPad + (width / layerCount) * (i + 1) - xCoord * (i + 1), i);
+            //    }
+            //}
         }
 
         /// <summary>
@@ -241,20 +304,25 @@ namespace Pronome
         /// <param name="e"></param>
         protected void DrawFrame(object sender, EventArgs e)
         {
+
             if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
             {
                 double elapsed = timer.GetElapsedTime();
 
-                foreach (Ball ball in Balls)
+                using (DrawingContext dc = Drawing.RenderOpen())
                 {
-                    ball.SetPosition(elapsed);
-                }
+                    foreach (Ball ball in Balls)
+                    {
+                        ball.SetPosition(elapsed, dc);
+                    }
+                    
+                    foreach (Lane lane in Lanes)
+                    {
+                        lane.ProcFrame(elapsed, dc);
+                    }
 
-                foreach (Lane lane in Lanes)
-                {
-                    lane.ProcFrame(elapsed);
+                    DrawLanes(dc, false);
                 }
-
                 IsStopped = false;
             }
             else if (Metronome.GetInstance().PlayState == Metronome.State.Paused)
@@ -271,6 +339,8 @@ namespace Pronome
                 }
                 IsStopped = true;
             }
+            
+
         }
 
         /// <summary>
@@ -278,26 +348,63 @@ namespace Pronome
         /// </summary>
         /// <param name="index">Index of layer</param>
         /// <returns>Ball geometry</returns>
-        protected GeometryDrawing MakeBall(int index)
+        protected void MakeBall(int index, DrawingContext dc)
         {
-            Point center = new Point(width / (layerCount * 2) * (index * 2 + 1) + widthPad, ballBase);
-            EllipseGeometry ball = new EllipseGeometry(center, ballRadius, ballRadius);
-            Balls[index] = new Ball(index, ball);
+            double xOffset = (width / (layerCount * 2) * (index * 2 + 1) + widthPad) * imageRatio + imageWidthPad;
+            Point center = new Point(
+                xOffset,
+                ballBase * imageRatio + imageHeightPad);
+            //EllipseGeometry ball = new EllipseGeometry(center, ballRadius, ballRadius);
+            
             Color color = ColorHelper.ColorWheel(index);
-            GeometryDrawing result = new GeometryDrawing(
-                new RadialGradientBrush(color, Colors.Transparent) {
-                    GradientStops = new GradientStopCollection(new GradientStop[] {
+            //GeometryDrawing result = new GeometryDrawing(
+            //    new RadialGradientBrush(color, Colors.Transparent) {
+            //        GradientStops = new GradientStopCollection(new GradientStop[] {
+            //            new GradientStop(color, .15),
+            //            new GradientStop(Colors.Black, 1.75)
+            //        }),
+            //        GradientOrigin = new Point(.25, .25),
+            //        Center = new Point(.25, .25),
+            //        ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
+            //    },
+            //    //new SolidColorBrush(color),
+            //    null, ball);//new Pen(Brushes.Red, 2), ball);
+
+            var gradient = new RadialGradientBrush(color, Colors.Transparent)
+            {
+                GradientStops = new GradientStopCollection(new GradientStop[] {
                         new GradientStop(color, .15),
                         new GradientStop(Colors.Black, 1.75)
                     }),
-                    GradientOrigin = new Point(.25, .25),
-                    Center = new Point(.25, .25),
-                    ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
-                },
-                //new SolidColorBrush(color),
-                null, ball);//new Pen(Brushes.Red, 2), ball);
+                GradientOrigin = new Point(.25, .25),
+                Center = new Point(.25, .25),
+                ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
+            };
 
-            return result;
+            dc.DrawEllipse(gradient, null, center, ballRadius, ballRadius);
+
+            Balls[index] = new Ball(index, gradient, xOffset, dc);
+
+            //return result;
+        }
+
+        protected void SetImageRatio()
+        {
+            // calculate imageRatio values
+            if (height / (width + 2 * widthPad) < Height / Width)
+            {
+                imageRatio = (Width - 20) / (width + 2 * widthPad);
+
+                imageHeightPad = (Height - 40 - height * imageRatio) / 2;
+            }
+            else
+            {
+                imageRatio = (Height - 40) / height;
+
+                imageWidthPad = (Width - 20 - (width + 2 * widthPad) * imageRatio) / 2;
+            }
+            ballRadius = baseBallRadius * imageRatio;
+            ballPadding = baseBallPadding * imageRatio;
         }
 
         public bool KeepOpen = true;
@@ -347,7 +454,7 @@ namespace Pronome
             protected double CurInterval; // when this is zero, it's time to cue a new tick
             protected int beatIndex = 0;
 
-            public Lane(Layer layer, Color color, double leftXDiff, double rightXDiff, int index)
+            public Lane(Layer layer, Color color, double leftXDiff, double rightXDiff, int index, DrawingContext dc)
             {
                 Layer = layer;
                 Brush = new SolidColorBrush(color);
@@ -360,20 +467,20 @@ namespace Pronome
                 Ticks = new Queue<Tick>();
 
                 // generate initial ticks and find current interval
-                InitTicks(Layer.Offset);
+                InitTicks(Layer.Offset, dc);
             }
 
             /// <summary>
             /// Fill the queue with the first batch of ticks.
             /// </summary>
             /// <param name="offset">Amount of bpm before first tick</param>
-            protected void InitTicks(double offset)
+            protected void InitTicks(double offset, DrawingContext dc)
             {
                 Tick.InitConstants(); // calculate the constants used for tick positioning
 
                 double accumulator = offset;
                 bool isFirst = true;
-                while (accumulator <= Tick.EndPoint)
+                while (accumulator <= Tick.QueueSize)
                 {
                     if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
@@ -387,19 +494,24 @@ namespace Pronome
                         continue;
                     }
                     // create tick
-                    double factor = Tick.Ease((Tick.EndPoint - accumulator) / Tick.EndPoint);
-                    var startPoint = new Point(LaneWidth * Index + factor * LeftXDiff, height);
-                    var endPoint = new Point(LaneWidth * (Index + 1) + factor * RightXDiff, height);
-                    var line = new LineGeometry(startPoint, endPoint);
-                    var lineTrans = new TranslateTransform(0, -divisionLine * factor);
-                    line.Transform = lineTrans;
-                    var geoDrawing = new GeometryDrawing(null, 
-                        new Pen(Brush, isFirst ? topTickWidth : normTickWidth), // make first tick thicker
-                        line);
-                    Instance.drawingGroup.Children.Add(geoDrawing);
+                    double factor = Tick.Ease((Tick.QueueSize - accumulator) / Tick.QueueSize);
+                    double leftStart = LaneWidth * Index + factor * LeftXDiff;
+                    double rightStart = LaneWidth * (Index + 1) + factor * RightXDiff;
+                    var startPoint = new Point(leftStart * imageRatio + imageWidthPad, (height - divisionLine * factor) * imageRatio + imageHeightPad);
+                    var endPoint = new Point(rightStart * imageRatio + imageWidthPad, (height - divisionLine * factor) * imageRatio + imageHeightPad);
+                    //var line = new LineGeometry(startPoint, endPoint);
+                    //var lineTrans = new TranslateTransform(0, -divisionLine * factor);
+                    //line.Transform = lineTrans;
+                    //var geoDrawing = new GeometryDrawing(null, 
+                    //    new Pen(Brush, isFirst ? topTickWidth : normTickWidth), // make first tick thicker
+                    //    line);
+                    //Instance.drawingGroup.Children.Add(geoDrawing);
+
+                    dc.DrawLine(new Pen(Brush, isFirst ? topTickWidth : normTickWidth), startPoint, endPoint);
+
                     isFirst = false;
 
-                    var tick = new Tick(LeftXDiff, RightXDiff, line, geoDrawing, this, Tick.EndPoint - accumulator);
+                    var tick = new Tick(LeftXDiff, RightXDiff, leftStart, rightStart, this, new Pen(Brush, isFirst ? topTickWidth : normTickWidth), Tick.QueueSize - accumulator);
 
                     Ticks.Enqueue(tick);
 
@@ -421,7 +533,7 @@ namespace Pronome
 
                 // get current interval.
                 accumulator -= Layer.Beat[beatIndex == Layer.Beat.Count ? 0 : beatIndex].Bpm;
-                CurInterval = Layer.Beat[beatIndex == Layer.Beat.Count ? 0 : beatIndex].Bpm - (Tick.EndPoint - accumulator);
+                CurInterval = Layer.Beat[beatIndex == Layer.Beat.Count ? 0 : beatIndex].Bpm - (Tick.QueueSize - accumulator);
             }
 
             /// <summary>
@@ -437,7 +549,7 @@ namespace Pronome
 
                     if (tick != null)
                     {
-                        tick.GeoDrawing.Pen.Thickness = topTickWidth;
+                        tick.Pen.Thickness = topTickWidth;
                     }
                 }
 
@@ -447,12 +559,12 @@ namespace Pronome
             /// Move ticks in queue, decrement the current interval, and add any new ticks.
             /// </summary>
             /// <param name="elapsedTime">Amount of time since last frame</param>
-            public void ProcFrame(double elapsedTime)
+            public void ProcFrame(double elapsedTime, DrawingContext dc)
             {
                 // animate ticks
                 foreach (Tick tick in Ticks.ToArray())
                 {
-                    tick.Move(elapsedTime);
+                    tick.Move(elapsedTime, dc);
                 }
 
                 CurInterval -= elapsedTime * (Metronome.GetInstance().Tempo / 60);
@@ -462,18 +574,19 @@ namespace Pronome
                 {
                     //if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
-                    double factor = Tick.Ease(-CurInterval) / Tick.EndPoint;
+                    double factor = Tick.Ease(-CurInterval) / Tick.QueueSize;
                     var startPoint = new Point(LaneWidth * Index + factor * LeftXDiff, height);
                     var endPoint = new Point(LaneWidth * (Index + 1) + factor * RightXDiff, height);
-                    var line = new LineGeometry(startPoint, endPoint);
-                    var lineTrans = new TranslateTransform(0, -divisionLine * factor);
-                    line.Transform = lineTrans;
-                    var geoDrawing = new GeometryDrawing(null, 
-                        new Pen(Brush, Ticks.Count == 0 ? topTickWidth : normTickWidth), 
-                        line);
-                    Instance.drawingGroup.Children.Add(geoDrawing);
+                    //var line = new LineGeometry(startPoint, endPoint);
+                    //var lineTrans = new TranslateTransform(0, -divisionLine * factor);
+                    //line.Transform = lineTrans;
+                    //var geoDrawing = new GeometryDrawing(null, 
+                    //    new Pen(Brush, Ticks.Count == 0 ? topTickWidth : normTickWidth), 
+                    //    line);
+                    //Instance.drawingGroup.Children.Add(geoDrawing);
+                    Pen pen = new Pen(Brush, Ticks.Count == 0 ? topTickWidth : normTickWidth);
 
-                    Ticks.Enqueue(new Tick(LeftXDiff, RightXDiff, line, geoDrawing, this, -CurInterval));
+                    Ticks.Enqueue(new Tick(LeftXDiff, RightXDiff, startPoint.X, endPoint.X, this, pen, -CurInterval));
 
                     if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
@@ -490,7 +603,7 @@ namespace Pronome
             /// Set state of the drawing to match the position of the playing/paused beat.
             /// </summary>
             /// <param name="elapsedBpm">Number of Bpm that have elapsed.</param>
-            public void Sync(double elapsedBpm)
+            public void Sync(double elapsedBpm, DrawingContext dc)
             {
                 elapsedBpm -= Layer.Offset;
                 elapsedBpm = elapsedBpm % Layer.GetTotalBpmValue();
@@ -499,7 +612,7 @@ namespace Pronome
                 // Remove existing ticks
                 foreach(Tick tick in Ticks)
                 {
-                    Instance.drawingGroup.Children.Remove(tick.GeoDrawing);
+                    //Instance.drawingGroup.Children.Remove(tick.GeoDrawing);
                 }
 
                 Ticks.Clear();
@@ -517,62 +630,59 @@ namespace Pronome
                 //if (beatIndex == -1) beatIndex = Layer.Beat.Count - 1;
 
                 // fill in initial ticks
-                InitTicks(bpm - elapsedBpm);
+                InitTicks(bpm - elapsedBpm, dc);
             }
         }
 
         public class Tick
         {
-            public static double EndPoint = 6; // number of qtr notes to show. Duration of animation for each tick
+            public static double QueueSize = 6; // number of qtr notes to show. Duration of animation for each tick
 
             protected double ElapsedInterval = 0;
             protected bool IsComplete = false;
 
             protected double LeftDisplace; // the distance that left point needs to move inwards over course of animation.
             protected double RightDisplace;
-            protected double LeftStart;
-            protected double RightStart;
-
-            public GeometryDrawing GeoDrawing;
-            protected TranslateTransform LineTranslate;
-            protected LineGeometry Line;
+            protected double LeftStart; // starting position of left endpoint
+            protected double RightStart; // starting position of right endpoint
 
             protected Lane Lane;
+
+            public Pen Pen;
 
             public Tick(
                 double leftDisplace,
                 double rightDisplace, 
-                LineGeometry line, 
-                GeometryDrawing geoDrawing,
+                double leftStart, 
+                double rightStart,
                 Lane lane,
+                Pen pen,
                 double elapsedInterval = 0)
             {
                 LeftDisplace = leftDisplace;
                 RightDisplace = rightDisplace;
-                Line = line;
-                LineTranslate = line.Transform as TranslateTransform;
-                GeoDrawing = geoDrawing;
                 Lane = lane;
                 ElapsedInterval = elapsedInterval;
-                LeftStart = line.StartPoint.X - Ease(ElapsedInterval / EndPoint) * LeftDisplace;
-                RightStart = line.EndPoint.X - Ease(ElapsedInterval / EndPoint) * RightDisplace;
+                LeftStart = leftStart - Ease(ElapsedInterval / QueueSize) * LeftDisplace;
+                RightStart = rightStart - Ease(ElapsedInterval / QueueSize) * RightDisplace;
+                Pen = pen;
             }
 
-            public void Move(double timeChange)
+            public void Move(double timeChange, DrawingContext dc)
             {
                 // add elapsed qtr notes to interval
                 ElapsedInterval += timeChange * (Metronome.GetInstance().Tempo / 60);
 
-                double fraction = ElapsedInterval / EndPoint;
+                double fraction = ElapsedInterval / QueueSize;
                 double transY = Ease(fraction);
 
                 // move line up
-                LineTranslate.Y = -divisionLine * transY;
+                double yCoord = -divisionLine * transY;
 
                 if (fraction >= 1)
                 {
                     // remove element when animation finished
-                    Instance.drawingGroup.Children.Remove(GeoDrawing);
+                    //Instance.drawingGroup.Children.Remove(GeoDrawing);
                     if (!IsComplete)
                     {
                         Lane.DequeueTick();
@@ -582,8 +692,14 @@ namespace Pronome
                 else
                 {
                     // reposition end points
-                    Line.StartPoint = new Point(LeftStart + transY * LeftDisplace, Line.StartPoint.Y);
-                    Line.EndPoint = new Point(RightStart + transY * RightDisplace, Line.EndPoint.Y);
+                    //Line.StartPoint = new Point(LeftStart + transY * LeftDisplace, Line.StartPoint.Y);
+                    //Line.EndPoint = new Point(RightStart + transY * RightDisplace, Line.EndPoint.Y);
+
+                    double y = (height - (divisionLine * transY)) * imageRatio + imageHeightPad;
+                    Point start = new Point((LeftStart + transY * LeftDisplace) * imageRatio + imageWidthPad, y);
+                    Point end = new Point((RightStart + transY * RightDisplace) * imageRatio + imageWidthPad, y);
+
+                    dc.DrawLine(Pen, start, end);
                 }
             }
 
@@ -613,29 +729,33 @@ namespace Pronome
         protected class Ball
         {
             protected int Index = 0;
-            public EllipseGeometry Geometry;
-            protected TranslateTransform Transform;
+            //public EllipseGeometry Geometry;
+            //protected TranslateTransform Transform;
             protected Layer Layer;
             public double currentInterval = 0; // length in quarters of the current beat interval
             protected double countDown = 0; // quarter notes remaining before going to next interval
             protected double defaultFactor; //4500
             protected float currentTempo;
             protected double factor;// = defaultFactor; // control the max height of the bounce
+            protected RadialGradientBrush gradient;
+            protected double XOffset;
 
-            public Ball(int index, EllipseGeometry geometry)
+            public Ball(int index, RadialGradientBrush grad, double xOffset, DrawingContext dc)
             {
-                Geometry = geometry;
+                //Geometry = geometry;
                 Layer = Metronome.GetInstance().Layers[index];
                 countDown += Layer.Offset;//BpmToSec(Layer.Offset);
                 AddSilence(); // account for silent beats at start
                 currentInterval = countDown * 2; // put it at the apex
-                Transform = new TranslateTransform();
-                Geometry.Transform = Transform;
+                //Transform = new TranslateTransform();
+                //Geometry.Transform = Transform;
+                gradient = grad;
+                XOffset = xOffset;
 
                 currentTempo = Metronome.GetInstance().Tempo;
                 defaultFactor = 1000 * (120 / Metronome.GetInstance().Tempo);
                 SetFactor();
-                SetPosition(0);
+                SetPosition(0, dc);
             }
 
             public void AddNext()
@@ -665,7 +785,7 @@ namespace Pronome
                 SetFactor();
             }
 
-            public void SetPosition(double elapsedTime)
+            public void SetPosition(double elapsedTime, DrawingContext dc)
             {
                 countDown -= elapsedTime * (Metronome.GetInstance().Tempo / 60);
 
@@ -676,7 +796,15 @@ namespace Pronome
 
                 double total = currentInterval - countDown;
                 
-                Transform.Y = -factor * (-total * total + currentInterval * total);
+                //Transform.Y = -factor * (-total * total + currentInterval * total);
+
+                double y = (ballBase - factor * (-total * total + currentInterval * total)) * imageRatio + imageHeightPad;
+
+                dc.DrawEllipse(
+                    gradient,
+                    null,
+                    new Point(XOffset, y),
+                    ballRadius, ballRadius);
             }
 
             protected double AddSilence()
@@ -699,7 +827,7 @@ namespace Pronome
                 return 0;
             }
 
-            public void Sync(double elapsedBpm)
+            public void Sync(double elapsedBpm, DrawingContext dc)
             {
                 elapsedBpm -= Layer.Offset;
                 elapsedBpm = elapsedBpm % Layer.GetTotalBpmValue();
@@ -732,7 +860,7 @@ namespace Pronome
 
                 // set the current interval and countdown interval appropriately
                 SetFactor();
-                SetPosition(0);
+                SetPosition(0, dc);
             }
 
             protected void SetFactor()
@@ -747,6 +875,28 @@ namespace Pronome
                 {
                     factor = defaultFactor;
                 }
+            }
+        }
+
+        protected override int VisualChildrenCount
+        {
+            get => 1;
+        }
+
+        protected override Visual GetVisualChild(int index)
+        {
+            if (index != 0) throw new ArgumentOutOfRangeException("index");
+
+            return Drawing;
+        }
+
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            SetImageRatio();
+
+            if (Metronome.GetInstance().PlayState != Metronome.State.Playing)
+            {
+                DrawScene();
             }
         }
     }
