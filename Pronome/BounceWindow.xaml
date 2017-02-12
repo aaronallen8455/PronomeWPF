@@ -5,17 +5,5 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        SizeChanged="Window_SizeChanged"
-        Title="Bounce Window" Height="900" Width="900">
-    <!--<Grid Background="Black">
-        <Image Margin="10">
-            <Image.Source>
-                <DrawingImage>
-                    <DrawingImage.Drawing>
-                        <DrawingGroup x:Name="drawingGroup"/>
-                    </DrawingImage.Drawing>
-                </DrawingImage>
-            </Image.Source>
-        </Image>
-    </Grid>-->
-</Window>
+        SizeChanged="DrawScene"
+        Title="Bounce Window" Height="900" Width="900"/>

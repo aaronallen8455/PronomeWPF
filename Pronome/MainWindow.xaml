@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Height="400" Width="800"
         AllowsTransparency="True" WindowStyle="None" Background="Transparent"
-        Title="MainWindow">
+        Title="ProNome">
     <Window.Resources>
         <!--window for displaying options-->
         <local:OptionsWindow x:Key="optionsWindow"/>

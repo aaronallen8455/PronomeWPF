@@ -217,14 +217,22 @@ namespace Pronome
         private void queueSizeInput_LostFocus(object sender, RoutedEventArgs e)
         {
             TextBox input = sender as TextBox;
-            double value = double.Parse(input.Text);
-            if (value > 0 && value < 1000)
+            try
             {
-                BounceWindow.Tick.QueueSize = value;
-                if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
+                double value = double.Parse(input.Text);
+
+                if (value > 0 && value < 1000)
                 {
-                    BounceWindow.Instance.DrawScene();
+                    BounceWindow.Tick.QueueSize = value;
+                    if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
+                    {
+                        BounceWindow.Instance.DrawScene();
+                    }
                 }
+            }
+            catch (FormatException ex)
+            {
+                input.Text = BounceWindow.Tick.QueueSize.ToString();
             }
         }
 

@@ -92,7 +92,7 @@ namespace Pronome
         /// </summary>
         protected static double ballBase = height - divisionLine - ballRadius;
 
-        protected DrawingVisual Drawing;
+        protected DrawingVisual Drawing = new DrawingVisual();
 
         protected static double imageRatio = 1;
 
@@ -163,11 +163,11 @@ namespace Pronome
             //drawingGroup.Children.Clear();
             ballRadius = baseBallRadius;
             ballPadding = baseBallPadding;
-
+            
             layerCount = met.Layers.Count;
             Balls = new Ball[layerCount];
             Lanes = new Lane[layerCount];
-            LaneGeometries = new GeometryDrawing[layerCount + 1];
+            //LaneGeometries = new GeometryDrawing[layerCount + 1];
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
             divisionLine = height / (1 / divisionPoint);
             ballBase = height - divisionLine - ballRadius;
@@ -178,8 +178,6 @@ namespace Pronome
             // draw sizer element
             //var size = new RectangleGeometry(new Rect(0, 0, width + 2 * widthPad, height));
             //drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, null, size));
-
-            if (Drawing == null) Drawing = new DrawingVisual();
 
             using (DrawingContext dc = Drawing.RenderOpen())
             {
@@ -223,13 +221,14 @@ namespace Pronome
             timer = new AnimationTimer();
 
             // attach to frame rendering event
+            CompositionTarget.Rendering -= DrawFrame;
             CompositionTarget.Rendering += DrawFrame;
 
             SceneDrawn = true;
         }
 
         Point[,] laneEndPoints;
-        Pen lanePen = new Pen(Brushes.White, 3);
+        Pen lanePen = new Pen(Brushes.LightGray, 2);
 
         /// <summary>
         /// Make the lane drawing and instantiate Lane objects for each layer.
@@ -351,9 +350,9 @@ namespace Pronome
         protected void MakeBall(int index, DrawingContext dc)
         {
             double xOffset = (width / (layerCount * 2) * (index * 2 + 1) + widthPad) * imageRatio + imageWidthPad;
-            Point center = new Point(
-                xOffset,
-                ballBase * imageRatio + imageHeightPad);
+            //Point center = new Point(
+            //    xOffset,
+            //    ballBase * imageRatio + imageHeightPad);
             //EllipseGeometry ball = new EllipseGeometry(center, ballRadius, ballRadius);
             
             Color color = ColorHelper.ColorWheel(index);
@@ -381,27 +380,45 @@ namespace Pronome
                 ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
             };
 
-            dc.DrawEllipse(gradient, null, center, ballRadius, ballRadius);
+            //dc.DrawEllipse(gradient, null, center, ballRadius, ballRadius);
 
             Balls[index] = new Ball(index, gradient, xOffset, dc);
 
             //return result;
         }
 
+        /// <summary>
+        /// Set the image ratio values based on window size
+        /// </summary>
         protected void SetImageRatio()
         {
-            // calculate imageRatio values
-            if (height / (width + 2 * widthPad) < Height / Width)
-            {
-                imageRatio = (Width - 20) / (width + 2 * widthPad);
+            double winWidth;
+            double winHeight;
 
-                imageHeightPad = (Height - 40 - height * imageRatio) / 2;
+            //if (WindowState == WindowState.Maximized)
+            //{
+            //    winWidth = SystemParameters.PrimaryScreenWidth;
+            //    winHeight = SystemParameters.PrimaryScreenHeight;
+            //}
+            //else
+            //{
+            winWidth = ActualWidth;
+            winHeight = ActualHeight;
+            //}
+
+            if (height / (width + 2 * widthPad) < winHeight / winWidth)
+            {
+                imageRatio = (winWidth - 20) / (width + 2 * widthPad);
+
+                imageHeightPad = (winHeight - 40 - height * imageRatio) / 2;
+                imageWidthPad = 0;
             }
             else
             {
-                imageRatio = (Height - 40) / height;
+                imageRatio = (winHeight - 40) / height;
 
-                imageWidthPad = (Width - 20 - (width + 2 * widthPad) * imageRatio) / 2;
+                imageWidthPad = (winWidth - 20 - (width + 2 * widthPad) * imageRatio) / 2;
+                imageHeightPad = 0;
             }
             ballRadius = baseBallRadius * imageRatio;
             ballPadding = baseBallPadding * imageRatio;
@@ -890,14 +907,11 @@ namespace Pronome
             return Drawing;
         }
 
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        protected override void OnStateChanged(EventArgs e)
         {
-            SetImageRatio();
+            base.OnStateChanged(e);
 
-            if (Metronome.GetInstance().PlayState != Metronome.State.Playing)
-            {
-                DrawScene();
-            }
+            DrawScene();
         }
     }
 }
