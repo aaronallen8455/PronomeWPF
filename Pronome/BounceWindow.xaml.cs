@@ -630,6 +630,11 @@ namespace Pronome
             protected double LeftStart; // starting position of left endpoint
             protected double RightStart; // starting position of right endpoint
 
+            double leftStartImageRatioPad; // LeftStart * imageRatio + imageWidthPad
+            double leftDisplaceImageRatio; // LeftDisplace * imageRatio
+            double rightStartImageRatioPad; // RightStart * imageRatio + imageWidthPad
+            double rightDisplaceImageRatio; // RightDisplace * imageRatio
+
             protected Lane Lane;
 
             public Pen Pen;
@@ -650,6 +655,10 @@ namespace Pronome
                 LeftStart = leftStart - Ease(ElapsedInterval / QueueSize) * LeftDisplace;
                 RightStart = rightStart - Ease(ElapsedInterval / QueueSize) * RightDisplace;
                 Pen = pen;
+                leftStartImageRatioPad = LeftStart * imageRatio + imageWidthPad;
+                leftDisplaceImageRatio = LeftDisplace * imageRatio;
+                rightStartImageRatioPad = RightStart * imageRatio + imageWidthPad;
+                rightDisplaceImageRatio = RightDisplace * imageRatio;
             }
 
             public void Move(double timeChange, DrawingContext dc)
@@ -676,16 +685,16 @@ namespace Pronome
                 else
                 {
                     // reposition end points
-                    //Line.StartPoint = new Point(LeftStart + transY * LeftDisplace, Line.StartPoint.Y);
-                    //Line.EndPoint = new Point(RightStart + transY * RightDisplace, Line.EndPoint.Y);
 
-                    double y = (height - (divisionLine * transY)) * imageRatio + imageHeightPad;
-                    Point start = new Point((LeftStart + transY * LeftDisplace) * imageRatio + imageWidthPad, y);
-                    Point end = new Point((RightStart + transY * RightDisplace) * imageRatio + imageWidthPad, y);
+                    double y = heightImageRatioPad - divisionLineImageRatio * transY;
+                    Point start = new Point(leftStartImageRatioPad + transY * leftDisplaceImageRatio, y);
+                    Point end = new Point(rightStartImageRatioPad + transY * rightDisplaceImageRatio, y);
 
                     dc.DrawLine(Pen, start, end);
                 }
             }
+
+            
 
             static public void InitConstants()
             {
@@ -693,8 +702,12 @@ namespace Pronome
                 apex = leftSlope * (widthPad + Instance.width / 2);
                 factor = -Math.Log(1 - (1 / (apex / divisionLine)), 2);
                 denominator = -Math.Pow(2, -factor) + 1;
+                heightImageRatioPad = height * imageRatio + imageHeightPad;
+                divisionLineImageRatio = divisionLine * imageRatio;
             }
 
+            static double heightImageRatioPad; // height * imageRatio + heightPad
+            static double divisionLineImageRatio; // divisionLine * imageRatio
             static double leftSlope;
             static double apex;
             static double denominator;
@@ -731,14 +744,13 @@ namespace Pronome
                 countDown += Layer.Offset;//BpmToSec(Layer.Offset);
                 AddSilence(); // account for silent beats at start
                 currentInterval = countDown * 2; // put it at the apex
-                //Transform = new TranslateTransform();
-                //Geometry.Transform = Transform;
                 gradient = grad;
                 XOffset = xOffset;
 
                 currentTempo = Metronome.GetInstance().Tempo;
                 defaultFactor = 1000 * (120 / Metronome.GetInstance().Tempo);
                 SetFactor();
+                ballBaseImageRatioPad = ballBase * imageRatio + imageHeightPad;
                 SetPosition(0, dc);
             }
 
@@ -764,10 +776,12 @@ namespace Pronome
                 countDown += time;
 
                 currentInterval = time + silence;
-
                 // check if factor needs to be changed
                 SetFactor();
+                factorImageRatioCurInterval = factorImageRatio * currentInterval;
             }
+
+            double ballBaseImageRatioPad; // bb * ir + hpad
 
             public void SetPosition(double elapsedTime, DrawingContext dc)
             {
@@ -782,7 +796,7 @@ namespace Pronome
 
                 //Transform.Y = -factor * (-total * total + currentInterval * total);
 
-                double y = (ballBase - factor * (-total * total + currentInterval * total)) * imageRatio + imageHeightPad;
+                double y = ballBaseImageRatioPad - factorImageRatio * -total * total - factorImageRatioCurInterval * total;
 
                 dc.DrawEllipse(
                     gradient,
@@ -790,6 +804,9 @@ namespace Pronome
                     new Point(XOffset, y),
                     ballRadius, ballRadius);
             }
+
+            double factorImageRatio; // factor * imageRatio
+            double factorImageRatioCurInterval; // factorImageRatio * currentInterval
 
             protected double AddSilence()
             {
@@ -859,6 +876,7 @@ namespace Pronome
                 {
                     factor = defaultFactor;
                 }
+                factorImageRatio = factor * imageRatio;
             }
         }
 
