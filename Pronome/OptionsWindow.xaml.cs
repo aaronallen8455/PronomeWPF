@@ -67,7 +67,8 @@ namespace Pronome
             {
                 // validate the input
                 string pattern = @"[\d.*/\-+xX]";
-                if (Regex.IsMatch(intervalAudibleInput.Text + intervalSilentInput.Text, pattern)) {
+                if (Regex.IsMatch(intervalAudibleInput.Text + intervalSilentInput.Text, pattern))
+                {
                     audible = BeatCell.Parse(intervalAudibleInput.Text);
                     silent = BeatCell.Parse(intervalSilentInput.Text);
 

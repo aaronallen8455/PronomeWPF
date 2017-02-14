@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Media;
+using System;
 
 namespace Pronome.Bounce
 {
@@ -113,11 +114,13 @@ namespace Pronome.Bounce
         /// </summary>
         public static double TickQueueSize = 6;
 
+        public static DrawingVisual Drawing;
+
         /// <summary>
         /// Draw the scene, instantiate all initial objects
         /// </summary>
         /// <param name="drawing"></param>
-        public static void DrawScene(DrawingVisual drawing)
+        public static void DrawScene()
         {
             Metronome met = Metronome.GetInstance();
             if (met.Layers.Count == 0) return; // do nothing if beat is empty
@@ -138,7 +141,7 @@ namespace Pronome.Bounce
             // calculate imageRatio values
             SetImageRatio(BounceWindow.Instance.ActualWidth, BounceWindow.Instance.ActualHeight);
 
-            using (DrawingContext dc = drawing.RenderOpen())
+            using (DrawingContext dc = Drawing.RenderOpen())
             {
                 // draw lanes
                 DrawLanes(dc);
@@ -220,14 +223,13 @@ namespace Pronome.Bounce
         /// <summary>
         /// Draw the current frame.
         /// </summary>
-        /// <param name="dc"></param>
-        public static void DrawFrame(DrawingVisual drawing)
+        public static void DrawFrame(object sender, EventArgs e)
         {
             if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
             {
                 double elapsed = timer.GetElapsedTime();
 
-                using (DrawingContext dc = drawing.RenderOpen())
+                using (DrawingContext dc = Drawing.RenderOpen())
                 {
                     foreach (Ball ball in Balls)
                     {
@@ -253,7 +255,7 @@ namespace Pronome.Bounce
 
                 if (!IsStopped)
                 {
-                    DrawScene(drawing);
+                    DrawScene();
                 }
                 IsStopped = true;
             }

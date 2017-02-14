@@ -38,9 +38,9 @@ namespace Pronome
             // import the syntax definition
             Assembly myAssembly = Assembly.GetExecutingAssembly();
             using (Stream s = myAssembly.GetManifestResourceStream("Pronome.pronome.xshd"))
-                using (XmlTextReader reader = new XmlTextReader(s))
-                    HighlightingManager.Instance.RegisterHighlighting("Pronome", new[] { ".cs" }, 
-                        HighlightingLoader.Load(reader, HighlightingManager.Instance));
+            using (XmlTextReader reader = new XmlTextReader(s))
+                HighlightingManager.Instance.RegisterHighlighting("Pronome", new[] { ".cs" },
+                    HighlightingLoader.Load(reader, HighlightingManager.Instance));
 
             Metronome.GetInstance().Tempo = 120f;
             tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
@@ -240,7 +240,7 @@ namespace Pronome
             // Write window size and position to storage
             IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
             using (IsolatedStorageFileStream stream = new IsolatedStorageFileStream("pronomeSettings", FileMode.Create, f))
-                using (StreamWriter writer = new StreamWriter(stream))
+            using (StreamWriter writer = new StreamWriter(stream))
             {
                 foreach (KeyValuePair<string, double> pair in Settings)
                 {
@@ -261,7 +261,7 @@ namespace Pronome
             // Read each setting when application is initialized
             IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
             using (IsolatedStorageFileStream stream = new IsolatedStorageFileStream("pronomeSettings", FileMode.OpenOrCreate, f))
-                using (StreamReader reader = new StreamReader(stream))
+            using (StreamReader reader = new StreamReader(stream))
             {
                 string line = reader.ReadLine();
                 while (line != null)

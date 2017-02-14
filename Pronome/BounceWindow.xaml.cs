@@ -17,11 +17,6 @@ namespace Pronome
         /// </summary>
         public bool SceneDrawn = false;
 
-        /// <summary>
-        /// True if beat is not playing.
-        /// </summary>
-        protected bool IsStopped = true;
-
         protected DrawingVisual Drawing = new DrawingVisual();
 
         public static BounceWindow Instance;
@@ -30,6 +25,7 @@ namespace Pronome
         {
             Instance = this;
             InitializeComponent();
+            Helper.Drawing = Drawing;
             DrawScene();
             AddVisualChild(Drawing);
             AddLogicalChild(Drawing);
@@ -49,11 +45,11 @@ namespace Pronome
         /// </summary>
         public void DrawScene()
         {
-            Helper.DrawScene(Drawing);
+            Helper.DrawScene();
 
             // attach to frame rendering event
-            CompositionTarget.Rendering -= DrawFrame;
-            CompositionTarget.Rendering += DrawFrame;
+            CompositionTarget.Rendering -= Helper.DrawFrame;
+            CompositionTarget.Rendering += Helper.DrawFrame;
 
             SceneDrawn = true;
         }
@@ -65,7 +61,7 @@ namespace Pronome
         /// <param name="e"></param>
         protected void DrawFrame(object sender, EventArgs e)
         {
-            Helper.DrawFrame(Drawing);
+            //Helper.DrawFrame(Drawing);
         }
 
         public bool KeepOpen = true;
