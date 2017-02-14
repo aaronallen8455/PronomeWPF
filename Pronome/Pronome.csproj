@@ -86,6 +86,10 @@
     </Compile>
     <Compile Include="Classes\AnimationTimer.cs" />
     <Compile Include="Classes\BeatGraph.cs" />
+    <Compile Include="Classes\Bounce\Ball.cs" />
+    <Compile Include="Classes\Bounce\Helper.cs" />
+    <Compile Include="Classes\Bounce\Lane.cs" />
+    <Compile Include="Classes\Bounce\Tick.cs" />
     <Compile Include="Classes\ColorHelper.cs" />
     <Compile Include="Classes\TextMarkerService.cs" />
     <Page Include="BeatGraphWindow.xaml">
