@@ -13,6 +13,8 @@ namespace Pronome.Bounce
         protected double RightDisplace;
         protected double LeftStart; // starting position of left endpoint
         protected double RightStart; // starting position of right endpoint
+        protected Point StartPoint;
+        protected Point EndPoint;
 
         static double leftSlope;
         static double apex;
@@ -39,6 +41,8 @@ namespace Pronome.Bounce
             LeftStart = leftStart - Ease(ElapsedInterval / Helper.TickQueueSize) * LeftDisplace;
             RightStart = rightStart - Ease(ElapsedInterval / Helper.TickQueueSize) * RightDisplace;
             Pen = pen;
+            StartPoint = new Point();
+            EndPoint = new Point();
         }
 
         public void Move(double timeChange, DrawingContext dc)
@@ -65,9 +69,7 @@ namespace Pronome.Bounce
             else
             {
                 // reposition end points
-                //Line.StartPoint = new Point(LeftStart + transY * LeftDisplace, Line.StartPoint.Y);
-                //Line.EndPoint = new Point(RightStart + transY * RightDisplace, Line.EndPoint.Y);
-
+                
                 double y = (Helper.height - (Helper.divisionLine * transY)) * Helper.imageRatio + Helper.imageHeightPad;
                 Point start = new Point((LeftStart + transY * LeftDisplace) * Helper.imageRatio + Helper.imageWidthPad, y);
                 Point end = new Point((RightStart + transY * RightDisplace) * Helper.imageRatio + Helper.imageWidthPad, y);

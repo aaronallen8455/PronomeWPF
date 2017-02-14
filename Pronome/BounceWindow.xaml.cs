@@ -2,7 +2,6 @@
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Media;
-using System.Windows.Input;
 using Pronome.Bounce;
 
 namespace Pronome
@@ -96,34 +95,6 @@ namespace Pronome
             base.OnStateChanged(e);
 
             DrawScene();
-        }
-
-        /// <summary>
-        /// Enter full screen mode on CTRL+F
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == Key.F || e.SystemKey == Key.A
-                && (e.KeyboardDevice.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
-            {
-                if (WindowStyle != WindowStyle.None)
-                {
-                    Mouse.OverrideCursor = Cursors.None;
-                    Hide();
-                    WindowState = WindowState.Maximized;
-                    WindowStyle = WindowStyle.None;
-                    Show();
-
-                }
-                else
-                {
-                    WindowState = WindowState.Normal;
-                    WindowStyle = WindowStyle.SingleBorderWindow;
-                    Mouse.OverrideCursor = Cursors.Arrow;
-                }
-            }
         }
     }
 }

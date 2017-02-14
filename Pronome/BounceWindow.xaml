@@ -6,5 +6,4 @@
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
         SizeChanged="DrawScene"
-        KeyDown="Window_KeyDown"
         Title="Bounce Window" Height="900" Width="900"/>

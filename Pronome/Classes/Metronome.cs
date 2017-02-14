@@ -5,7 +5,6 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Threading;
-using System.Text.RegularExpressions;
 using System.Windows;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
