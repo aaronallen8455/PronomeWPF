@@ -192,7 +192,7 @@ namespace Pronome
 
         private void bounceDivideSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            BounceWindow.divisionPoint = (sender as Slider).Value;
+            Bounce.Helper.divisionPoint = (sender as Slider).Value;
             if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
             {
                 BounceWindow.Instance.DrawScene();
@@ -202,7 +202,7 @@ namespace Pronome
 
         private void bounceDivideSlider_Loaded(object sender, RoutedEventArgs e)
         {
-            (sender as Slider).Value = BounceWindow.divisionPoint;
+            (sender as Slider).Value = Bounce.Helper.divisionPoint;
         }
 
         private void queueSizeInput_LostFocus(object sender, RoutedEventArgs e)
@@ -214,7 +214,7 @@ namespace Pronome
 
                 if (value > 0 && value < 1000)
                 {
-                    BounceWindow.Tick.QueueSize = value;
+                    Bounce.Helper.TickQueueSize = value;
                     if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
                     {
                         BounceWindow.Instance.DrawScene();
@@ -223,18 +223,18 @@ namespace Pronome
             }
             catch (FormatException ex)
             {
-                input.Text = BounceWindow.Tick.QueueSize.ToString();
+                input.Text = Bounce.Helper.TickQueueSize.ToString();
             }
         }
 
         private void queueSizeInput_Loaded(object sender, RoutedEventArgs e)
         {
-            (sender as TextBox).Text = BounceWindow.Tick.QueueSize.ToString();
+            (sender as TextBox).Text = Bounce.Helper.TickQueueSize.ToString();
         }
 
         private void bounceLaneTaperSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            BounceWindow.widthPad = (sender as Slider).Value;
+            Bounce.Helper.widthPad = (sender as Slider).Value;
             if (BounceWindow.Instance != null && BounceWindow.Instance.SceneDrawn)
             {
                 //Dispatcher.BeginInvoke(new Action(() => BounceWindow.Instance.DrawScene()));
@@ -245,7 +245,7 @@ namespace Pronome
 
         private void bounceLaneTaperSlider_Loaded(object sender, RoutedEventArgs e)
         {
-            (sender as Slider).Value = BounceWindow.widthPad;
+            (sender as Slider).Value = Bounce.Helper.widthPad;
         }
 
 

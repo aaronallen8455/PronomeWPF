@@ -8,7 +8,7 @@ namespace Pronome.Bounce
     /// <summary>
     /// Has methods for drawing the scene and holding state
     /// </summary>
-    public static class Helper
+    public class Helper
     {
         /// <summary>
         /// The width of the ball area
@@ -33,27 +33,27 @@ namespace Pronome.Bounce
         /// <summary>
         /// The number of layers in the beat
         /// </summary>
-        public static int layerCount;
+        public int layerCount;
 
         /// <summary>
         /// Holds the Lane objects.
         /// </summary>
-        static Lane[] Lanes;
+        protected Lane[] Lanes;
 
         /// <summary>
         /// Holds the ball objects
         /// </summary>
-        static Ball[] Balls;
+        protected Ball[] Balls;
 
         /// <summary>
         /// Timer for syncing animation
         /// </summary>
-        static AnimationTimer timer;
+        protected AnimationTimer timer;
 
         /// <summary>
         /// True if beat is not playing.
         /// </summary>
-        static bool IsStopped = true;
+        protected bool IsStopped = true;
 
         /// <summary>
         /// The base radius of the ball drawings.
@@ -73,7 +73,7 @@ namespace Pronome.Bounce
         /// <summary>
         /// Amount of ball padding based on image ratio
         /// </summary>
-        static double ballPadding;
+        protected double ballPadding;
 
         /// <summary>
         /// The unit position of the line that seperates the lanes and balls.
@@ -83,7 +83,7 @@ namespace Pronome.Bounce
         /// <summary>
         /// The position of the center line of the balls when at base level.
         /// </summary>
-        public static double ballBase = height - divisionLine - ballRadius;
+        public double ballBase = height - divisionLine - ballRadius;
 
         /// <summary>
         /// The factor by which the drawn image is sized to the window
@@ -115,13 +115,18 @@ namespace Pronome.Bounce
         /// </summary>
         public static double TickQueueSize = 6;
 
-        public static DrawingVisual Drawing;
+        protected DrawingVisual Drawing;
+
+        public Helper(DrawingVisual drawing)
+        {
+            Drawing = drawing;
+        }
 
         /// <summary>
         /// Draw the scene, instantiate all initial objects
         /// </summary>
         /// <param name="drawing"></param>
-        public static void DrawScene()
+        public void DrawScene()
         {
             Metronome met = Metronome.GetInstance();
             if (met.Layers.Count == 0) return; // do nothing if beat is empty
@@ -189,7 +194,7 @@ namespace Pronome.Bounce
         /// </summary>
         /// <param name="dc"></param>
         /// <param name="instantiateLayers">Whether to run the instantiation routine</param>
-        static void DrawLanes(DrawingContext dc, bool instantiateLayers = true)
+        protected void DrawLanes(DrawingContext dc, bool instantiateLayers = true)
         {
             if (instantiateLayers)
             {
@@ -209,7 +214,7 @@ namespace Pronome.Bounce
                         Metronome.GetInstance().Layers[i - 1], ColorHelper.ColorWheel(i - 1),
                         (widthPad + (width / layerCount) * (i - 1) - xCoord * (i - 1)),
                         (widthPad + (width / layerCount) * i - xCoord * i),
-                        i - 1, dc
+                        i - 1, dc, this
                     );
                 }
             }
@@ -224,7 +229,7 @@ namespace Pronome.Bounce
         /// <summary>
         /// Draw the current frame.
         /// </summary>
-        public static void DrawFrame(object sender, EventArgs e)
+        public void DrawFrame(object sender, EventArgs e)
         {
             if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
             {
@@ -267,7 +272,7 @@ namespace Pronome.Bounce
         /// </summary>
         /// <param name="index">Index of layer</param>
         /// <returns>Ball geometry</returns>
-        static void MakeBall(int index, DrawingContext dc)
+        protected void MakeBall(int index, DrawingContext dc)
         {
             double xOffset = (width / (layerCount * 2) * (index * 2 + 1) + widthPad) * imageRatio + imageWidthPad;
 
@@ -284,13 +289,13 @@ namespace Pronome.Bounce
                 ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
             };
 
-            Balls[index] = new Ball(index, gradient, xOffset, dc);
+            Balls[index] = new Ball(index, gradient, xOffset, dc, this);
         }
 
         /// <summary>
         /// Set the image ratio values based on window size
         /// </summary>
-        public static void SetImageRatio(double winWidth, double winHeight)
+        public void SetImageRatio(double winWidth, double winHeight)
         {
             if (height / (width + 2 * widthPad) < winHeight / winWidth)
             {

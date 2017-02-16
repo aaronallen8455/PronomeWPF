@@ -42,7 +42,7 @@ namespace Pronome
                     Layer.Remainder -= rounded;
                 }
 
-                if (isWav) whole *= 4; // multiply for wav files. 4 bytes per sample
+                if (isWav) whole *= 2; // multiply for wav files. 4 bytes per sample
 
                 yield return whole;
             }

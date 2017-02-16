@@ -3,8 +3,9 @@ using System.Windows.Media;
 
 namespace Pronome.Bounce
 {
-    class Ball
+    public class Ball
     {
+        protected Helper Helper;
         protected int Index = 0;
         //public EllipseGeometry Geometry;
         //protected TranslateTransform Transform;
@@ -16,8 +17,11 @@ namespace Pronome.Bounce
         protected double factor;// = defaultFactor; // control the max height of the bounce
         protected RadialGradientBrush gradient;
         protected double XOffset;
+        double factorImageRatio; // factor * imageRatio
+        double factorImageRatioCurInterval; // factorImageRatio * currentInterval
+        double ballBaseImageRatioPad; // bb * ir + hpad
 
-        public Ball(int index, RadialGradientBrush grad, double xOffset, DrawingContext dc)
+        public Ball(int index, RadialGradientBrush grad, double xOffset, DrawingContext dc, Helper helper)
         {
             Layer = Metronome.GetInstance().Layers[index];
             countDown += Layer.Offset;//BpmToSec(Layer.Offset);
@@ -27,10 +31,12 @@ namespace Pronome.Bounce
                                              //Geometry.Transform = Transform;
             gradient = grad;
             XOffset = xOffset;
+            Helper = helper;
 
             currentTempo = Metronome.GetInstance().Tempo;
             defaultFactor = 1000 * (120 / Metronome.GetInstance().Tempo);
             SetFactor();
+            ballBaseImageRatioPad = Helper.ballBase * Helper.imageRatio + Helper.imageHeightPad;
             SetPosition(0, dc);
         }
 
@@ -74,7 +80,7 @@ namespace Pronome.Bounce
 
             //Transform.Y = -factor * (-total * total + currentInterval * total);
 
-            double y = (Helper.ballBase - factor * (-total * total + currentInterval * total)) * Helper.imageRatio + Helper.imageHeightPad;
+            double y = ballBaseImageRatioPad - factorImageRatio * -total * total - factorImageRatioCurInterval * total;
 
             dc.DrawEllipse(
                 gradient,
@@ -151,6 +157,8 @@ namespace Pronome.Bounce
             {
                 factor = defaultFactor;
             }
+            factorImageRatio = factor * Helper.imageRatio;
+            factorImageRatioCurInterval = factorImageRatio * currentInterval;
         }
     }
 }

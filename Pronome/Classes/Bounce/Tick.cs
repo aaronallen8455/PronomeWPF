@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace Pronome.Bounce
 {
-    class Tick
+    public class Tick
     {
         protected double ElapsedInterval = 0;
         protected bool IsComplete = false;
@@ -13,13 +13,17 @@ namespace Pronome.Bounce
         protected double RightDisplace;
         protected double LeftStart; // starting position of left endpoint
         protected double RightStart; // starting position of right endpoint
-        protected Point StartPoint;
-        protected Point EndPoint;
+        double leftStartImageRatioPad; // LeftStart * imageRatio + imageWidthPad
+        double leftDisplaceImageRatio; // LeftDisplace * imageRatio
+        double rightStartImageRatioPad; // RightStart * imageRatio + imageWidthPad
+        double rightDisplaceImageRatio; // RightDisplace * imageRatio
 
         static double leftSlope;
         static double apex;
         static double denominator;
         static double factor;
+        static double heightImageRatioPad; // height * imageRatio + heightPad
+        static double divisionLineImageRatio; // divisionLine * imageRatio
 
         protected Lane Lane;
 
@@ -32,7 +36,8 @@ namespace Pronome.Bounce
             double rightStart,
             Lane lane,
             Pen pen,
-            double elapsedInterval = 0)
+            double elapsedInterval = 0
+            )
         {
             LeftDisplace = leftDisplace;
             RightDisplace = rightDisplace;
@@ -41,8 +46,10 @@ namespace Pronome.Bounce
             LeftStart = leftStart - Ease(ElapsedInterval / Helper.TickQueueSize) * LeftDisplace;
             RightStart = rightStart - Ease(ElapsedInterval / Helper.TickQueueSize) * RightDisplace;
             Pen = pen;
-            StartPoint = new Point();
-            EndPoint = new Point();
+            leftStartImageRatioPad = LeftStart * Helper.imageRatio + Helper.imageWidthPad;
+            leftDisplaceImageRatio = LeftDisplace * Helper.imageRatio;
+            rightStartImageRatioPad = RightStart * Helper.imageRatio + Helper.imageWidthPad;
+            rightDisplaceImageRatio = RightDisplace * Helper.imageRatio;
         }
 
         public void Move(double timeChange, DrawingContext dc)
@@ -69,10 +76,10 @@ namespace Pronome.Bounce
             else
             {
                 // reposition end points
-                
-                double y = (Helper.height - (Helper.divisionLine * transY)) * Helper.imageRatio + Helper.imageHeightPad;
-                Point start = new Point((LeftStart + transY * LeftDisplace) * Helper.imageRatio + Helper.imageWidthPad, y);
-                Point end = new Point((RightStart + transY * RightDisplace) * Helper.imageRatio + Helper.imageWidthPad, y);
+
+                double y = heightImageRatioPad - divisionLineImageRatio * transY;
+                Point start = new Point(leftStartImageRatioPad + transY * leftDisplaceImageRatio, y);
+                Point end = new Point(rightStartImageRatioPad + transY * rightDisplaceImageRatio, y);
 
                 dc.DrawLine(Pen, start, end);
             }
@@ -84,6 +91,8 @@ namespace Pronome.Bounce
             apex = leftSlope * (Helper.widthPad + Helper.width / 2);
             factor = -Math.Log(1 - (1 / (apex / Helper.divisionLine)), 2);
             denominator = -Math.Pow(2, -factor) + 1;
+            heightImageRatioPad = Helper.height * Helper.imageRatio + Helper.imageHeightPad;
+            divisionLineImageRatio = Helper.divisionLine * Helper.imageRatio;
         }
         
         static public double Ease(double fraction)

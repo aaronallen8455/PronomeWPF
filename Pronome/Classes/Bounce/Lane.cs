@@ -4,7 +4,7 @@ using System.Windows;
 
 namespace Pronome.Bounce
 {
-    class Lane
+    public class Lane
     {
         /// <summary>
         /// Thickness of the top tick
@@ -21,6 +21,8 @@ namespace Pronome.Bounce
         /// </summary>
         protected double LaneWidth;
 
+        protected Helper Helper;
+
         protected Layer Layer; // the layer represented by this lane
         protected SolidColorBrush Brush;
 
@@ -33,13 +35,14 @@ namespace Pronome.Bounce
         protected double CurInterval; // when this is zero, it's time to cue a new tick
         protected int beatIndex = 0;
 
-        public Lane(Layer layer, Color color, double leftXDiff, double rightXDiff, int index, DrawingContext dc)
+        public Lane(Layer layer, Color color, double leftXDiff, double rightXDiff, int index, DrawingContext dc, Helper helper)
         {
             Layer = layer;
             Brush = new SolidColorBrush(color);
             LeftXDiff = leftXDiff;
             RightXDiff = rightXDiff;
             Index = index;
+            Helper = helper;
 
             LaneWidth = (Helper.widthPad * 2 + Helper.width) / Helper.layerCount;
 

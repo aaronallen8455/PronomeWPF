@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.IO;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace Pronome
 {
@@ -12,8 +13,13 @@ namespace Pronome
     {
         WaveFileReader sourceStream;
 
-        /**<summary>This is added to the mixer. Exposes controls for volume and pan.</summary>*/
-        public WaveChannel32 Channel { get; set; }
+        /**<summary>Used to implement panning.</summary>*/
+        public PanningSampleProvider Panner { get; set; }
+
+        /// <summary>
+        /// Implements volume control. Exposed to mixer.
+        /// </summary>
+        public VolumeSampleProvider VolumeProvider { get; set; }
 
         public bool IsPitch { get { return false; } }
 
@@ -33,8 +39,11 @@ namespace Pronome
             Assembly myAssembly = Assembly.GetExecutingAssembly();
             Stream s = myAssembly.GetManifestResourceStream(fileName);
             sourceStream = new WaveFileReader(s);
-            BytesPerSec = sourceStream.WaveFormat.AverageBytesPerSecond;
-            Channel = new WaveChannel32(this);
+            Panner = new PanningSampleProvider(this.ToSampleProvider());
+            VolumeProvider = new VolumeSampleProvider(Panner);
+            BytesPerSec = VolumeProvider.WaveFormat.AverageBytesPerSecond;
+            //PanningSampleProvider test = new PanningSampleProvider(this.ToSampleProvider());
+            
 
             Metronome met = Metronome.GetInstance();
             // set audible/silent interval if already exists
@@ -55,14 +64,14 @@ namespace Pronome
         /**<summary>The volume for this sound source.</summary>*/
         public double Volume
         {
-            get { return Channel.Volume; }
-            set { Channel.Volume = (float)value; }
+            get { return VolumeProvider.Volume; }
+            set { VolumeProvider.Volume = (float)value; }
         }
 
         /**<summary>The pan control for this sound. -1 to 1</summary>*/
         public float Pan
         {
-            get => Channel.Pan; set => Channel.Pan = value;
+            get => Panner.Pan; set => Panner.Pan = value;
         }
 
         /**<summary>Gets the wave format object for this stream.</summary>*/
@@ -152,26 +161,26 @@ namespace Pronome
                 {
                     BeatCollection.MultiplyBeatValues();
 
-                    double div = ByteInterval / 4;
+                    double div = ByteInterval / 2;
                     div *= intervalMultiplyFactor;
                     Layer.Remainder *= intervalMultiplyFactor; // multiply remainder as well
                     Layer.Remainder += div - (int)div;
-                    ByteInterval = (int)div * 4;
+                    ByteInterval = (int)div * 2;
                     
                     if (Layer.Remainder >= 1)
                     {
-                        ByteInterval += (int)Layer.Remainder * 4;
+                        ByteInterval += (int)Layer.Remainder * 2;
                         Layer.Remainder -= (int)Layer.Remainder;
                     }
 
                     // multiply the offset aswell
                     if (hasOffset)
                     {
-                        div = totalOffset / 4;
+                        div = totalOffset / 2;
                         div *= intervalMultiplyFactor;
                         offsetRemainder *= intervalMultiplyFactor;
                         offsetRemainder += div - (int)div;
-                        totalOffset = (int)div * 4;
+                        totalOffset = (int)div * 2;
                     }
                     if (initialOffset > 0)
                     {
@@ -181,11 +190,11 @@ namespace Pronome
                     // multiply the silent interval
                     if (Metronome.GetInstance().IsSilentInterval)
                     {
-                        double sid = currentSlntIntvl / 4;
+                        double sid = currentSlntIntvl / 2;
                         sid *= intervalMultiplyFactor;
                         SilentIntervalRemainder *= intervalMultiplyFactor;
                         SilentIntervalRemainder += sid - (int)sid;
-                        currentSlntIntvl = (int)sid * 4;
+                        currentSlntIntvl = (int)sid * 2;
                         SilentInterval *= intervalMultiplyFactor;
                         AudibleInterval *= intervalMultiplyFactor;
                     }
@@ -193,19 +202,19 @@ namespace Pronome
                     //// do the hihat cutoff interval
                     if (IsHiHatOpen && CurrentHiHatDuration != 0)
                     {
-                        div = CurrentHiHatDuration / 4;
-                        CurrentHiHatDuration = (int)(div * intervalMultiplyFactor) * 4;
+                        div = CurrentHiHatDuration / 2;
+                        CurrentHiHatDuration = (int)(div * intervalMultiplyFactor) * 2;
                     }
 
                     // recalculate the hihat count and byte to cutoff values
                     if (IsHiHatOpen && Layer.HasHiHatClosed)
                     {
                         long countDiff = HiHatCycleToMute - cycle;
-                        long totalBytes = countDiff * 2560 + HiHatByteToMute;
+                        long totalBytes = countDiff * 1280 + HiHatByteToMute;
                         totalBytes = (long)(totalBytes * intervalMultiplyFactor);
-                        HiHatCycleToMute = cycle + totalBytes / 2560;
-                        HiHatByteToMute = totalBytes % 2560;
-                        HiHatByteToMute -= HiHatByteToMute % 4; // align
+                        HiHatCycleToMute = cycle + totalBytes / 1280;
+                        HiHatByteToMute = totalBytes % 1280;
+                        HiHatByteToMute -= HiHatByteToMute % 2; // align
                     }
 
                     intervalMultiplyCued = false;
@@ -246,8 +255,8 @@ namespace Pronome
                 if (IsHiHatClose && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
                 {
                     int total = totalOffset;
-                    int cycles = total / 2560;
-                    int bytes = total % 2560;
+                    int cycles = total / 1280;
+                    int bytes = total % 1280;
 
                     // assign the hihat cutoff to all open hihat sounds.
                     IEnumerable hhos = Layer.AudioSources.Values.Where(x => !x.IsPitch && ((WavFileStream)x).IsHiHatOpen);
@@ -327,7 +336,7 @@ namespace Pronome
         public void SetOffset(double value)
         {
             initialOffset = value;
-            totalOffset = ((int)value) * 4;
+            totalOffset = ((int)value) * 2;
             offsetRemainder = value - (int)value;
             
             hasOffset = totalOffset > 0;
@@ -356,9 +365,9 @@ namespace Pronome
 
         public void SetSilentInterval(double audible, double silent)
         {
-            AudibleInterval = BeatCell.ConvertFromBpm(audible, this) * 4;
-            SilentInterval = BeatCell.ConvertFromBpm(silent, this) * 4;
-            currentSlntIntvl = (long)(AudibleInterval - initialOffset * 4 - 4);
+            AudibleInterval = BeatCell.ConvertFromBpm(audible, this) * 2;
+            SilentInterval = BeatCell.ConvertFromBpm(silent, this) * 2;
+            currentSlntIntvl = (long)(AudibleInterval - initialOffset * 2 - 2);
             SilentIntervalRemainder = audible - (int)audible + offsetRemainder;
 
             SetInitialMuting();
@@ -376,7 +385,7 @@ namespace Pronome
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (count == 5120) { return count; } // somtimes count is double at start for some reason
+            if (count == 2560) { return count; } // somtimes count is double at start for some reason
 
             int bytesCopied = 0;
 
@@ -585,7 +594,7 @@ namespace Pronome
         {
             //memStream.Dispose();
             sourceStream.Dispose();
-            Channel.Dispose();
+            //Channel.Dispose();
             Dispose();
         }
     }
