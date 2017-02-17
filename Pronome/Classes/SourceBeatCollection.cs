@@ -20,7 +20,7 @@ namespace Pronome
             Bpm = beats;
             Beats = beats.Select((x) => BeatCell.ConvertFromBpm(x, src)).ToArray();
             Enumerator = GetEnumerator();
-            isWav = src.WaveFormat.AverageBytesPerSecond == 64000;
+            isWav = src.WaveFormat.AverageBytesPerSecond == 32000;
         }
 
         public IEnumerator<long> GetEnumerator()
@@ -42,7 +42,10 @@ namespace Pronome
                     Layer.Remainder -= rounded;
                 }
 
-                if (isWav) whole *= 2; // multiply for wav files. 4 bytes per sample
+                if (isWav)
+                {
+                    whole *= 2; // multiply for wav files. 4 bytes per sample
+                }
 
                 yield return whole;
             }

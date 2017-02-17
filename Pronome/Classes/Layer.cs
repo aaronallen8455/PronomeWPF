@@ -150,43 +150,6 @@ namespace Pronome
                     beat = beat.Substring(0, match.Index) + 
                         ResolveReferences(refIndex, new HashSet<int>(new int[] { selfIndex })) + 
                         beat.Substring(match.Index + match.Length);
-
-                    //string refBeat;
-                    //// is a self reference?
-                    //if (beat[beat.IndexOf('$') + 1].ToString().ToLower() == "s" ||
-                    //    Regex.Match(beat, @"\$(\d+)").Groups[1].Value == (Metronome.GetInstance().Layers.Count + 1).ToString())
-                    //{
-                    //    refBeat = Regex.Replace(ParsedString, @"!.*?!|\s", "");
-                    //}
-                    //else
-                    //{
-                    //    //get the index of the referenced beat, if exists
-                    //    int refIndex = int.Parse(Regex.Match(beat, @"\$[\d]+").Value.Substring(1)) - 1;
-                    //    // does referenced beat exist?
-                    //    refIndex = Metronome.GetInstance().Layers.ElementAtOrDefault(refIndex) == null ? 0 : refIndex;
-                    //    refBeat = Regex.Replace(Metronome.GetInstance().Layers[refIndex].ParsedString, @"!.*?!|\s", "");
-                    //
-                    //    // remove sound source modifiers for non self references, unless its @0
-                    //    refBeat = Regex.Replace(refBeat, pitchModifier, ""); // get rid of this?
-                    //}
-                    //// remove single cell repeat on references
-                    //refBeat = Regex.Replace(refBeat, @"(\$[\ds]+)\(\d\)", "$1");
-                    //// remove references and their innermost nest from the referenced beat
-                    //while (refBeat.Contains('$'))
-                    //{
-                    //    if (Regex.IsMatch(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*"))
-                    //        refBeat = Regex.Replace(refBeat, @"[[{][^[{\]}]*\$[^[{\]}]*[\]}][^\]},]*", "$s");
-                    //    else
-                    //        refBeat = Regex.Replace(refBeat, @"\$[\ds]+,?", ""); // straight up replace
-                    //}
-                    //// clean out empty cells
-                    //refBeat = Regex.Replace(refBeat, @",,", ",");
-                    ////refBeat = Regex.Replace(refBeat, @",$", "");
-                    //refBeat = refBeat.Trim(',');
-                    //
-                    //// replace in the refBeat
-                    //var match = Regex.Match(beat, @"\$[\ds]+");
-                    //beat = beat.Substring(0, match.Index) + refBeat + beat.Substring(match.Index + match.Length);
                 }
             }
             

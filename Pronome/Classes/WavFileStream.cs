@@ -40,6 +40,7 @@ namespace Pronome
             Stream s = myAssembly.GetManifestResourceStream(fileName);
             sourceStream = new WaveFileReader(s);
             Panner = new PanningSampleProvider(this.ToSampleProvider());
+            Panner.Pan = 0;
             VolumeProvider = new VolumeSampleProvider(Panner);
             BytesPerSec = VolumeProvider.WaveFormat.AverageBytesPerSecond;
             //PanningSampleProvider test = new PanningSampleProvider(this.ToSampleProvider());
