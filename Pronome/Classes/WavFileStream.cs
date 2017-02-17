@@ -41,10 +41,9 @@ namespace Pronome
             sourceStream = new WaveFileReader(s);
             Panner = new PanningSampleProvider(this.ToSampleProvider());
             Panner.Pan = 0;
+            Panner.PanStrategy = new StereoPanStrategy();
             VolumeProvider = new VolumeSampleProvider(Panner);
-            BytesPerSec = VolumeProvider.WaveFormat.AverageBytesPerSecond;
-            //PanningSampleProvider test = new PanningSampleProvider(this.ToSampleProvider());
-            
+            BytesPerSec = VolumeProvider.WaveFormat.AverageBytesPerSecond;            
 
             Metronome met = Metronome.GetInstance();
             // set audible/silent interval if already exists
@@ -54,12 +53,6 @@ namespace Pronome
             // is this a hihat sound?
             if (BeatCell.HiHatOpenFileNames.Contains(fileName)) IsHiHatOpen = true;
             else if (BeatCell.HiHatClosedFileNames.Contains(fileName)) IsHiHatClose = true;
-            
-            // determine if first sound will be muted
-            //if (met.IsRandomMute || met.IsSilentInterval) is now done in the layer, after all sources have been created
-            //{
-            //    SetInitialMuting();
-            //}
         }
 
         /**<summary>The volume for this sound source.</summary>*/
