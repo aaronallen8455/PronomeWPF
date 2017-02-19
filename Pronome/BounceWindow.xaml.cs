@@ -104,7 +104,7 @@ namespace Pronome
         {
             Instance = this;
             InitializeComponent();
-            DrawScene();
+            //DrawScene();
             AddVisualChild(Drawing);
             AddLogicalChild(Drawing);
             Metronome.AfterBeatParsed += new EventHandler(DrawScene);
@@ -202,11 +202,6 @@ namespace Pronome
         /// </summary>
         protected void DrawLanes(DrawingContext dc, bool instantiateLayers = true)
         {
-            //Pen lanePen = new Pen(Brushes.White, 3);
-            //var leftBound = new LineGeometry(new Point(0, height), new Point(widthPad, height - divisionLine));
-            //var initialGeo = new GeometryDrawing(null, lanePen, leftBound);
-            //drawingGroup.Children.Add(initialGeo);
-            //LaneGeometries[layerCount] = initialGeo;
 
             // init lane endpoints and lane objects
             if (instantiateLayers)
@@ -237,30 +232,6 @@ namespace Pronome
             {
                 dc.DrawLine(lanePen, laneEndPoints[i, 0], laneEndPoints[i, 1]);
             }
-
-
-            //dc.DrawLine(lanePen, new Point(0, height * imageRatio), new Point(widthPad * imageRatio, (height - divisionLine) * imageRatio));
-            //
-            ////double xCoord = (width + 2 * widthPad) / layerCount;
-            //for (int i = 0; i < layerCount; i++)
-            //{
-            //    var start = new Point(xCoord * (i + 1), height);
-            //    var end = new Point(widthPad + width / layerCount * (i + 1), height - divisionLine);
-            //
-            //    //var laneGeometry = new GeometryDrawing(null, lanePen, new LineGeometry(start, end));
-            //    //
-            //    //drawingGroup.Children.Add(laneGeometry);
-            //    //LaneGeometries[i] = laneGeometry;
-            //
-            //    dc.DrawLine(lanePen, start, end);
-            //
-            //    if (instantiateLayers)
-            //    {
-            //        Lanes[i] = new Lane(Metronome.GetInstance().Layers[i], ColorHelper.ColorWheel(i),
-            //            widthPad + (width / layerCount) * i - xCoord * i,
-            //            widthPad + (width / layerCount) * (i + 1) - xCoord * (i + 1), i);
-            //    }
-            //}
         }
 
         /// <summary>
@@ -317,24 +288,8 @@ namespace Pronome
         protected void MakeBall(int index, DrawingContext dc)
         {
             double xOffset = (width / (layerCount * 2) * (index * 2 + 1) + widthPad) * imageRatio + imageWidthPad;
-            //Point center = new Point(
-            //    xOffset,
-            //    ballBase * imageRatio + imageHeightPad);
-            //EllipseGeometry ball = new EllipseGeometry(center, ballRadius, ballRadius);
 
             Color color = ColorHelper.ColorWheel(index);
-            //GeometryDrawing result = new GeometryDrawing(
-            //    new RadialGradientBrush(color, Colors.Transparent) {
-            //        GradientStops = new GradientStopCollection(new GradientStop[] {
-            //            new GradientStop(color, .15),
-            //            new GradientStop(Colors.Black, 1.75)
-            //        }),
-            //        GradientOrigin = new Point(.25, .25),
-            //        Center = new Point(.25, .25),
-            //        ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
-            //    },
-            //    //new SolidColorBrush(color),
-            //    null, ball);//new Pen(Brushes.Red, 2), ball);
 
             var gradient = new RadialGradientBrush(color, Colors.Transparent)
             {
@@ -347,11 +302,7 @@ namespace Pronome
                 ColorInterpolationMode = ColorInterpolationMode.ScRgbLinearInterpolation
             };
 
-            //dc.DrawEllipse(gradient, null, center, ballRadius, ballRadius);
-
             Balls[index] = new Ball(index, gradient, xOffset, dc);
-
-            //return result;
         }
 
         /// <summary>
@@ -694,8 +645,6 @@ namespace Pronome
                 }
             }
 
-
-
             static public void InitConstants()
             {
                 leftSlope = divisionLine / widthPad;
@@ -712,6 +661,12 @@ namespace Pronome
             static double apex;
             static double denominator;
             static double factor;
+
+            /// <summary>
+            /// The math for caculating the position of the tick as it ascends.
+            /// </summary>
+            /// <param name="fraction"></param>
+            /// <returns></returns>
             static public double Ease(double fraction)
             {
                 if (widthPad <= 10)
@@ -719,7 +674,7 @@ namespace Pronome
                     return fraction;
                 }
 
-                return (-1 / (Math.Pow(2, fraction * factor)) + 1) / denominator; //2.3 for 1, 1.55 for 2
+                return (-1 / (Math.Pow(2, fraction * factor)) + 1) / denominator;
             }
         }
 
@@ -772,16 +727,16 @@ namespace Pronome
 
                 double silence = AddSilence();
 
-                double time = bpm;//BpmToSec(bpm);
-                countDown += time;
+                countDown += bpm;
 
-                currentInterval = time + silence;
+                currentInterval = bpm + silence;
                 // check if factor needs to be changed
                 SetFactor();
-                factorImageRatioCurInterval = factorImageRatio * currentInterval;
             }
 
             double ballBaseImageRatioPad; // bb * ir + hpad
+
+            //static Dictionary<Tuple<double, double>, double> totalMemo = new Dictionary<Tuple<double, double>, double>();
 
             public void SetPosition(double elapsedTime, DrawingContext dc)
             {
@@ -793,8 +748,6 @@ namespace Pronome
                 }
 
                 double total = currentInterval - countDown;
-
-                //Transform.Y = -factor * (-total * total + currentInterval * total);
 
                 double y = ballBaseImageRatioPad - factorImageRatio * -total * total - factorImageRatioCurInterval * total;
 
@@ -877,6 +830,7 @@ namespace Pronome
                     factor = defaultFactor;
                 }
                 factorImageRatio = factor * imageRatio;
+                factorImageRatioCurInterval = factorImageRatio * currentInterval;
             }
         }
 

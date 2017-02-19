@@ -748,16 +748,16 @@ namespace Pronome
                 // Once per audio source
                 if (completed.Contains(Beat[i].AudioSource)) continue;
                 // if selected beat is not first in cycle, set it's offset
-                if (i != 0)
+                //if (i != 0)
+                //{
+                double offsetAccumulate = Offset;
+                for (int p = 0; p < i; p++)
                 {
-                    double offsetAccumulate = Offset;
-                    for (int p = 0; p < i; p++)
-                    {
-                        offsetAccumulate += Beat[p].Bpm;
-                    }
-
-                    Beat[i].AudioSource.SetOffset(BeatCell.ConvertFromBpm(offsetAccumulate, Beat[i].AudioSource));
+                    offsetAccumulate += Beat[p].Bpm;
                 }
+
+                Beat[i].AudioSource.SetOffset(BeatCell.ConvertFromBpm(offsetAccumulate, Beat[i].AudioSource));
+                //}
                 // iterate over beats starting with current one. Aggregate with cells that have the same audio source.
                 for (int p = i; ; p++)
                 {
@@ -884,7 +884,7 @@ namespace Pronome
             AudioSources = new Dictionary<string, IStreamProvider>();
             SetBaseSource(BaseSourceName);
             Parse(ParsedString);
-            if (Offset != 0)
+            if (ParsedOffset != string.Empty)
                 SetOffset(BeatCell.Parse(ParsedOffset));
             if (pan != 0)
                 Pan = pan;
