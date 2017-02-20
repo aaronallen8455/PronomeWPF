@@ -41,8 +41,6 @@ namespace Pronome
         /// </summary>
         protected Lane[] Lanes;
 
-        protected GeometryDrawing[] LaneGeometries;
-
         /// <summary>
         /// The window instance.
         /// </summary>
@@ -127,24 +125,18 @@ namespace Pronome
             if (met.Layers.Count == 0) return; // do nothing if beat is empty
 
             // remove existing graphics
-            //drawingGroup.Children.Clear();
             ballRadius = baseBallRadius;
             ballPadding = baseBallPadding;
 
             layerCount = met.Layers.Count;
             Balls = new Ball[layerCount];
             Lanes = new Lane[layerCount];
-            //LaneGeometries = new GeometryDrawing[layerCount + 1];
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
             divisionLine = height / (1 / divisionPoint);
             ballBase = height - divisionLine - ballRadius;
 
             // calculate imageRatio values
             SetImageRatio();
-
-            // draw sizer element
-            //var size = new RectangleGeometry(new Rect(0, 0, width + 2 * widthPad, height));
-            //drawingGroup.Children.Add(new GeometryDrawing(Brushes.Transparent, null, size));
 
             using (DrawingContext dc = Drawing.RenderOpen())
             {

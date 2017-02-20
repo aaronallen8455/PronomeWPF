@@ -24,6 +24,61 @@
         <Style TargetType="Border" x:Key="headerBorder">
             <Setter Property="Background" Value="#7F000000"/>
         </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualState Name="Normal">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="hoverRect"
+                                                        Storyboard.TargetProperty="Opacity"
+                                                        To="0"
+                                                        Duration="0:0:.3"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState Name="Disabled"/>
+                                    <VisualState Name="Pressed">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="backgroundRect"
+                                                        Storyboard.TargetProperty="Opacity"
+                                                        To="1"
+                                                        Duration="0"/>
+                                            <DoubleAnimation Storyboard.TargetName="hoverRect"
+                                                        Storyboard.TargetProperty="Opacity"
+                                                        To="0"
+                                                        Duration="0"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState Name="MouseOver">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="hoverRect"
+                                                        Storyboard.TargetProperty="Opacity"
+                                                        To=".2"
+                                                        Duration="0"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Grid>
+                                <Rectangle Name="backgroundRect" Fill="{TemplateBinding Background}" Opacity="0"/>
+                                <Rectangle Name="hoverRect" Fill="White" Opacity="0"/>
+                                <ContentPresenter VerticalAlignment="Center" 
+                                                  HorizontalAlignment="Center"
+                                                  Margin="{TemplateBinding Padding}"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#FF007ACC"/>
+        </Style>
+        
+        
         
     </Window.Resources>
     <Border BorderBrush="Black" BorderThickness="1,1,1,1" CornerRadius="8,8,8,8" Background="#B200008B">
@@ -56,8 +111,9 @@
                         <!--<Rectangle Fill="Black" Opacity=".5"/>-->
                         <WrapPanel HorizontalAlignment="Center" DataContext="{DynamicResource disableDuringPlay}">
                             <WrapPanel.Resources>
-                                <Style TargetType="Button">
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                                     <Setter Property="Margin" Value="5, 10"/>
+                                    <Setter Property="Padding" Value="5"/>
                                 </Style>
                             </WrapPanel.Resources>
                             <!--Add layer button-->
