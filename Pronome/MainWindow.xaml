@@ -25,11 +25,12 @@
             <Setter Property="Background" Value="#7F000000"/>
         </Style>
 
+        <!--Default button template-->
         <Style TargetType="Button">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border>
+                        <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup Name="CommonStates">
                                     <VisualState Name="Normal">
@@ -37,7 +38,7 @@
                                             <DoubleAnimation Storyboard.TargetName="hoverRect"
                                                         Storyboard.TargetProperty="Opacity"
                                                         To="0"
-                                                        Duration="0:0:.3"/>
+                                                        Duration="0:0:.23"/>
                                         </Storyboard>
                                     </VisualState>
                                     <VisualState Name="Disabled"/>
@@ -71,15 +72,187 @@
                                                   Margin="{TemplateBinding Padding}"/>
                             </Grid>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#FFB4B4B4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="#FF007ACC"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
-        
-        
-        
+
+        <!--Used for border on playback controls-->
+        <Ellipse Stroke="Beige" StrokeThickness=".8" Width="20" Height="20" x:Key="controlButtonBorder" x:Shared="False"/>
+
+        <!--Play button template-->
+        <ControlTemplate TargetType="Button" x:Key="playButtonTemplate">
+            <Viewbox Stretch="Uniform" MaxHeight="35" MaxWidth="35">
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup Name="CommonStates">
+                        <VisualState Name="Normal">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="background"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To="0"
+                                                 Duration="0:0:.23"/>
+                            </Storyboard>
+                        </VisualState>
+                        <VisualState Name="Disabled"/>
+                        <VisualState Name="MouseOver">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="background"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To=".2"
+                                                 Duration="0"/>
+                            </Storyboard>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+                <Grid>
+                    <Ellipse Fill="White" Opacity="0" Width="20" Height="20" Name="background"/>
+                    <ContentControl Content="{StaticResource controlButtonBorder}"/>
+                    <Polygon Points="7,5 7,15 15.5,10"
+                                Fill="LawnGreen"
+                                Name="triangle"/>
+                </Grid>
+            </Viewbox>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter TargetName="triangle" Property="Fill" Value="#FFB2B2B2"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX=".95" ScaleY=".95"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <!--Pause button style-->
+        <Style x:Key="pauseButtonStyle">
+            <Setter Property="Button.Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Viewbox Stretch="Uniform" MaxHeight="35" MaxWidth="35">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualState Name="Normal">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="background"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To="0"
+                                                 Duration="0:0:.23"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState Name="Disabled"/>
+                                    <VisualState Name="MouseOver">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="background"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To=".2"
+                                                 Duration="0"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Grid>
+                                <Ellipse Fill="White" Opacity="0" Width="20" Height="20" Name="background"/>
+                                <ContentControl Content="{StaticResource controlButtonBorder}"/>
+                                <Image Name="glyph" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Image.Source>
+                                        <DrawingImage>
+                                            <DrawingImage.Drawing>
+                                                <DrawingGroup>
+                                                    <GeometryDrawing Brush="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Foreground}">
+                                                        <GeometryDrawing.Geometry>
+                                                            <RectangleGeometry Rect="0, 0, 3, 10"/>
+                                                        </GeometryDrawing.Geometry>
+                                                    </GeometryDrawing>
+                                                    <GeometryDrawing Brush="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Foreground}">
+                                                        <GeometryDrawing.Geometry>
+                                                            <RectangleGeometry Rect="5, 0, 3, 10"/>
+                                                        </GeometryDrawing.Geometry>
+                                                    </GeometryDrawing>
+                                                </DrawingGroup>
+                                            </DrawingImage.Drawing>
+                                        </DrawingImage>
+                                    </Image.Source>
+                                </Image>
+                            </Grid>
+                        </Viewbox>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX=".95" ScaleY=".95"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Button.Foreground" Value="Yellow"/>
+            <Style.Triggers>
+                <Trigger Property="Button.IsEnabled" Value="False">
+                    <Setter Property="Button.Foreground" Value="#FFB2B2B2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!--Stop button template-->
+        <ControlTemplate TargetType="Button" x:Key="stopButtonTemplate">
+            <Viewbox Stretch="Uniform" MaxHeight="35" MaxWidth="35">
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup Name="CommonStates">
+                        <VisualState Name="Normal">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="background"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To="0"
+                                                 Duration="0:0:.23"/>
+                            </Storyboard>
+                        </VisualState>
+                        <VisualState Name="Disabled"/>
+                        <VisualState Name="MouseOver">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="background"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To=".2"
+                                                 Duration="0"/>
+                            </Storyboard>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+                <Grid>
+                    <Ellipse Fill="White" Opacity="0" Width="20" Height="20" Name="background"/>
+                    <ContentControl Content="{StaticResource controlButtonBorder}"/>
+                    <Rectangle Fill="Red" Width="9" Height="9" HorizontalAlignment="Center" VerticalAlignment="Center" Name="glyph"/>
+                </Grid>
+            </Viewbox>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter TargetName="glyph" Property="Fill" Value="#FFB2B2B2"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX=".95" ScaleY=".95"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
     </Window.Resources>
     <Border BorderBrush="Black" BorderThickness="1,1,1,1" CornerRadius="8,8,8,8" Background="#B200008B">
 
@@ -119,11 +292,11 @@
                             <!--Add layer button-->
                             <Button Click="addLayerButton_Click">Add Layer</Button>
                             <!--Play button-->
-                            <Button Name="playButton" Click="playButton_Click">Play</Button>
+                            <Button Name="playButton" Click="playButton_Click" Template="{StaticResource playButtonTemplate}"/>
                             <!--Pause button-->
-                            <Button Name="pauseButton" Click="pauseButton_Click" IsEnabled="False">Pause</Button>
+                            <Button Name="pauseButton" Click="pauseButton_Click" IsEnabled="False" Style="{StaticResource pauseButtonStyle}">Pause</Button>
                             <!--Stop button-->
-                            <Button Name="stopButton" Click="stopButton_Click" IsEnabled="{Binding Path=IsEnabled, Converter={StaticResource inverseBooleanConverter}}">Stop</Button>
+                            <Button Name="stopButton" Click="stopButton_Click" Template="{StaticResource stopButtonTemplate}" IsEnabled="{Binding Path=IsEnabled, Converter={StaticResource inverseBooleanConverter}}">Stop</Button>
                             <!--Tempo tap button-->
                             <Button Click="tempoTap_Click">Tempo</Button>
                             <!--Tempo input field-->
