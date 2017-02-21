@@ -86,7 +86,7 @@
         </Style>
 
         <!--Used for border on playback controls-->
-        <Ellipse Stroke="Beige" StrokeThickness=".8" Width="20" Height="20" x:Key="controlButtonBorder" x:Shared="False"/>
+        <Ellipse Stroke="#FF234E9B" StrokeThickness="1" Width="20" Height="20" x:Key="controlButtonBorder" x:Shared="False"/>
 
         <!--Play button template-->
         <ControlTemplate TargetType="Button" x:Key="playButtonTemplate">
@@ -271,9 +271,7 @@
                                 -
                             </Button>
                             <!--Close Window button-->
-                            <Button Click="windowCloseButton_Click" Width="23" Height="23" Margin="4">
-                                X
-                            </Button>
+                            <Button Click="windowCloseButton_Click" Width="23" Height="23" Margin="4" Content="{StaticResource closeButtonGlyph}"/>
                         </StackPanel>
                     </Grid>
                 </Border>

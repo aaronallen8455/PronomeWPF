@@ -178,6 +178,31 @@
             VerticalAlignment="Center"
             Orientation="Vertical"/>
 
+        <!--The X used by close window buttons-->
+        <Image x:Key="closeButtonGlyph" MaxHeight="12" x:Shared="False">
+            <Image.Source>
+                <DrawingImage>
+                    <DrawingImage.Drawing>
+                        <GeometryDrawing>
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#FFF1F1F1" Thickness="2"/>
+                            </GeometryDrawing.Pen>
+                            <GeometryDrawing.Geometry>
+                                <PathGeometry>
+                                    <PathFigure StartPoint="0,0">
+                                        <LineSegment Point="8,8"/>
+                                    </PathFigure>
+                                    <PathFigure StartPoint="0,8">
+                                        <LineSegment Point="8,0"/>
+                                    </PathFigure>
+                                </PathGeometry>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingImage.Drawing>
+                </DrawingImage>
+            </Image.Source>
+        </Image>
+        
         <!--Delete button-->
         <Button
             x:Key="deleteButton"
@@ -189,10 +214,9 @@
             Width="23"
             Height="23"
             DataContext="{DynamicResource disableDuringPlay}"
-            IsEnabled="{Binding Path=IsEnabled}">
-            X
-        </Button>
-        
+            IsEnabled="{Binding Path=IsEnabled}"
+            Content="{StaticResource closeButtonGlyph}"/>
+
         <!--Labels-->
         <Label
             x:Key="label"
