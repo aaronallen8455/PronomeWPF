@@ -7,7 +7,6 @@
         mc:Ignorable="d"
         Title="ProNome Options" Height="600" Width="530"
         Name="optionsWindow">
-
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         
         <DockPanel Name="dock" HorizontalAlignment="Stretch" 
@@ -192,7 +191,19 @@
             <Expander Header="Additional Settings">
                 <StackPanel>
                     <TextBlock>
-                        Set the font size for beat code inputs.
+                        Sets the duration of pitch tones in seconds.
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Target="{Binding ElementName=pitchDecayLength}">Pitch Decay</Label>
+                        <TextBox Name="pitchDecayLength"
+                                   LostFocus="pitchDecayLength_LostFocus"
+                                   Loaded="pitchDecayLength_Loaded"
+                                   Width="50"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <Separator/>
+                    <TextBlock>
+                        Sets the font size for beat code inputs.
                     </TextBlock>
                     <StackPanel Orientation="Horizontal">
                         <Label Target="{Binding ElementName=beatFontSizeTextBox}"></Label>

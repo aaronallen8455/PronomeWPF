@@ -228,6 +228,8 @@ namespace Pronome
             else Settings.Add("bounceDivision", BounceWindow.divisionPoint);
             if (Settings.ContainsKey("bounceWidthPad")) Settings["bounceWidthPad"] = BounceWindow.widthPad;
             else Settings.Add("bounceWidthPad", BounceWindow.widthPad);
+            if (Settings.ContainsKey("pitchDecayLength")) Settings["pitchDecayLength"] = PitchStream.DecayLength;
+            else Settings.Add("pitchDecayLength", PitchStream.DecayLength);
 
             // Write window size and position to storage
             IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
@@ -278,6 +280,7 @@ namespace Pronome
             if (Settings.ContainsKey("bounceQueueSize")) BounceWindow.Tick.QueueSize = Settings["bounceQueueSize"];
             if (Settings.ContainsKey("bounceDivision")) BounceWindow.divisionPoint = Settings["bounceDivision"];
             if (Settings.ContainsKey("bounceWidthPad")) BounceWindow.widthPad = Settings["bounceWidthPad"];
+            if (Settings.ContainsKey("pitchDecayLength")) PitchStream.DecayLength = Settings["pitchDecayLength"];
 
             f.Dispose();
         }

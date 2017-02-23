@@ -21,9 +21,22 @@ namespace Pronome
         private const double TwoPi = 2 * Math.PI;
 
         /// <summary>
-        /// Determines how fast the notes decay
+        /// Determines how fast the notes decay in seconds
         /// </summary>
-        public static double DecayFactor = .00035;
+        public static double DecayLength
+        {
+            get => _decayLength;
+            set
+            {
+                _decayLength = value;
+                // queue the new gain step value
+                foreach (Layer layer in Metronome.GetInstance().Layers.Where(x => x.IsPitch))
+                {
+                    layer.Volume = layer.Volume;
+                }
+            }
+        }
+        protected static double _decayLength = .15;
 
         /**<summary>The number of bytes/Second for this audio stream.</summary>*/
         public int BytesPerSec { get; set; }
@@ -135,8 +148,6 @@ namespace Pronome
             {
                 freqEnum.Reset();
                 return GetNextFrequency();
-                //freqEnum.MoveNext();
-                //return freqEnum.Current;
             }
         }
 
@@ -148,7 +159,7 @@ namespace Pronome
 
         /**<summary>Used to create the fade out of the beep sound. Resets to the value of Volume on interval completetion.</summary>*/
         protected double Gain { get; set; }
-        double gainStep = .0003; // the amount that gain is subtracted by for each byte to produce fade.
+        double gainStep = 1 / (16000 / DecayLength); // the amount that gain is subtracted by for each byte to produce fade.
         double newGainStep; // set when Volume changes and takes effect when byte interval resets.
 
         /**<summary>If a multiply is cued, perform operation on all relevant members at the start of a stream read.</summary>*/
@@ -223,9 +234,9 @@ namespace Pronome
             get { return _volume; }
             set
             {
-                double ratio = value / _volume;
                 _volume = value;
-                newGainStep = value * DecayFactor;
+                newGainStep = value / (16000 * DecayLength); //DecayFactor;
+                // 16000 BPS
             }
         }
         double _volume = 1;

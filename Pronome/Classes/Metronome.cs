@@ -192,7 +192,7 @@ namespace Pronome
         /** <summary>Stop playing and reset positions.</summary> */
         public void Stop()
         {
-            if (PlayState == State.Playing)
+            if (PlayState == State.Playing || PlayState == State.Paused)
             {
                 Player.Pause();
 

@@ -248,6 +248,19 @@ namespace Pronome
             (sender as Slider).Value = BounceWindow.widthPad;
         }
 
+        private void pitchDecayLength_LostFocus(object sender, RoutedEventArgs e)
+        {
+            double newValue;
+            if (double.TryParse((sender as TextBox).Text, out newValue) && newValue > 0)
+            {
+                PitchStream.DecayLength = newValue;
 
+            }
+        }
+
+        private void pitchDecayLength_Loaded(object sender, RoutedEventArgs e)
+        {
+            (sender as TextBox).Text = PitchStream.DecayLength.ToString();
+        }
     }
 }
