@@ -1,18 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.ComponentModel;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace Pronome
 {
@@ -426,5 +417,34 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// Enter full screen on ctrl-F
+        /// </summary>
+        /// <param name="e"></param>
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+
+            if (e.Key == Key.F || e.SystemKey == Key.A
+                && (e.KeyboardDevice.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                if (WindowStyle != WindowStyle.None)
+                {
+                    Mouse.OverrideCursor = Cursors.None;
+                    WindowState = WindowState.Maximized;
+                    WindowStyle = WindowStyle.None;
+                    Hide();
+                    Show();
+                    Topmost = true;
+                }
+                else
+                {
+                    WindowState = WindowState.Normal;
+                    WindowStyle = WindowStyle.SingleBorderWindow;
+                    Mouse.OverrideCursor = default(Cursor);
+                    Topmost = false;
+                }
+            }
+        }
     }
 }

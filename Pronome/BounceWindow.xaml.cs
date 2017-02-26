@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Media;
+using System.Windows.Input;
 
 namespace Pronome
 {
@@ -843,6 +844,36 @@ namespace Pronome
             base.OnStateChanged(e);
 
             DrawScene();
+        }
+
+        /// <summary>
+        /// Enter full screen on ctrl-F
+        /// </summary>
+        /// <param name="e"></param>
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+
+            if (e.Key == Key.F || e.SystemKey == Key.A
+                && (e.KeyboardDevice.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                if (WindowStyle != WindowStyle.None)
+                {
+                    Mouse.OverrideCursor = Cursors.None;
+                    WindowState = WindowState.Maximized;
+                    WindowStyle = WindowStyle.None;
+                    Hide();
+                    Show();
+                    Topmost = true;
+                }
+                else
+                {
+                    WindowState = WindowState.Normal;
+                    WindowStyle = WindowStyle.SingleBorderWindow;
+                    Mouse.OverrideCursor = default(Cursor);
+                    Topmost = false;
+                }
+            }
         }
     }
 }

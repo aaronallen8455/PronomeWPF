@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 using NAudio.Wave;
 
 namespace Pronome
@@ -474,6 +475,7 @@ namespace Pronome
                             multiple = TwoPi * Frequency / waveFormat.SampleRate; // reuse this value
                             freqChanged = false;
                         }
+
                         sampleValue = previousSample = Gain * Math.Sin(nSample * multiple);
                     }
                     Gain -= gainStep;
