@@ -101,6 +101,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Editor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ExportWavWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -123,6 +127,9 @@
     <Compile Include="Classes\SourceBeatCollection.cs" />
     <Compile Include="Classes\StreamToWavFile.cs" />
     <Compile Include="Classes\WavFileStream.cs" />
+    <Compile Include="Editor.xaml.cs">
+      <DependentUpon>Editor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ExportWavWindow.xaml.cs">
       <DependentUpon>ExportWavWindow.xaml</DependentUpon>
     </Compile>

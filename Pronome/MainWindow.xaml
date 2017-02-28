@@ -26,10 +26,10 @@
         </Style>
 
         <!--Default button template-->
-        <Style TargetType="Button">
+        <Style TargetType="ButtonBase" x:Key="buttonBaseStyle">
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
+                    <ControlTemplate TargetType="ButtonBase">
                         <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup Name="CommonStates">
@@ -83,6 +83,20 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="#FF007ACC"/>
             <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <!--Set button styles-->
+        <Style TargetType="Button" BasedOn="{StaticResource buttonBaseStyle}"/>
+
+        <Style TargetType="RepeatButton" BasedOn="{StaticResource buttonBaseStyle}"/>
+
+        <Style TargetType="ToggleButton" BasedOn="{StaticResource buttonBaseStyle}">
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="true">
+                    <Setter Property="Foreground" Value="Aquamarine"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <!--Used for border on playback controls-->
@@ -379,14 +393,30 @@
                             <!--Tempo tap button-->
                             <Button Click="tempoTap_Click">Tempo</Button>
                             <!--Tempo input field-->
-                            <Grid Margin="5, 0">
+                            <Grid Margin="0, 0, 5, 0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition/>
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <RepeatButton Click="tempoUp_Click" FontSize="6pt">U</RepeatButton>
-                                    <RepeatButton Click="tempoDown_Click" FontSize="6pt">D</RepeatButton>
+                                    <RepeatButton Click="tempoUp_Click" Padding="4">
+                                        <Polygon Fill="White">
+                                            <Polygon.Points>
+                                                <Point X="5" Y="0"/>
+                                                <Point X="0" Y="5"/>
+                                                <Point X="10" Y="5"/>
+                                            </Polygon.Points>
+                                        </Polygon>
+                                    </RepeatButton>
+                                    <RepeatButton Click="tempoDown_Click" Padding="4">
+                                        <Polygon Fill="White">
+                                            <Polygon.Points>
+                                                <Point X="5" Y="5"/>
+                                                <Point X="0" Y="0"/>
+                                                <Point X="10" Y="0"/>
+                                            </Polygon.Points>
+                                        </Polygon>
+                                    </RepeatButton>
                                 </StackPanel>
                                 <TextBox Name="tempoInput" 
                                      LostFocus="tempoInput_LostFocus"
@@ -397,7 +427,7 @@
                                      Grid.Column="1"/>
                             </Grid>
                             <!--Master volume-->
-                            <StackPanel Margin="5, 0">
+                            <StackPanel Margin="5, 0" VerticalAlignment="Center">
                                 <TextBlock Foreground="White" FontSize="7pt" HorizontalAlignment="Center">Master Vol.</TextBlock>
                                 <Slider 
                                 Name="masterVolume" 

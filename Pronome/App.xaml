@@ -147,7 +147,8 @@
         <ToggleButton
             x:Key="muteButton"
             x:Shared="False"
-            Margin="4, 4, 4, 2">
+            Margin="4, 4, 4, 2"
+            Width="18">
             M
         </ToggleButton>
         
@@ -155,7 +156,8 @@
         <ToggleButton
             x:Key="soloButton"
             x:Shared="False"
-            Margin="4, 2, 4, 4">
+            Margin="4, 2, 4, 4"
+            Width="18">
             S
         </ToggleButton>
         
