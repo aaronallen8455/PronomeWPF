@@ -3,10 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
         Title="Editor" Height="300" Width="300">
     <Window.Resources>
+        <sys:Double x:Key="rowHeight">40</sys:Double>
+        <sys:Double x:Key="cellHeight">8</sys:Double>
+
+        <!--The canvas that the cells are drawn on-->
+        <Canvas x:Key="rowCanvas" Height="{StaticResource rowHeight}" x:Shared="False"/>
+
+        <Rectangle 
+            Width="3" 
+            x:Key="cellRectangle" 
+            x:Shared="False" 
+            Fill="Black" />
+
         <Style TargetType="Label">
             <Setter Property="FontSize" Value="9"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -22,6 +35,10 @@
             <StackPanel>
                 <Label Target="{Binding ElementName=incrementInput}">Increment</Label>
                 <TextBox Name="incrementInput" Width="50"/>
+            </StackPanel>
+            <StackPanel>
+                <Label Target="{Binding ElementName=durationInput}">Duration</Label>
+                <TextBox Name="durationInput" Width="50"/>
             </StackPanel>
             <StackPanel>
                 <Label Target="{Binding ElementName=sourceSelector}">Source</Label>

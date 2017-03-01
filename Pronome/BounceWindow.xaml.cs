@@ -729,8 +729,11 @@ namespace Pronome
 
             double ballBaseImageRatioPad; // bb * ir + hpad
 
-            //static Dictionary<Tuple<double, double>, double> totalMemo = new Dictionary<Tuple<double, double>, double>();
-
+            /// <summary>
+            /// Draw the ball at the correct position based on elapsed time since last frame.
+            /// </summary>
+            /// <param name="elapsedTime"></param>
+            /// <param name="dc"></param>
             public void SetPosition(double elapsedTime, DrawingContext dc)
             {
                 countDown -= elapsedTime * (Metronome.GetInstance().Tempo / 60);
@@ -754,6 +757,10 @@ namespace Pronome
             double factorImageRatio; // factor * imageRatio
             double factorImageRatioCurInterval; // factorImageRatio * currentInterval
 
+            /// <summary>
+            /// Get the number of quarter notes of silence and forward the index pointer to the next non-silent cell.
+            /// </summary>
+            /// <returns></returns>
             protected double AddSilence()
             {
                 double bpm = 0;
@@ -774,6 +781,11 @@ namespace Pronome
                 return 0;
             }
 
+            /// <summary>
+            /// Sync the ball up with the elapsed time of the playback
+            /// </summary>
+            /// <param name="elapsedBpm"></param>
+            /// <param name="dc"></param>
             public void Sync(double elapsedBpm, DrawingContext dc)
             {
                 elapsedBpm -= Layer.Offset;
@@ -810,6 +822,9 @@ namespace Pronome
                 SetPosition(0, dc);
             }
 
+            /// <summary>
+            /// Set the factor which determines how high and how fast the ball will bounce based on interval size.
+            /// </summary>
             protected void SetFactor()
             {
                 double halfInterval = currentInterval / 2;
