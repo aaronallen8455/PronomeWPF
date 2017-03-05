@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -27,13 +28,15 @@ namespace Pronome
         /// <summary>
         /// The scale of the spacing in the UI
         /// </summary>
-        public double Scale = 1;
+        public static double Scale = 1;
+
+        public const float BaseFactor = 20f;
 
         public Editor()
         {
-            InitializeComponent();
+            //InitializeComponent();
 
-            Instance = this;
+            //Instance = this;
         }
 
         public void BuildUI()
@@ -46,6 +49,18 @@ namespace Pronome
                 var row = new Editor.Row(layer);
                 layerPanel.Children.Add(row.Canvas);
                 Rows.Add(row);
+            }
+        }
+
+        public bool KeepOpen = true;
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            if (KeepOpen)
+            {
+                Hide();
+                e.Cancel = true;
             }
         }
     }

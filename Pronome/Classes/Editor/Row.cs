@@ -51,6 +51,7 @@ namespace Pronome.Editor
                     OpenMultGroups.Push(new MultGroup() { Row = this });
                     cell.MultGroups.AddFirst(OpenMultGroups.Peek());
                     OpenMultGroups.Peek().Cells.Add(cell);
+                    OpenMultGroups.Peek().Position = cell.Position;
                 }
 
                 // check for opening repeat group
@@ -59,6 +60,7 @@ namespace Pronome.Editor
                     OpenRepeatGroups.Push(new RepeatGroup() { Row = this });
                     cell.RepeatGroups.AddFirst(OpenRepeatGroups.Peek());
                     OpenRepeatGroups.Peek().Cells.Add(cell);
+                    OpenRepeatGroups.Peek().Position = cell.Position;
                 }
 
                 // parse the BPM value or get reference
@@ -99,23 +101,32 @@ namespace Pronome.Editor
                 {
                     MultGroup mg = OpenMultGroups.Pop();
                     mg.Factor = BeatCell.Parse(Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value);
+                    // set duration
+                    mg.Duration = cell.Position + cell.Duration - mg.Position;
+                    MultGroups.AddLast(mg);
+                    // render
+                    Canvas.Children.Add(mg.Rectangle);
                 }
 
                 // check for closing repeat group, getting times and last term modifier
                 if (chunk.IndexOf(']') > -1)
                 {
                     RepeatGroup rg = OpenRepeatGroups.Pop();
-                    Match m = Regex.Match(chunk, @"](\d+)");
-                    if (m.Length == 0)
+                    rg.Duration = cell.Position + cell.Duration - rg.Position;
+                    Match mtch = Regex.Match(chunk, @"](\d+)");
+                    if (mtch.Length == 0)
                     {
-                        m = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
-                        rg.Times = int.Parse(m.Groups[1].Value);
-                        rg.LastTermModifier = BeatCell.Parse(m.Groups[2].Value);
+                        mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
+                        rg.Times = int.Parse(mtch.Groups[1].Value);
+                        rg.LastTermModifier = BeatCell.Parse(mtch.Groups[2].Value);
                     }
                     else
                     {
-                        rg.Times = int.Parse(m.Groups[1].Value);
+                        rg.Times = int.Parse(mtch.Groups[1].Value);
                     }
+                    RepeatGroups.AddLast(rg);
+                    // render
+                    Canvas.Children.Add(rg.Rectangle);
                 }
 
                 // check if its a break, |
@@ -123,6 +134,9 @@ namespace Pronome.Editor
                 {
                     cell.IsBreak = true;
                 }
+
+                // render the cell
+                Canvas.Children.Add(cell.Rectangle);
             }
 
             return result;

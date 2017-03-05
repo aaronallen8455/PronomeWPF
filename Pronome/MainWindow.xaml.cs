@@ -209,6 +209,10 @@ namespace Pronome
             bounce.KeepOpen = false;
             bounce.Close();
 
+            //Editor editor = Resources["editorWindow"] as Editor;
+            //editor.KeepOpen = false;
+            //editor.Close();
+
             // save user settings
             if (Settings.ContainsKey("winWidth")) Settings["winWidth"] = Width;
             else Settings.Add("winWidth", Width);
@@ -329,6 +333,14 @@ namespace Pronome
                 }
             }
         }
+
+        //private void openEditorButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    var editorWindow = Resources["editorWindow"] as Editor;
+        //    editorWindow.Show();
+        //    editorWindow.Activate();
+        //    editorWindow.BuildUI();
+        //}
 
         private void minimizeButton_Click(object sender, RoutedEventArgs e)
         {

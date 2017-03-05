@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
-        xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
         Title="Editor" Height="300" Width="300">
     <Window.Resources>
@@ -19,6 +18,16 @@
             x:Key="cellRectangle" 
             x:Shared="False" 
             Fill="Black" />
+
+        <Rectangle
+            x:Key="multGroupRectangle"
+            x:Shared="False"
+            Fill="Orange"/>
+
+        <Rectangle
+            x:Key="repeatGroupRectangle"
+            x:Shared="False"
+            Fill="ForestGreen"/>
 
         <Style TargetType="Label">
             <Setter Property="FontSize" Value="9"/>

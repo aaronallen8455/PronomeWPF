@@ -439,7 +439,9 @@
                             </StackPanel>
                             <!--Open options-->
                             <Button Name="openOptionsButton" Click="openOptionsButton_Click">Options</Button>
+                            <!--Graph-->
                             <Button Name="openGraphButton" Click="openGraphButton_Click">Graph</Button>
+                            <!--Bounce-->
                             <Button Name="openBounceButton" Click="openBounceButton_Click">Bounce</Button>
                         </WrapPanel>
 
