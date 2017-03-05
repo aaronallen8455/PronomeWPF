@@ -15,6 +15,8 @@
         <local:BeatGraphWindow x:Key="graphWindow"/>
         <!-- window for the bounce animation-->
         <local:BounceWindow x:Key="bounceWindow"/>
+        <!--window for editor-->
+        <local:EditorWindow x:Key="editorWindow"/>
         <!--Boolean inverter-->
         <local:InverseBooleanConverter x:Key="inverseBooleanConverter"/>
         <Style TargetType="Rectangle">
@@ -443,6 +445,8 @@
                             <Button Name="openGraphButton" Click="openGraphButton_Click">Graph</Button>
                             <!--Bounce-->
                             <Button Name="openBounceButton" Click="openBounceButton_Click">Bounce</Button>
+                            <!--Editor-->
+                            <Button Name="openEditorButton" Click="openEditorButton_Click">Editor</Button>
                         </WrapPanel>
 
                         <!--Window Resizer-->

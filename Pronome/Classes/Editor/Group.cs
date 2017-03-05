@@ -12,7 +12,7 @@ namespace Pronome.Editor
     abstract class Group
     {
         public Row Row;
-        public List<Cell> Cells;
+        public List<Cell> Cells = new List<Cell>();
         protected double _position;
         /// <summary>
         /// The left offset of the group in BPM. Setting will adjust rect position.
@@ -23,7 +23,7 @@ namespace Pronome.Editor
             set
             {
                 _position = value;
-                Canvas.SetLeft(Rectangle, value * Editor.Scale * Editor.BaseFactor);
+                Canvas.SetLeft(Rectangle, value * EditorWindow.Scale * EditorWindow.BaseFactor);
             }
         }
         protected double _duration;
@@ -36,15 +36,15 @@ namespace Pronome.Editor
             set
             {
                 _duration = value;
-                Rectangle.Width = value * Editor.Scale * Editor.BaseFactor;
+                Rectangle.Width = value * EditorWindow.Scale * EditorWindow.BaseFactor;
             }
         }
-        public Rectangle Rectangle;
+        public Rectangle Rectangle = new Rectangle();// = EditorWindow.Instance.Resources["groupRectangle"] as Rectangle;
 
         public void RefreshRectParams()
         {
-            Rectangle.Width = Duration * Editor.Scale * Editor.BaseFactor;
-            Canvas.SetLeft(Rectangle, Position * Editor.Scale * Editor.BaseFactor);
+            Rectangle.Width = Duration * EditorWindow.Scale * EditorWindow.BaseFactor;
+            Canvas.SetLeft(Rectangle, Position * EditorWindow.Scale * EditorWindow.BaseFactor);
         }
     }
 
@@ -54,8 +54,8 @@ namespace Pronome.Editor
 
         public MultGroup()
         {
-            Rectangle = Editor.Instance.Resources["multGroupRectangle"] as Rectangle;
-            Rectangle.Fill = Brushes.Orange;
+            Rectangle.Style = EditorWindow.Instance.Resources["multRectStyle"] as System.Windows.Style;
+            Panel.SetZIndex(Rectangle, 5);
         }
     }
 
@@ -71,9 +71,20 @@ namespace Pronome.Editor
         /// </summary>
         public double LastTermModifier;
 
+        /// <summary>
+        /// Holds the cell's within this group for easy duplication
+        /// </summary>
+        public Canvas Canvas = new Canvas();
+
+        /// <summary>
+        /// Holds the rects used to display the duplicated cells
+        /// </summary>
+        public LinkedList<Rectangle> HostRects = new LinkedList<Rectangle>();
+
         public RepeatGroup()
         {
-            Rectangle.Fill = Brushes.ForestGreen;
+            Rectangle.Style = EditorWindow.Instance.Resources["repeatRectStyle"] as System.Windows.Style;
+            Panel.SetZIndex(Rectangle, 5);
         }
     }
 }

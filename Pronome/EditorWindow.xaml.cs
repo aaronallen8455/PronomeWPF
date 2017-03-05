@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 using System.ComponentModel;
-using System.Text.RegularExpressions;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
@@ -17,11 +16,11 @@ using System.Windows.Shapes;
 namespace Pronome
 {
     /// <summary>
-    /// Interaction logic for Editor.xaml
+    /// Interaction logic for EditorWindow.xaml
     /// </summary>
-    public partial class Editor : Window
+    public partial class EditorWindow : Window
     {
-        public static Editor Instance;
+        public static EditorWindow Instance;
 
         List<Editor.Row> Rows = new List<Editor.Row>();
 
@@ -30,13 +29,13 @@ namespace Pronome
         /// </summary>
         public static double Scale = 1;
 
-        public const float BaseFactor = 20f;
+        public const float BaseFactor = 40f;
 
-        public Editor()
+        public EditorWindow()
         {
-            //InitializeComponent();
+            InitializeComponent();
 
-            //Instance = this;
+            Instance = this;
         }
 
         public void BuildUI()

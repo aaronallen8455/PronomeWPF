@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Pronome.Editor
 {
@@ -20,13 +21,13 @@ namespace Pronome.Editor
         {
             Layer = layer;
             Offset = layer.Offset;
-            Canvas = Editor.Instance.Resources["rowCanvas"] as Canvas;
+            Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
             Cells = ParseBeat(layer.ParsedString);
         }
 
         protected List<Cell> ParseBeat(string beat)
         {
-            List<Cell> result = new List<Cell>();
+            List<Cell> cells = new List<Cell>();
 
             string[] chunks = beat.Split(new char[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries);
             Stack<MultGroup> OpenMultGroups = new Stack<MultGroup>();
@@ -127,6 +128,51 @@ namespace Pronome.Editor
                     RepeatGroups.AddLast(rg);
                     // render
                     Canvas.Children.Add(rg.Rectangle);
+                    // add the child canvas
+                    if (OpenRepeatGroups.Any())
+                    {
+                        // nested repeats
+                        OpenRepeatGroups.Peek().Canvas.Children.Add(rg.Canvas);
+                    }
+                    else
+                    {
+                        // added to row canvas
+                        Canvas.Children.Add(rg.Canvas);
+                    }
+                    // forward the position to account for repeats
+                    //position += rg.Duration * (rg.Times - 1);
+                    rg.Canvas.Children.Add(cell.Rectangle);
+                    // append duplicates of sub-canvas
+                    for (int i=0; i < rg.Times - 1; i++)
+                    {
+                        VisualBrush duplicate = new VisualBrush(rg.Canvas);
+                        var dupHost = EditorWindow.Instance.Resources["repeatRectangle"] as System.Windows.Shapes.Rectangle;
+                        // size the rect
+                        dupHost.Width = (rg.Duration - cell.Duration) * EditorWindow.Scale * EditorWindow.BaseFactor + (double)EditorWindow.Instance.Resources["cellWidth"];
+                        // fill with dupe content
+                        dupHost.Fill = duplicate;
+                        // do offsets
+                        Canvas.SetLeft(dupHost, position * EditorWindow.Scale * EditorWindow.BaseFactor);
+                        Canvas.SetTop(dupHost, (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2);
+                        rg.HostRects.AddLast(dupHost);
+                        // render it
+                        Canvas.Children.Add(dupHost);
+                        // move position forward
+                        position += rg.Duration;
+                    }
+                    position += rg.LastTermModifier * EditorWindow.Scale * EditorWindow.BaseFactor;
+                }
+                else
+                {
+                    // add cell rect to canvas or repeat group sub-canvas
+                    if (OpenRepeatGroups.Any())
+                    {
+                        OpenRepeatGroups.Peek().Canvas.Children.Add(cell.Rectangle);
+                    }
+                    else
+                    {
+                        Canvas.Children.Add(cell.Rectangle);
+                    }
                 }
 
                 // check if its a break, |
@@ -135,11 +181,10 @@ namespace Pronome.Editor
                     cell.IsBreak = true;
                 }
 
-                // render the cell
-                Canvas.Children.Add(cell.Rectangle);
+                cells.Add(cell);
             }
 
-            return result;
+            return cells;
         }
     }
 }

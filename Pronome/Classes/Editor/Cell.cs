@@ -13,7 +13,16 @@ namespace Pronome.Editor
         public Row Row;
         public Rectangle Rectangle;
         public double Duration;
-        public double Position;
+        protected double _position;
+        public double Position
+        {
+            get => _position;
+            set
+            {
+                _position = value;
+                Canvas.SetLeft(Rectangle, Position * EditorWindow.Scale * EditorWindow.BaseFactor);
+            }
+        }
         public bool IsSelected = false;
 
         /// <summary>
@@ -33,14 +42,14 @@ namespace Pronome.Editor
         public Cell(Row row)
         {
             Row = row;
-            Rectangle = Editor.Instance.Resources["cellRectangle"] as Rectangle;
+            Rectangle = EditorWindow.Instance.Resources["cellRectangle"] as Rectangle;
+            Rectangle.Height = (double)EditorWindow.Instance.Resources["cellHeight"];
             // set Canvas.Top
             Canvas.SetTop(Rectangle,
-                (double)Editor.Instance.Resources["rowHeight"] / 2 - (double)Editor.Instance.Resources["cellHeight"] / 2);
-            // set position
-            Canvas.SetLeft(Rectangle, Position * Editor.Instance.Scale);
+                (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2);
+            Panel.SetZIndex(Rectangle, 10);
 
-            row.Canvas.Children.Add(Rectangle);
+            //row.Canvas.Children.Add(Rectangle);
         }
 
         public struct CellRepeat

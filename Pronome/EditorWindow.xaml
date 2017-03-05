@@ -1,33 +1,73 @@
-﻿<Window x:Class="Pronome.Editor"
+﻿<Window x:Class="Pronome.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Editor" Height="300" Width="300">
+        Title="Editor" Height="300" Width="600">
     <Window.Resources>
         <sys:Double x:Key="rowHeight">40</sys:Double>
-        <sys:Double x:Key="cellHeight">8</sys:Double>
+        <sys:Double x:Key="cellHeight">25</sys:Double>
+        <sys:Double x:Key="cellWidth">3</sys:Double>
 
         <!--The canvas that the cells are drawn on-->
         <Canvas x:Key="rowCanvas" Height="{StaticResource rowHeight}" x:Shared="False"/>
 
         <Rectangle 
-            Width="3" 
+            Width="{StaticResource cellWidth}" 
             x:Key="cellRectangle" 
             x:Shared="False" 
-            Fill="Black" />
+            Fill="Black"/>
 
+        <!--base style that mult and repeat inherit from-->
+        <Style x:Key="groupRectStyle" TargetType="Rectangle">
+            <Setter Property="Height" Value="{StaticResource rowHeight}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+        </Style>
+        
         <Rectangle
-            x:Key="multGroupRectangle"
+            x:Key="groupRectangle"
             x:Shared="False"
-            Fill="Orange"/>
+            Height="{StaticResource rowHeight}"
+            Stroke="Green" StrokeThickness="1"/>
 
+        <LinearGradientBrush
+            x:Key="repeatGroupBrush"
+            EndPoint="1,0">
+            <LinearGradientBrush.GradientStops>
+                <GradientStop Color="Green" Offset="0"/>
+                <GradientStop Color="Transparent" Offset=".1"/>
+                <GradientStop Color="Transparent" Offset=".9"/>
+                <GradientStop Color="Green" Offset="1"/>
+            </LinearGradientBrush.GradientStops>
+        </LinearGradientBrush>
+        <LinearGradientBrush
+            x:Key="multGroupBrush"
+            EndPoint="1,0">
+            <LinearGradientBrush.GradientStops>
+                <GradientStop Color="Orange" Offset="0"/>
+                <GradientStop Color="Transparent" Offset=".1"/>
+                <GradientStop Color="Transparent" Offset=".9"/>
+                <GradientStop Color="Orange" Offset="1"/>
+            </LinearGradientBrush.GradientStops>
+        </LinearGradientBrush>
+        
+        <Style x:Key="repeatRectStyle" TargetType="Rectangle" BasedOn="{StaticResource groupRectStyle}">
+            <Setter Property="Stroke" Value="Green"/>
+            <Setter Property="Fill" Value="{StaticResource repeatGroupBrush}"/>
+        </Style>
+        <Style x:Key="multRectStyle" TargetType="Rectangle" BasedOn="{StaticResource groupRectStyle}">
+            <Setter Property="Stroke" Value="Orange"/>
+            <Setter Property="Fill" Value="{StaticResource multGroupBrush}"/>
+        </Style>
+
+        <!--Rectangle used to host visual brush copies of repeat group cells-->
         <Rectangle
-            x:Key="repeatGroupRectangle"
+            x:Key="repeatRectangle"
             x:Shared="False"
-            Fill="ForestGreen"/>
+            Height="{StaticResource cellHeight}"
+            Opacity=".25"/>
 
         <Style TargetType="Label">
             <Setter Property="FontSize" Value="9"/>
@@ -68,7 +108,7 @@
             </StackPanel>
         </WrapPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-            <StackPanel Name="layerPanel"/>
+            <StackPanel Name="layerPanel" SnapsToDevicePixels="True" Margin="10,0,0,0"/>
         </ScrollViewer>
     </DockPanel>
 </Window>
