@@ -14,6 +14,9 @@ namespace Pronome.Editor
         public Rectangle Rectangle;
         public double Duration;
         protected double _position;
+        /// <summary>
+        /// The horizontal position of the cell in BPM. Changes actual position when set.
+        /// </summary>
         public double Position
         {
             get => _position;
@@ -48,8 +51,13 @@ namespace Pronome.Editor
             Canvas.SetTop(Rectangle,
                 (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2);
             Panel.SetZIndex(Rectangle, 10);
+            Rectangle.MouseDown += Rectangle_MouseDown;
+        }
 
-            //row.Canvas.Children.Add(Rectangle);
+        private void Rectangle_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            IsSelected = !IsSelected;
+            Rectangle.Stroke = IsSelected ? System.Windows.Media.Brushes.DeepPink : System.Windows.Media.Brushes.Black;
         }
 
         public struct CellRepeat

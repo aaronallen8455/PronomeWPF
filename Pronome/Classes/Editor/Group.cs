@@ -85,6 +85,7 @@ namespace Pronome.Editor
         {
             Rectangle.Style = EditorWindow.Instance.Resources["repeatRectStyle"] as System.Windows.Style;
             Panel.SetZIndex(Rectangle, 5);
+            Panel.SetZIndex(Canvas, 10);
         }
     }
 }

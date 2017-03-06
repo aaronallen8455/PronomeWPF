@@ -12,8 +12,24 @@
         <sys:Double x:Key="cellWidth">3</sys:Double>
 
         <!--The canvas that the cells are drawn on-->
-        <Canvas x:Key="rowCanvas" Height="{StaticResource rowHeight}" x:Shared="False"/>
+        <Canvas x:Key="rowCanvas" x:Shared="False"/>
 
+        <!--The background for the rows on which cell pattern is repeated-->
+        <Rectangle 
+            Width="Auto" 
+            Height="{StaticResource rowHeight}" 
+            x:Shared="False" 
+            x:Key="rowBackgroundRectangle"
+            Opacity=".3"/>
+        
+        <!--Row sizer element-->
+        <Rectangle
+            Height="{StaticResource rowHeight}"
+            Fill="#FFA7DFFF"
+            x:Shared="False"
+            x:Key="rowSizer"/>
+
+        <!--Cell-->
         <Rectangle 
             Width="{StaticResource cellWidth}" 
             x:Key="cellRectangle" 
@@ -37,8 +53,8 @@
             EndPoint="1,0">
             <LinearGradientBrush.GradientStops>
                 <GradientStop Color="Green" Offset="0"/>
-                <GradientStop Color="Transparent" Offset=".1"/>
-                <GradientStop Color="Transparent" Offset=".9"/>
+                <GradientStop Color="Transparent" Offset=".2"/>
+                <GradientStop Color="Transparent" Offset=".8"/>
                 <GradientStop Color="Green" Offset="1"/>
             </LinearGradientBrush.GradientStops>
         </LinearGradientBrush>
@@ -47,8 +63,8 @@
             EndPoint="1,0">
             <LinearGradientBrush.GradientStops>
                 <GradientStop Color="Orange" Offset="0"/>
-                <GradientStop Color="Transparent" Offset=".1"/>
-                <GradientStop Color="Transparent" Offset=".9"/>
+                <GradientStop Color="Transparent" Offset=".2"/>
+                <GradientStop Color="Transparent" Offset=".8"/>
                 <GradientStop Color="Orange" Offset="1"/>
             </LinearGradientBrush.GradientStops>
         </LinearGradientBrush>

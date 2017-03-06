@@ -47,6 +47,7 @@ namespace Pronome
             {
                 var row = new Editor.Row(layer);
                 layerPanel.Children.Add(row.Canvas);
+                layerPanel.Children.Add(row.Background);
                 Rows.Add(row);
             }
         }

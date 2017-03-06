@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace Pronome.Editor
 {
@@ -16,12 +17,20 @@ namespace Pronome.Editor
         public LinkedList<MultGroup> MultGroups = new LinkedList<MultGroup>();
         public LinkedList<RepeatGroup> RepeatGroups = new LinkedList<RepeatGroup>();
         public Canvas Canvas;
+        protected Rectangle Sizer = EditorWindow.Instance.Resources["rowSizer"] as Rectangle;
+        public Rectangle Background;
+        protected VisualBrush BackgroundBrush;
 
         public Row(Layer layer)
         {
             Layer = layer;
             Offset = layer.Offset;
             Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
+            Background = EditorWindow.Instance.Resources["rowBackgroundRectangle"] as Rectangle;
+            BackgroundBrush = new VisualBrush(Canvas);
+            BackgroundBrush.TileMode = TileMode.Tile;
+            Background.Fill = BackgroundBrush;
+            Canvas.Children.Add(Sizer);
             Cells = ParseBeat(layer.ParsedString);
         }
 
@@ -184,7 +193,21 @@ namespace Pronome.Editor
                 cells.Add(cell);
             }
 
+            // set the background tiling
+            SetBackground(position);
+
             return cells;
+        }
+
+        protected void SetBackground(double widthBpm)
+        {
+            // set background tile size
+            double rowHeight = (double)EditorWindow.Instance.Resources["rowHeight"];
+            double width = widthBpm * EditorWindow.Scale * EditorWindow.BaseFactor;
+            BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, width, rowHeight);
+            BackgroundBrush.ViewportUnits = BrushMappingMode.Absolute;
+            Background.Margin = new System.Windows.Thickness(width, 0, 0, 0);
+            Sizer.Width = width;
         }
     }
 }
