@@ -12,7 +12,7 @@ namespace Pronome.Editor
     class Row
     {
         public Layer Layer;
-        public List<Cell> Cells;
+        public LinkedList<Cell> Cells;
         public double Offset;
         public LinkedList<MultGroup> MultGroups = new LinkedList<MultGroup>();
         public LinkedList<RepeatGroup> RepeatGroups = new LinkedList<RepeatGroup>();
@@ -20,6 +20,8 @@ namespace Pronome.Editor
         protected Rectangle Sizer = EditorWindow.Instance.Resources["rowSizer"] as Rectangle;
         public Rectangle Background;
         protected VisualBrush BackgroundBrush;
+        public List<Cell> SelectedCells = new List<Cell>();
+        public HashSet<string> ReferencedLayers = new HashSet<string>();
 
         public Row(Layer layer)
         {
@@ -31,12 +33,14 @@ namespace Pronome.Editor
             BackgroundBrush.TileMode = TileMode.Tile;
             Background.Fill = BackgroundBrush;
             Canvas.Children.Add(Sizer);
-            Cells = ParseBeat(layer.ParsedString);
+            ParsedBeatResult pbr = ParseBeat(layer.ParsedString);
+            Cells = pbr.Cells;
+            SetBackground(pbr.Duration);
         }
 
-        protected List<Cell> ParseBeat(string beat)
+        protected ParsedBeatResult ParseBeat(string beat)
         {
-            List<Cell> cells = new List<Cell>();
+            LinkedList<Cell> cells = new LinkedList<Cell>();
 
             string[] chunks = beat.Split(new char[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries);
             Stack<MultGroup> OpenMultGroups = new Stack<MultGroup>();
@@ -79,13 +83,39 @@ namespace Pronome.Editor
                     // get reference
                     string r = Regex.Match(chunk, @"((?<=\$)\d+|s)").Value;
                     cell.Reference = r;
+                    ReferencedLayers.Add(r);
                 }
                 else
                 {
                     // get bpm value
                     string bpm = Regex.Match(chunk, @"[\d./+*\-]+").Value;
-                    cell.Duration = BeatCell.Parse(bpm);
-                    position += cell.Duration;
+                    if (!string.IsNullOrEmpty(bpm))
+                    {
+                        cell.Duration = BeatCell.Parse(bpm);
+                        // progress position
+                        position += cell.Duration;
+                    }
+                    else if (cell.Reference != string.Empty)
+                    {
+                        // need to parse the reference
+                        int refIndex;
+                        if (cell.Reference == "s")
+                        {
+                            // self reference
+                            refIndex = Metronome.GetInstance().Layers.IndexOf(Layer);
+                        }
+                        else
+                        {
+                            refIndex = int.Parse(cell.Reference);
+                        }
+
+                        ParsedBeatResult pbr = ResolveReference(refIndex, position);
+                        // add the ref cells in
+                        cells = new LinkedList<Cell>(cells.Concat(pbr.Cells));
+                        // progress position
+                        position += pbr.Duration;
+                    }
+                    
                 }
 
                 // check for source modifier
@@ -102,7 +132,7 @@ namespace Pronome.Editor
                     cell.Repeat = new Cell.CellRepeat()
                     {
                         Times = int.Parse(m.Groups[1].Value),
-                        LastTermModifier = BeatCell.Parse(m.Groups[2].Value)
+                        LastTermModifier = m.Groups[2].Length != 0 ? BeatCell.Parse(m.Groups[2].Value) : 0
                     };
                 }
 
@@ -128,7 +158,7 @@ namespace Pronome.Editor
                     {
                         mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
                         rg.Times = int.Parse(mtch.Groups[1].Value);
-                        rg.LastTermModifier = BeatCell.Parse(mtch.Groups[2].Value);
+                        rg.LastTermModifier = mtch.Groups[2].Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
                     }
                     else
                     {
@@ -190,24 +220,95 @@ namespace Pronome.Editor
                     cell.IsBreak = true;
                 }
 
-                cells.Add(cell);
+                cells.AddLast(cell);
             }
 
             // set the background tiling
-            SetBackground(position);
+            //SetBackground(position);
 
-            return cells;
+            return new ParsedBeatResult(cells, position);
+        }
+
+        protected struct ParsedBeatResult
+        {
+            public LinkedList<Cell> Cells;
+            public double Duration;
+            public ParsedBeatResult(LinkedList<Cell> cells, double duration)
+            {
+                Cells = cells;
+                Duration = duration;
+            }
+        }
+
+        private HashSet<int> touchedRefs = new HashSet<int>();
+
+        protected ParsedBeatResult ResolveReference(int refIndex, double position)
+        {
+            touchedRefs.Add(refIndex);
+            string beat = Metronome.GetInstance().Layers[refIndex].ParsedString;
+            // remove comments
+            beat = Regex.Replace(beat, @"!.*?!", "");
+            // remove whitespace
+            beat = Regex.Replace(beat, @"\s", "");
+            // convert self references
+            beat = Regex.Replace(beat, @"(?<=\$)[sS]", refIndex.ToString());
+            var matches = Regex.Matches(beat, @"(?<=\$)d+");
+            foreach (Match match in matches)
+            {
+                int ind;
+                if (!int.TryParse(match.Value, out ind))
+                {
+                    ind = refIndex;
+                }
+                if (touchedRefs.Contains(refIndex))
+                {
+                    // remove refs that have been touched
+                    // remove closest nest
+                    if (Regex.IsMatch(beat, @"[[{][^[{\]}]*\$" + ind.ToString() + @"[^[{\]}]*[\]}][^\]},]*"))
+                    {
+                        beat = Regex.Replace(beat, @"[[{][^[{\]}]*\$" + ind.ToString() + @"[^[{\]}]*[\]}][^\]},]*", "");
+                    }
+                    else
+                    {
+                        // no nest
+                        beat = Regex.Replace(beat, $@"\${ind},?", "");
+                    }
+
+                    // clean out empty cells
+                    beat = Regex.Replace(beat, @",,", ",");
+                    //refBeat = Regex.Replace(refBeat, @",$", "");
+                    beat = beat.Trim(',');
+                }
+            }
+
+            // recurse
+            var pbr = ParseBeat(beat);
+
+            // mark the cells as refs
+            foreach (Cell c in pbr.Cells)
+            {
+                c.IsReference = true;
+                c.Position += position;
+            }
+
+            // no longer block this refIndex
+            touchedRefs.Remove(refIndex);
+
+            return pbr;
         }
 
         protected void SetBackground(double widthBpm)
         {
             // set background tile size
             double rowHeight = (double)EditorWindow.Instance.Resources["rowHeight"];
-            double width = widthBpm * EditorWindow.Scale * EditorWindow.BaseFactor;
+            double width = (widthBpm - Offset) * EditorWindow.Scale * EditorWindow.BaseFactor;
+            double offset = Offset * EditorWindow.Scale * EditorWindow.BaseFactor;
             BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, width, rowHeight);
             BackgroundBrush.ViewportUnits = BrushMappingMode.Absolute;
-            Background.Margin = new System.Windows.Thickness(width, 0, 0, 0);
+            Background.Margin = new System.Windows.Thickness(width + offset, 0, 0, 0);
             Sizer.Width = width;
+            // offset the sizer
+            Canvas.SetLeft(Sizer, offset);
         }
     }
 }
