@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Text;
 
 namespace Pronome.Editor
 {
@@ -21,7 +22,7 @@ namespace Pronome.Editor
         public Rectangle Background;
         protected VisualBrush BackgroundBrush;
         public List<Cell> SelectedCells = new List<Cell>();
-        public HashSet<string> ReferencedLayers = new HashSet<string>();
+        public HashSet<int> ReferencedLayers = new HashSet<int>();
 
         public Row(Layer layer)
         {
@@ -63,8 +64,8 @@ namespace Pronome.Editor
                 if (chunk.IndexOf('{') > -1)
                 {
                     OpenMultGroups.Push(new MultGroup() { Row = this });
-                    cell.MultGroups.AddFirst(OpenMultGroups.Peek());
-                    OpenMultGroups.Peek().Cells.Add(cell);
+                    cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
+                    OpenMultGroups.Peek().Cells.AddLast(cell);
                     OpenMultGroups.Peek().Position = cell.Position;
                 }
 
@@ -72,8 +73,8 @@ namespace Pronome.Editor
                 if (chunk.IndexOf('[') > -1)
                 {
                     OpenRepeatGroups.Push(new RepeatGroup() { Row = this });
-                    cell.RepeatGroups.AddFirst(OpenRepeatGroups.Peek());
-                    OpenRepeatGroups.Peek().Cells.Add(cell);
+                    cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
+                    OpenRepeatGroups.Peek().Cells.AddLast(cell);
                     OpenRepeatGroups.Peek().Position = cell.Position;
                 }
 
@@ -83,7 +84,23 @@ namespace Pronome.Editor
                     // get reference
                     string r = Regex.Match(chunk, @"((?<=\$)\d+|s)").Value;
                     cell.Reference = r;
-                    ReferencedLayers.Add(r);
+                    // need to parse the reference
+                    int refIndex;
+                    if (cell.Reference == "s")
+                    {
+                        // self reference
+                        refIndex = Metronome.GetInstance().Layers.IndexOf(Layer);
+                    }
+                    else
+                    {
+                        refIndex = int.Parse(cell.Reference);
+                    }
+
+                    ParsedBeatResult pbr = ResolveReference(refIndex, position);
+                    // add the ref cells in
+                    //cells = new LinkedList<Cell>(cells.Concat(pbr.Cells));
+                    // progress position
+                    position += pbr.Duration;
                 }
                 else
                 {
@@ -91,31 +108,11 @@ namespace Pronome.Editor
                     string bpm = Regex.Match(chunk, @"[\d./+*\-]+").Value;
                     if (!string.IsNullOrEmpty(bpm))
                     {
+                        cell.Value = bpm;
                         cell.Duration = BeatCell.Parse(bpm);
                         // progress position
                         position += cell.Duration;
                     }
-                    else if (cell.Reference != string.Empty)
-                    {
-                        // need to parse the reference
-                        int refIndex;
-                        if (cell.Reference == "s")
-                        {
-                            // self reference
-                            refIndex = Metronome.GetInstance().Layers.IndexOf(Layer);
-                        }
-                        else
-                        {
-                            refIndex = int.Parse(cell.Reference);
-                        }
-
-                        ParsedBeatResult pbr = ResolveReference(refIndex, position);
-                        // add the ref cells in
-                        cells = new LinkedList<Cell>(cells.Concat(pbr.Cells));
-                        // progress position
-                        position += pbr.Duration;
-                    }
-                    
                 }
 
                 // check for source modifier
@@ -129,18 +126,23 @@ namespace Pronome.Editor
                 if (Regex.IsMatch(chunk, @"\(\d+\)[\d+\-/*.]*"))
                 {
                     Match m = Regex.Match(chunk, @"\((\d+)\)([\d+\-/*.]*)");
-                    cell.Repeat = new Cell.CellRepeat()
-                    {
-                        Times = int.Parse(m.Groups[1].Value),
-                        LastTermModifier = m.Groups[2].Length != 0 ? BeatCell.Parse(m.Groups[2].Value) : 0
-                    };
+                    //cell.Repeat = new Cell.CellRepeat()
+                    //{
+                    //    Times = int.Parse(m.Groups[1].Value),
+                    //    LastTermModifier = m.Groups[2].Length != 0 ? BeatCell.Parse(m.Groups[2].Value) : 0
+                    //};
+                    
+                    var rg = new RepeatGroup() { Row = this };
+                    rg.Cells.AddLast(cell);
+                    rg.Position = cell.Position;
+                    cell.RepeatGroups.AddLast(rg);
                 }
 
                 // check for closing mult group
                 if (chunk.IndexOf('}') > -1)
                 {
                     MultGroup mg = OpenMultGroups.Pop();
-                    mg.Factor = BeatCell.Parse(Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value);
+                    mg.Factor = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
                     // set duration
                     mg.Duration = cell.Position + cell.Duration - mg.Position;
                     MultGroups.AddLast(mg);
@@ -158,7 +160,7 @@ namespace Pronome.Editor
                     {
                         mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
                         rg.Times = int.Parse(mtch.Groups[1].Value);
-                        rg.LastTermModifier = mtch.Groups[2].Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
+                        rg.LastTermModifier = mtch.Groups[2].Value;//.Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
                     }
                     else
                     {
@@ -199,7 +201,7 @@ namespace Pronome.Editor
                         // move position forward
                         position += rg.Duration;
                     }
-                    position += rg.LastTermModifier * EditorWindow.Scale * EditorWindow.BaseFactor;
+                    position += BeatCell.Parse(rg.LastTermModifier) * EditorWindow.Scale * EditorWindow.BaseFactor;
                 }
                 else
                 {
@@ -208,7 +210,7 @@ namespace Pronome.Editor
                     {
                         OpenRepeatGroups.Peek().Canvas.Children.Add(cell.Rectangle);
                     }
-                    else
+                    else if (cell.Reference == string.Empty) // cell's rect is not used if it's a reference
                     {
                         Canvas.Children.Add(cell.Rectangle);
                     }
@@ -294,9 +296,113 @@ namespace Pronome.Editor
             // no longer block this refIndex
             touchedRefs.Remove(refIndex);
 
+            ReferencedLayers.Add(refIndex);
+
             return pbr;
         }
 
+        public string Stringify()
+        {
+            StringBuilder result = new StringBuilder();
+
+            foreach (Cell cell in Cells.Where(x => !x.IsReference))
+            {
+                // check for open mult group
+                foreach (MultGroup mg in cell.MultGroups)
+                {
+                    if (mg.Cells.First.Value == cell)
+                    {
+                        //OpenMultGroups.Push(cell.MultGroup);
+                        result.Append('{');
+                    }
+                }
+                // check for open repeat group
+                foreach (RepeatGroup rg in cell.RepeatGroups)
+                {
+                    if (rg.Cells.First.Value == cell && rg.Cells.Count > 1)
+                    {
+                        //OpenRepeatGroups.Push(cell.RepeatGroup);
+                        result.Append('[');
+                    }
+                }
+                // get duration or reference ID
+                if (cell.Reference == string.Empty)
+                {
+                    result.Append(cell.Value);
+                }
+                else
+                {
+                    result.Append($"${cell.Reference}");
+                }
+                // check for source modifier
+                if (cell.Source != Layer.BaseSourceName)
+                {
+                    string source;
+                    // is pitch or wav?
+                    if (cell.Source.IndexOf(".wav") == -1)
+                    {
+                        source = cell.Source;
+                    }
+                    else
+                    {
+                        source = WavFileStream.FileNameIndex[int.Parse(cell.Source), 0];
+                    }
+                    result.Append($"@{cell.Source}");
+                }
+                // check for close repeat group
+                foreach (RepeatGroup rg in cell.RepeatGroups)
+                {
+                    if (rg.Cells.Last.Value == cell)
+                    {
+                        // is single cell rep?
+                        if (rg.Cells.Count == 1)
+                        {
+                            result.Append($"({rg.Times})");
+                            if (rg.LastTermModifier != string.Empty)
+                            {
+                                result.Append(rg.LastTermModifier);
+                            }
+                        }
+                        else
+                        {
+                            // multi cell
+                            if (rg.LastTermModifier != string.Empty)
+                            {
+                                result.Append($"]({rg.Times}){rg.LastTermModifier}");
+                            }
+                            else
+                            {
+                                result.Append($"]{rg.Times}");
+                            }
+                        }
+                    }
+                }
+                // check for close mult group
+                foreach (MultGroup mg in cell.MultGroups)
+                {
+                    if (mg.Cells.Last.Value == cell)
+                    {
+                        result.Append($"}}{mg.Factor}");
+                    }
+                }
+                // check if is break point |
+                if (cell.IsBreak)
+                {
+                    result.Append('|');
+                }
+                else
+                {
+                    result.Append(',');
+                }
+            }
+
+            return result.ToString().TrimEnd(',');
+        }
+
+        /// <summary>
+        /// Apply current state to the background element
+        /// </summary>
+        /// <param name="widthBpm"></param>
         protected void SetBackground(double widthBpm)
         {
             // set background tile size

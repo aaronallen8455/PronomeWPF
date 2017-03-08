@@ -13,10 +13,67 @@ namespace Pronome.Editor
     {
         public Row Row;
         public Rectangle Rectangle;
+
+        protected double _duration;
         /// <summary>
         /// The cell's value in BPM
         /// </summary>
-        public double Duration;
+        public double Duration
+        {
+            get => _duration;
+            set {
+                // reposition all subsequent cells and groups
+                HashSet<RepeatGroup> touchedRepGroups = new HashSet<RepeatGroup>();
+                HashSet<MultGroup> touchedMultGroups = new HashSet<MultGroup>();
+                bool isFirst = true;
+                foreach (Cell cell in Row.Cells.SkipWhile(x => x != this).Skip(1))
+                {
+                    cell.Position += value - _duration;
+                    // reposition groups
+                    foreach (RepeatGroup rg in RepeatGroups)
+                    {
+                        if (!touchedRepGroups.Contains(rg))
+                        {
+                            touchedRepGroups.Add(rg);
+                            if (isFirst && cell == this) // if positioning from within group, increase duration
+                            {
+                                rg.Duration += value - _duration;
+                            }
+                            else
+                            {
+                                rg.Position += value - _duration;
+                            }
+                        }
+                    }
+                    foreach (MultGroup mg in MultGroups)
+                    {
+                        if (!touchedMultGroups.Contains(mg))
+                        {
+                            touchedMultGroups.Add(mg);
+                            if (isFirst && cell == this)
+                            {
+                                mg.Duration += value - _duration;
+                            }
+                            else
+                            {
+                                mg.Position += value - _duration;
+                            }
+                        }
+                    }
+                    // TODO: reposition reference rects
+
+                    isFirst = false;
+                }
+
+                _duration = value;
+            }
+        }
+
+        /// <summary>
+        /// The string representation of the duration. ie 1+2/3
+        /// </summary>
+        public string Value;
+
         protected double _position;
         /// <summary>
         /// The horizontal position of the cell in BPM. Changes actual position when set.
@@ -28,6 +85,12 @@ namespace Pronome.Editor
             {
                 _position = value;
                 Canvas.SetLeft(Rectangle, Position * EditorWindow.Scale * EditorWindow.BaseFactor);
+
+                // if this is first cell in row, adjust the row offset
+                if (Row.Cells.First.Value == this)
+                {
+                    Row.Offset = _position;
+                }
             }
         }
         public bool IsSelected = false;
@@ -41,10 +104,12 @@ namespace Pronome.Editor
         /// The index of the layer that this cell is a reference for. Null if it's a regular cell.
         /// </summary>
         public string Reference;
-        public CellRepeat Repeat;
+        //public CellRepeat Repeat;
         public string Source;
         public LinkedList<MultGroup> MultGroups = new LinkedList<MultGroup>();
         public LinkedList<RepeatGroup> RepeatGroups = new LinkedList<RepeatGroup>();
+        //public MultGroup MultGroup;
+        //public RepeatGroup RepeatGroup;
         /// <summary>
         /// Is this cell part of a reference. Should not be manipulable if so
         /// </summary>
@@ -64,7 +129,10 @@ namespace Pronome.Editor
 
         private void Rectangle_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            ToggleSelect();
+            if (!IsReference) // ref cells should not be manipulable
+            {
+                ToggleSelect();
+            }
         }
 
         private void ToggleSelect(bool Clicked = true)
@@ -113,10 +181,22 @@ namespace Pronome.Editor
             }
         }
 
-        public struct CellRepeat
+        public void AddValue(string val)
         {
-            public int Times;
-            public double LastTermModifier;
+            Value += $"+{val}";
+            Duration = BeatCell.Parse(Value);
         }
+
+        public void SubtractValue(string val)
+        {
+            Value += $"-{val}";
+            Duration = BeatCell.Parse(Value);
+        }
+
+        //public struct CellRepeat
+        //{
+        //    public int Times;
+        //    public double LastTermModifier;
+        //}
     }
 }

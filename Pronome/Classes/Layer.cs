@@ -226,7 +226,7 @@ namespace Pronome
                     string source = match.Groups[2].Value;
 
                     //if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}$|^[pP][\d.]+$"))
-                    if (!Regex.IsMatch(source, @"^\d{1,2}$"))
+                    if (Regex.IsMatch(source, @"[a-gA-GpP]"))
                     {
                         // is a pitch reference
                         return new BeatCell(match.Groups[1].Value, source);

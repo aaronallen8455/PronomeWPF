@@ -12,7 +12,7 @@ namespace Pronome.Editor
     abstract class Group
     {
         public Row Row;
-        public List<Cell> Cells = new List<Cell>();
+        public LinkedList<Cell> Cells = new LinkedList<Cell>();
         protected double _position;
         /// <summary>
         /// The left offset of the group in BPM. Setting will adjust rect position.
@@ -50,7 +50,10 @@ namespace Pronome.Editor
 
     class MultGroup : Group
     {
-        public double Factor;
+        /// <summary>
+        /// The factor to multiply by. ex 1+1/3
+        /// </summary>
+        public string Factor;
 
         public MultGroup()
         {
@@ -69,7 +72,7 @@ namespace Pronome.Editor
         /// <summary>
         /// The modifier on last term, ex. (#)2+1/3
         /// </summary>
-        public double LastTermModifier;
+        public string LastTermModifier;
 
         /// <summary>
         /// Holds the cell's within this group for easy duplication
