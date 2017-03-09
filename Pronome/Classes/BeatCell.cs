@@ -97,6 +97,8 @@ namespace Pronome
          */
         static public double Parse(string str)
         {
+            if (string.IsNullOrEmpty(str)) return 0;
+
             string operators = "";
             for (int i = 0; i < str.Length; i++)
             {

@@ -84,6 +84,14 @@
             x:Shared="False"
             Height="{StaticResource cellHeight}"
             Opacity=".25"/>
+        
+        <!--Placed over a reference block-->
+        <Rectangle
+            x:Key="referenceRectangle"
+            x:Shared="False"
+            Height="{StaticResource rowHeight}"
+            Fill="MediumPurple"
+            Opacity=".4"/>
 
         <Style TargetType="Label">
             <Setter Property="FontSize" Value="9"/>

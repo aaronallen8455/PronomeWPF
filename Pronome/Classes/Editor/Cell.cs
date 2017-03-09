@@ -87,7 +87,7 @@ namespace Pronome.Editor
                 Canvas.SetLeft(Rectangle, Position * EditorWindow.Scale * EditorWindow.BaseFactor);
 
                 // if this is first cell in row, adjust the row offset
-                if (Row.Cells.First.Value == this)
+                if (Row.Cells.Any() && Row.Cells.First.Value == this)
                 {
                     Row.Offset = _position;
                 }
@@ -114,6 +114,11 @@ namespace Pronome.Editor
         /// Is this cell part of a reference. Should not be manipulable if so
         /// </summary>
         public bool IsReference = false;
+
+        /// <summary>
+        /// Drawn in place of cell rect if this is a reference. Denotes a referenced block.
+        /// </summary>
+        public Rectangle ReferenceRectangle;// = EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle;
 
         public Cell(Row row)
         {

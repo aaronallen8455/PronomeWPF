@@ -13,7 +13,7 @@ namespace Pronome.Editor
     class Row
     {
         public Layer Layer;
-        public LinkedList<Cell> Cells;
+        public LinkedList<Cell> Cells = new LinkedList<Cell>();
         public double Offset;
         public LinkedList<MultGroup> MultGroups = new LinkedList<MultGroup>();
         public LinkedList<RepeatGroup> RepeatGroups = new LinkedList<RepeatGroup>();
@@ -68,6 +68,10 @@ namespace Pronome.Editor
                     OpenMultGroups.Peek().Cells.AddLast(cell);
                     OpenMultGroups.Peek().Position = cell.Position;
                 }
+                else if (OpenMultGroups.Any())
+                {
+                    cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
+                }
 
                 // check for opening repeat group
                 if (chunk.IndexOf('[') > -1)
@@ -76,6 +80,10 @@ namespace Pronome.Editor
                     cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
                     OpenRepeatGroups.Peek().Cells.AddLast(cell);
                     OpenRepeatGroups.Peek().Position = cell.Position;
+                }
+                else if (RepeatGroups.Any())
+                {
+                    cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
                 }
 
                 // parse the BPM value or get reference
@@ -93,7 +101,7 @@ namespace Pronome.Editor
                     }
                     else
                     {
-                        refIndex = int.Parse(cell.Reference);
+                        refIndex = int.Parse(cell.Reference) - 1;
                     }
 
                     ParsedBeatResult pbr = ResolveReference(refIndex, position);
@@ -101,6 +109,21 @@ namespace Pronome.Editor
                     //cells = new LinkedList<Cell>(cells.Concat(pbr.Cells));
                     // progress position
                     position += pbr.Duration;
+
+                    // draw reference rect
+                    cell.ReferenceRectangle = EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle;
+                    Canvas.SetLeft(cell.ReferenceRectangle, cell.Position * EditorWindow.Scale * EditorWindow.BaseFactor);
+                    cell.ReferenceRectangle.Width = pbr.Duration * EditorWindow.Scale * EditorWindow.BaseFactor;
+                    Panel.SetZIndex(cell.ReferenceRectangle, 30);
+                    // add to main canvas or repeat group canvas
+                    if (OpenRepeatGroups.Any())
+                    {
+                        OpenRepeatGroups.Peek().Canvas.Children.Add(cell.ReferenceRectangle);
+                    }
+                    else
+                    {
+                        Canvas.Children.Add(cell.ReferenceRectangle);
+                    }
                 }
                 else
                 {
@@ -210,7 +233,7 @@ namespace Pronome.Editor
                     {
                         OpenRepeatGroups.Peek().Canvas.Children.Add(cell.Rectangle);
                     }
-                    else if (cell.Reference == string.Empty) // cell's rect is not used if it's a reference
+                    else if (string.IsNullOrEmpty(cell.Reference)) // cell's rect is not used if it's a reference
                     {
                         Canvas.Children.Add(cell.Rectangle);
                     }
@@ -253,15 +276,16 @@ namespace Pronome.Editor
             // remove whitespace
             beat = Regex.Replace(beat, @"\s", "");
             // convert self references
-            beat = Regex.Replace(beat, @"(?<=\$)[sS]", refIndex.ToString());
-            var matches = Regex.Matches(beat, @"(?<=\$)d+");
+            beat = Regex.Replace(beat, @"(?<=\$)[sS]", (refIndex + 1).ToString());
+            var matches = Regex.Matches(beat, @"(?<=\$)\d+");
             foreach (Match match in matches)
             {
                 int ind;
-                if (!int.TryParse(match.Value, out ind))
-                {
-                    ind = refIndex;
-                }
+                //if (!int.TryParse(match.Value, out ind))
+                //{
+                //    ind = refIndex + 1;
+                //}
+                int.TryParse(match.Value, out ind);
                 if (touchedRefs.Contains(refIndex))
                 {
                     // remove refs that have been touched
@@ -301,6 +325,10 @@ namespace Pronome.Editor
             return pbr;
         }
 
+        /// <summary>
+        /// Outputs the string representation of the beat layer from the editor.
+        /// </summary>
+        /// <returns></returns>
         public string Stringify()
         {
             StringBuilder result = new StringBuilder();
@@ -326,7 +354,7 @@ namespace Pronome.Editor
                     }
                 }
                 // get duration or reference ID
-                if (cell.Reference == string.Empty)
+                if (string.IsNullOrEmpty(cell.Reference))
                 {
                     result.Append(cell.Value);
                 }
@@ -358,7 +386,7 @@ namespace Pronome.Editor
                         if (rg.Cells.Count == 1)
                         {
                             result.Append($"({rg.Times})");
-                            if (rg.LastTermModifier != string.Empty)
+                            if (string.IsNullOrEmpty(rg.LastTermModifier))
                             {
                                 result.Append(rg.LastTermModifier);
                             }
@@ -366,7 +394,7 @@ namespace Pronome.Editor
                         else
                         {
                             // multi cell
-                            if (rg.LastTermModifier != string.Empty)
+                            if (string.IsNullOrEmpty(rg.LastTermModifier))
                             {
                                 result.Append($"]({rg.Times}){rg.LastTermModifier}");
                             }
