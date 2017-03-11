@@ -81,7 +81,7 @@ namespace Pronome.Editor
         public string LastTermModifier;
 
         /// <summary>
-        /// Holds the cell's within this group for easy duplication
+        /// Holds the cell's within this group for easy duplication. Does not have a left offset
         /// </summary>
         public Canvas Canvas = new Canvas();
 

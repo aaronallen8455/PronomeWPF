@@ -107,7 +107,6 @@ namespace Pronome
             baseSourceSelector = resources["sourceSelector"] as ComboBox;
             MakeLabel("Source", baseSourceSelector);
             // get array of sources
-            // TODO: add index numbers to .wav items
             List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
                 .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers

@@ -10,6 +10,8 @@
         <sys:Double x:Key="rowHeight">40</sys:Double>
         <sys:Double x:Key="cellHeight">25</sys:Double>
         <sys:Double x:Key="cellWidth">3</sys:Double>
+        <sys:Boolean x:Key="changesApplied">False</sys:Boolean>
+        <sys:Boolean x:Key="cellSelected">False</sys:Boolean>
 
         <!--The canvas that the cells are drawn on-->
         <Canvas x:Key="rowCanvas" x:Shared="False"/>
@@ -111,26 +113,44 @@
             </StackPanel>
             <StackPanel>
                 <Label Target="{Binding ElementName=durationInput}">Duration</Label>
-                <TextBox Name="durationInput" Width="50"/>
+                <TextBox Name="durationInput" 
+                         LostFocus="durationInput_LostFocus" 
+                         Width="50"
+                         IsEnabled="{DynamicResource cellSelected}"/>
             </StackPanel>
             <StackPanel>
                 <Label Target="{Binding ElementName=sourceSelector}">Source</Label>
-                <ComboBox Name="sourceSelector"/>
+                <ComboBox Name="sourceSelector" 
+                          SelectionChanged="sourceSelector_SelectionChanged"
+                          IsEnabled="{DynamicResource cellSelected}"/>
             </StackPanel>
             <StackPanel Name="pitchInputPanel">
                 <Label Target="{Binding ElementName=pitchInput}">Pitch</Label>
-                <TextBox Name="pitchInput" Width="50"/>
+                <TextBox Name="pitchInput" Width="50" LostFocus="pitchInput_LostFocus"/>
             </StackPanel>
         </WrapPanel>
-        <WrapPanel DockPanel.Dock="Bottom">
-            <StackPanel>
+        <Grid DockPanel.Dock="Bottom">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" HorizontalAlignment="Left">
+                <!--Scale ratio setting-->
                 <Label>Scale</Label>
-                <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Horizontal" Grid.Column="0">
                     <TextBox Name="scaleInput" Width="30"/>
                     <TextBlock>%</TextBlock>
                 </StackPanel>
             </StackPanel>
-        </WrapPanel>
+            <StackPanel Grid.Column="1" Margin="8">
+                <!--Apply changes button-->
+                <Button Name="applyChangesButton"
+                        Click="applyChangesButton_Click"
+                        IsEnabled="{DynamicResource changesApplied}">
+                    Apply Changes
+                </Button>
+            </StackPanel>
+        </Grid>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <StackPanel Name="layerPanel" SnapsToDevicePixels="True" Margin="10,0,0,0"/>
         </ScrollViewer>

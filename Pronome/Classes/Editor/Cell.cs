@@ -14,6 +14,11 @@ namespace Pronome.Editor
         public Row Row;
         public Rectangle Rectangle;
 
+        /// <summary>
+        /// Currently selected cells
+        /// </summary>
+        public static List<Cell> SelectedCells = new List<Cell>();
+
         protected double _duration;
         /// <summary>
         /// The cell's value in BPM
@@ -26,9 +31,10 @@ namespace Pronome.Editor
                 HashSet<RepeatGroup> touchedRepGroups = new HashSet<RepeatGroup>();
                 HashSet<MultGroup> touchedMultGroups = new HashSet<MultGroup>();
                 bool isFirst = true;
+                double diff = value - _duration;
                 foreach (Cell cell in Row.Cells.SkipWhile(x => x != this).Skip(1))
                 {
-                    cell.Position += value - _duration;
+                    cell.Position += diff;
                     // reposition groups
                     foreach (RepeatGroup rg in RepeatGroups)
                     {
@@ -37,11 +43,11 @@ namespace Pronome.Editor
                             touchedRepGroups.Add(rg);
                             if (isFirst && cell == this) // if positioning from within group, increase duration
                             {
-                                rg.Duration += value - _duration;
+                                rg.Duration += diff;
                             }
                             else
                             {
-                                rg.Position += value - _duration;
+                                rg.Position += diff;
                             }
                         }
                     }
@@ -52,18 +58,26 @@ namespace Pronome.Editor
                             touchedMultGroups.Add(mg);
                             if (isFirst && cell == this)
                             {
-                                mg.Duration += value - _duration;
+                                mg.Duration += diff;
                             }
                             else
                             {
-                                mg.Position += value - _duration;
+                                mg.Position += diff;
                             }
                         }
                     }
-                    // TODO: reposition reference rects
+                    // reposition reference rect
+                    if (cell.ReferenceRectangle != null)
+                    {
+                        double cur = Canvas.GetLeft(cell.ReferenceRectangle);
+                        Canvas.SetLeft(cell.ReferenceRectangle, cur + diff);
+                    }
 
                     isFirst = false;
                 }
+
+                // resize sizer
+                Row.ChangeSizerWidthByAmount(diff);
 
                 _duration = value;
             }
@@ -137,6 +151,8 @@ namespace Pronome.Editor
             if (!IsReference) // ref cells should not be manipulable
             {
                 ToggleSelect();
+
+                EditorWindow.Instance.UpdateUiForSelectedCell();
             }
         }
 
@@ -162,27 +178,33 @@ namespace Pronome.Editor
                     }
                     else
                     { // single select - deselect others
-                        while (Row.SelectedCells.Any())
+                        while (SelectedCells.Any())
                         {
-                            Row.SelectedCells.First().ToggleSelect();
+                            SelectedCells.First().ToggleSelect();
                         }
                     }
                 }
 
-                Row.SelectedCells.Add(this);
+                SelectedCells.Add(this);
+                EditorWindow.Instance.SetCellSelected(true);
             }
             else if (!IsSelected)
             { // deselect if not a cell in a multi-select being clicked
-                if (Row.SelectedCells.Count > 1 && Clicked)
+                if (SelectedCells.Count > 1 && Clicked)
                 {
                     //ToggleSelect(false);
-                    foreach (Cell c in Row.SelectedCells.ToArray())
+                    foreach (Cell c in SelectedCells.ToArray())
                     {
                         c.ToggleSelect(false);
                     }
                 }
 
-                Row.SelectedCells.Remove(this);
+                SelectedCells.Remove(this);
+                if (!SelectedCells.Any())
+                {
+                    // no cells selected
+                    EditorWindow.Instance.SetCellSelected(false);
+                }
             }
         }
 
@@ -198,10 +220,6 @@ namespace Pronome.Editor
             Duration = BeatCell.Parse(Value);
         }
 
-        //public struct CellRepeat
-        //{
-        //    public int Times;
-        //    public double LastTermModifier;
-        //}
+        
     }
 }

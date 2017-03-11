@@ -54,11 +54,6 @@ namespace Pronome.Editor
         protected VisualBrush BackgroundBrush;
 
         /// <summary>
-        /// Currently selected cells
-        /// </summary>
-        public List<Cell> SelectedCells = new List<Cell>();
-
-        /// <summary>
         /// Layers indexes that are referenced in this row. 0 based.
         /// </summary>
         public HashSet<int> ReferencedLayers = new HashSet<int>();
@@ -154,15 +149,6 @@ namespace Pronome.Editor
                     foreach (Cell c in pbr.Cells)
                     {
                         cells.AddLast(c);
-                        //if (c.IsReference) continue;
-                        //if (OpenRepeatGroups.Any())
-                        //{
-                        //    OpenRepeatGroups.Peek().Canvas.Children.Add(c.Rectangle);
-                        //}
-                        //else
-                        //{
-                        //    Canvas.Children.Add(c.Rectangle);
-                        //}
                     }
 
                     // draw reference rect
@@ -512,7 +498,14 @@ namespace Pronome.Editor
                 Canvas.SetTop(dupHost, (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2);
                 rg.HostRects.AddLast(dupHost);
                 // render it
-                Canvas.Children.Add(dupHost);
+                if (openRepeatGroups.Any())
+                {
+                    openRepeatGroups.Peek().Canvas.Children.Add(dupHost);
+                }
+                else
+                {
+                    Canvas.Children.Add(dupHost);
+                }
                 // move position forward
                 position += rg.Duration;
             }
@@ -538,6 +531,21 @@ namespace Pronome.Editor
             Sizer.Width = width;
             // offset the sizer
             //Canvas.SetLeft(Sizer, offset);
+        }
+
+        /// <summary>
+        /// Change the sizer width and reposition background by an amount in BPM
+        /// </summary>
+        /// <param name="diff"></param>
+        public void ChangeSizerWidthByAmount(double diff)
+        {
+            double change = diff * EditorWindow.Scale * EditorWindow.BaseFactor;
+            double offset = Offset * EditorWindow.Scale * EditorWindow.BaseFactor;
+            double rowHeight = (double)EditorWindow.Instance.Resources["rowHeight"];
+            Sizer.Width += change;
+            // reposition background
+            BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, Sizer.Width, rowHeight);
+            Background.Margin = new System.Windows.Thickness(Background.Margin.Left + change + offset, 0, 0, 0);
         }
     }
 }
