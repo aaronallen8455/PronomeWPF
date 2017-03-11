@@ -22,10 +22,11 @@ namespace Pronome.Editor
             get => _position;
             set
             {
+                SetRectPosition(value);
                 _position = value;
-                Canvas.SetLeft(Rectangle, value * EditorWindow.Scale * EditorWindow.BaseFactor);
             }
         }
+
         protected double _duration;
         /// <summary>
         /// The duration of the group in BPM. Setting will adjust rect size.
@@ -45,6 +46,11 @@ namespace Pronome.Editor
         {
             Rectangle.Width = Duration * EditorWindow.Scale * EditorWindow.BaseFactor;
             Canvas.SetLeft(Rectangle, Position * EditorWindow.Scale * EditorWindow.BaseFactor);
+        }
+
+        virtual protected void SetRectPosition(double value)
+        {
+            Canvas.SetLeft(Rectangle, value * EditorWindow.Scale * EditorWindow.BaseFactor);
         }
     }
 
@@ -89,6 +95,22 @@ namespace Pronome.Editor
             Rectangle.Style = EditorWindow.Instance.Resources["repeatRectStyle"] as System.Windows.Style;
             Panel.SetZIndex(Rectangle, 5);
             Panel.SetZIndex(Canvas, 10);
+        }
+
+        protected override void SetRectPosition(double value)
+        {
+            // Reposition the host rects
+            double n = value * EditorWindow.Scale * EditorWindow.BaseFactor;
+            double o = Position * EditorWindow.Scale * EditorWindow.BaseFactor;
+            double diff = n - o;
+
+            foreach (Rectangle rect in HostRects)
+            {
+                double left = Canvas.GetLeft(rect);
+                Canvas.SetLeft(rect, left + diff);
+            }
+
+            base.SetRectPosition(value);
         }
     }
 }

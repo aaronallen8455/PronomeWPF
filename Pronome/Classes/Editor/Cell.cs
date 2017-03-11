@@ -84,12 +84,12 @@ namespace Pronome.Editor
             set
             {
                 _position = value;
-                Canvas.SetLeft(Rectangle, Position * EditorWindow.Scale * EditorWindow.BaseFactor);
+                Canvas.SetLeft(Rectangle, value * EditorWindow.Scale * EditorWindow.BaseFactor);
 
                 // if this is first cell in row, adjust the row offset
                 if (Row.Cells.Any() && Row.Cells.First.Value == this)
                 {
-                    Row.Offset = _position;
+                    Row.Offset = value;
                 }
             }
         }
