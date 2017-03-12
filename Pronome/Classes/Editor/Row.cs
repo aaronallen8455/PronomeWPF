@@ -41,6 +41,11 @@ namespace Pronome.Editor
         /// The canvas on which all visuals are drawn, except for the 'background'
         /// </summary>
         public Canvas Canvas;
+
+        /// <summary>
+        /// The element added to the layerPanel stackpanel. Contains everything from this row.
+        /// </summary>
+        public Grid BaseElement = new Grid();
         
         /// <summary>
         /// Sets the size of the row and supplies background color
@@ -63,6 +68,7 @@ namespace Pronome.Editor
             Layer = layer;
             Offset = layer.Offset;
             Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
+            //Panel.SetZIndex(Canvas, 20);
             Canvas.Margin = new System.Windows.Thickness(Offset * EditorWindow.Scale * EditorWindow.BaseFactor, 0, 0, 0);
             Background = EditorWindow.Instance.Resources["rowBackgroundRectangle"] as Rectangle;
             BackgroundBrush = new VisualBrush(Canvas);
@@ -72,6 +78,9 @@ namespace Pronome.Editor
             ParsedBeatResult pbr = ParseBeat(layer.ParsedString);
             Cells = pbr.Cells;
             SetBackground(pbr.Duration);
+
+            BaseElement.Children.Add(Canvas);
+            BaseElement.Children.Add(Background);
         }
 
         protected ParsedBeatResult ParseBeat(string beat)
@@ -546,6 +555,48 @@ namespace Pronome.Editor
             // reposition background
             BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, Sizer.Width, rowHeight);
             Background.Margin = new System.Windows.Thickness(Background.Margin.Left + change + offset, 0, 0, 0);
+        }
+
+        public void DrawGridLines(string intervalCode)
+        {
+            double gridCellSize;
+            if (BeatCell.TryParse(intervalCode, out gridCellSize))
+            {
+                gridCellSize *= EditorWindow.BaseFactor * EditorWindow.Scale;
+                // get duration of selection and leftmost position
+                double duration = 0; // BPM
+                double positionBpm = double.MaxValue;
+                foreach (Cell cell in Cell.SelectedCells)
+                {
+                    duration += cell.Duration;
+                    if (cell.Position < positionBpm)
+                    {
+                        positionBpm = cell.Position;
+                    }
+                }
+                duration -= Cell.SelectedCells.Last().Duration;
+
+                Rectangle sizer = EditorWindow.Instance.GridSizer;
+                // set grid cell size
+                sizer.Width = gridCellSize;
+                Rectangle tick = EditorWindow.Instance.GridTick;
+                Rectangle leftGrid = EditorWindow.Instance.GridLeft;
+                // set left grid width
+                leftGrid.Width = (positionBpm + Offset) * EditorWindow.Scale * EditorWindow.BaseFactor;
+                Rectangle rightGrid = EditorWindow.Instance.GridRight;
+                // position right grid
+                rightGrid.Margin = new System.Windows.Thickness(leftGrid.Width + duration * EditorWindow.Scale * EditorWindow.BaseFactor, 0, 0, 0);
+                VisualBrush gridBrush = EditorWindow.Instance.GridBrush;
+                // set viewport size
+                gridBrush.Viewport = new System.Windows.Rect(0, sizer.Height, gridCellSize, sizer.Height);
+
+                //Canvas.Children.Add(leftGrid);
+                //Canvas.Children.Add(rightGrid);
+                //EditorWindow.Instance.LayerPanel.Children.Add(rightGrid);
+                //Canvas.Children.Add(EditorWindow.Instance.GridCanvas);
+                BaseElement.Children.Add(leftGrid);
+                BaseElement.Children.Add(rightGrid);
+            }
         }
     }
 }

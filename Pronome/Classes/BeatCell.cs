@@ -148,5 +148,23 @@ namespace Pronome
 
             return numbers[0];
         }
+
+        /// <summary>
+        /// Parse a math expression after testing validity
+        /// </summary>
+        /// <param name="str">String to parse</param>
+        /// <param name="val">Output value</param>
+        /// <returns></returns>
+        static public bool TryParse(string str, out double val)
+        {
+            if (System.Text.RegularExpressions.Regex.IsMatch(str, @"(\d+\.?\d*[\-+*/xX]?)*\d+\.?\d*$"))
+            {
+                val = Parse(str);
+
+                return true;
+            }
+            val = 0;
+            return false;
+        }
     }
 }

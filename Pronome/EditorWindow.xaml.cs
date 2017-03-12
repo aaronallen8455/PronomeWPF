@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Shapes;
+using System.Windows.Media;
 using Pronome.Editor;
 
 namespace Pronome
@@ -18,11 +20,37 @@ namespace Pronome
 
         List<Row> Rows = new List<Row>();
 
+        Row LastSelectedRow;
+
+        /// <summary>
+        /// Sizes the grid cells
+        /// </summary>
+        public Rectangle GridSizer;
+        /// <summary>
+        /// Tick mark for each grid cell
+        /// </summary>
+        public Rectangle GridTick;
+        /// <summary>
+        /// Left portion of the grid is displayed in here
+        /// </summary>
+        public Rectangle GridLeft;
+        /// <summary>
+        /// Right portion of the grid is diplayed in here
+        /// </summary>
+        public Rectangle GridRight;
+        public Canvas GridCanvas;
+        public VisualBrush GridBrush;
+
+        public StackPanel LayerPanel;
+
         /// <summary>
         /// The scale of the spacing in the UI
         /// </summary>
         public static double Scale = 1;
 
+        /// <summary>
+        /// Determines overall scale of UI
+        /// </summary>
         public const float BaseFactor = 40f;
 
         public EditorWindow()
@@ -31,12 +59,30 @@ namespace Pronome
 
             Instance = this;
 
+            LayerPanel = layerPanel;
+
             // add items to source selector
             List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
                 .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
             sourceSelector.ItemsSource = sources;
+
+            // init grid UI elements
+            GridSizer = Resources["gridSizer"] as Rectangle;
+            GridTick = Resources["gridTick"] as Rectangle;
+            GridLeft = Resources["gridLeft"] as Rectangle;
+            Panel.SetZIndex(GridLeft, 5);
+            GridRight = Resources["gridRight"] as Rectangle;
+            Panel.SetZIndex(GridRight, 5);
+            GridCanvas = new Canvas();
+            GridBrush = new VisualBrush(GridCanvas);
+            GridBrush.ViewportUnits = BrushMappingMode.Absolute;
+            GridBrush.TileMode = TileMode.Tile;
+            GridLeft.Fill = GridBrush;
+            GridRight.Fill = GridBrush;
+            GridCanvas.Children.Add(GridSizer);
+            GridCanvas.Children.Add(GridTick);
         }
 
         public void BuildUI()
@@ -46,45 +92,80 @@ namespace Pronome
             Rows.Clear();
             foreach (Layer layer in Metronome.GetInstance().Layers)
             {
-                var row = new Editor.Row(layer);
-                layerPanel.Children.Add(row.Canvas);
-                layerPanel.Children.Add(row.Background);
+                var row = new Row(layer);
+                layerPanel.Children.Add(row.BaseElement);
+                //layerPanel.Children.Add(row.Canvas);
+                //layerPanel.Children.Add(row.Background);
                 Rows.Add(row);
             }
         }
 
         public void UpdateUiForSelectedCell()
         {
-            if (Cell.SelectedCells.Count == 1)
+            if (Cell.SelectedCells.Any())
             {
-                Cell cell = Cell.SelectedCells[0];
-
-                durationInput.Text = cell.Value;
-
-                string source = string.IsNullOrEmpty(cell.Source) ? cell.Row.Layer.BaseSourceName : cell.Source;
-                // is a pitch or wav?
-                if (source.Contains(".wav"))
+                if (Cell.SelectedCells.Count == 1)
                 {
-                    pitchInputPanel.Visibility = Visibility.Collapsed;
-                    //string newSource = WavFileStream.GetFileByName((sourceSelector.SelectedItem as string).Substring(4));
-                    string name = WavFileStream.GetSelectorNameByFile(source);
-                    sourceSelector.SelectedItem = name;
+                    Cell cell = Cell.SelectedCells[0];
+
+                    durationInput.Text = cell.Value;
+
+                    string source = string.IsNullOrEmpty(cell.Source) ? cell.Row.Layer.BaseSourceName : cell.Source;
+                    // is a pitch or wav?
+                    if (source.Contains(".wav"))
+                    {
+                        pitchInputPanel.Visibility = Visibility.Collapsed;
+                        //string newSource = WavFileStream.GetFileByName((sourceSelector.SelectedItem as string).Substring(4));
+                        string name = WavFileStream.GetSelectorNameByFile(source);
+                        sourceSelector.SelectedItem = name;
+                    }
+                    else
+                    {
+                        // pitch
+                        pitchInputPanel.Visibility = Visibility.Visible;
+                        pitchInput.Text = source;
+                        sourceSelector.SelectedItem = "Pitch";
+                    }
+                    //pitchInput.Text = source;
+
+
                 }
                 else
                 {
-                    // pitch
-                    pitchInputPanel.Visibility = Visibility.Visible;
-                    pitchInput.Text = source;
-                    sourceSelector.SelectedItem = "Pitch";
+                    durationInput.Text = string.Empty;
+                    sourceSelector.SelectedItem = null;
+                    pitchInput.Text = string.Empty;
+                    pitchInputPanel.Visibility = Visibility.Collapsed;
                 }
-                //pitchInput.Text = source;
+
+                // draw grid based on increment input
+                string intervalCode = incrementInput.Text;
+                // validate input
+
+                // free up the grid
+                RemoveGridLines();
+                // draw the grid on the current row
+                LastSelectedRow = Cell.SelectedCells.First().Row;
+                LastSelectedRow.DrawGridLines(intervalCode);
             }
             else
             {
+                // empty the fields and remove grid
                 durationInput.Text = string.Empty;
                 sourceSelector.SelectedItem = null;
                 pitchInput.Text = string.Empty;
                 pitchInputPanel.Visibility = Visibility.Collapsed;
+
+                RemoveGridLines();
+            }
+        }
+
+        public void RemoveGridLines()
+        {
+            if (LastSelectedRow != null)
+            {
+                LastSelectedRow.BaseElement.Children.Remove(GridLeft);
+                LastSelectedRow.BaseElement.Children.Remove(GridRight);
             }
         }
 
@@ -124,9 +205,10 @@ namespace Pronome
         {
             string value = ((TextBox)sender).Text;
             // validate
-            if (Regex.IsMatch(value, @"(\d+\.?\d*[\-+*/xX]?)*\d+\.?\d*$"))
+            double duration;
+            if (BeatCell.TryParse(value, out duration))
             {
-                double duration = BeatCell.Parse(value);
+                //double duration = BeatCell.Parse(value);
 
                 foreach(Cell cell in Cell.SelectedCells)
                 {
@@ -138,7 +220,7 @@ namespace Pronome
             }
         }
 
-        private void sourceSelector_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void sourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
         }
@@ -146,6 +228,21 @@ namespace Pronome
         private void pitchInput_LostFocus(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void incrementInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            string input = ((TextBox)sender).Text;
+
+            if (BeatCell.TryParse(input, out double incr))
+            {
+                if (Cell.SelectedCells.Any())
+                {
+                    RemoveGridLines();
+                    // draw new grid
+                    Cell.SelectedCells.First().Row.DrawGridLines(input);
+                }
+            }
         }
     }
 }

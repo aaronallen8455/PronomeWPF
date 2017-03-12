@@ -38,6 +38,40 @@
             x:Shared="False" 
             Fill="Black"/>
 
+        <!--Selection grid elements-->
+        <Rectangle
+            Width="1"
+            Height="{StaticResource rowHeight}"
+            x:Key="gridTick"
+            x:Shared="True"
+            Fill="Red"/>
+        <Rectangle
+            x:Key="gridSizer"
+            x:Shared="True"
+            Fill="Transparent"
+            Height="{StaticResource rowHeight}"/>
+        <Rectangle
+            x:Key="gridLeft"
+            x:Shared="True"
+            HorizontalAlignment="Left"
+            Height="{StaticResource rowHeight}"
+            IsHitTestVisible="False"
+            SnapsToDevicePixels="True">
+            <Rectangle.LayoutTransform>
+                <ScaleTransform ScaleX="-1"/>
+            </Rectangle.LayoutTransform>
+            <Rectangle.RenderTransform>
+                <TranslateTransform X="1"/>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+        <Rectangle
+            x:Key="gridRight"
+            x:Shared="True"
+            Height="{StaticResource rowHeight}"
+            Width="Auto"
+            IsHitTestVisible="False"
+            SnapsToDevicePixels="True"/>
+
         <!--base style that mult and repeat inherit from-->
         <Style x:Key="groupRectStyle" TargetType="Rectangle">
             <Setter Property="Height" Value="{StaticResource rowHeight}"/>
@@ -100,6 +134,7 @@
             <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
     </Window.Resources>
+    
     <DockPanel>
         <WrapPanel DockPanel.Dock="Top" FlowDirection="LeftToRight">
             <WrapPanel.Resources>
@@ -109,7 +144,7 @@
             </WrapPanel.Resources>
             <StackPanel>
                 <Label Target="{Binding ElementName=incrementInput}">Increment</Label>
-                <TextBox Name="incrementInput" Width="50"/>
+                <TextBox Name="incrementInput" LostFocus="incrementInput_LostFocus" Width="50" Text="1"/>
             </StackPanel>
             <StackPanel>
                 <Label Target="{Binding ElementName=durationInput}">Duration</Label>
