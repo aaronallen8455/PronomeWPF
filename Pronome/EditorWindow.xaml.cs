@@ -102,11 +102,11 @@ namespace Pronome
 
         public void UpdateUiForSelectedCell()
         {
-            if (Cell.SelectedCells.Any())
+            if (Cell.SelectedCells.Cells.Any())
             {
-                if (Cell.SelectedCells.Count == 1)
+                if (Cell.SelectedCells.Cells.Count == 1)
                 {
-                    Cell cell = Cell.SelectedCells[0];
+                    Cell cell = Cell.SelectedCells.Cells[0];
 
                     durationInput.Text = cell.Value;
 
@@ -145,7 +145,7 @@ namespace Pronome
                 // free up the grid
                 RemoveGridLines();
                 // draw the grid on the current row
-                LastSelectedRow = Cell.SelectedCells.First().Row;
+                LastSelectedRow = Cell.SelectedCells.Cells.First().Row;
                 LastSelectedRow.DrawGridLines(intervalCode);
             }
             else
@@ -210,7 +210,7 @@ namespace Pronome
             {
                 //double duration = BeatCell.Parse(value);
 
-                foreach(Cell cell in Cell.SelectedCells)
+                foreach(Cell cell in Cell.SelectedCells.Cells)
                 {
                     cell.Duration = duration;
                     cell.Value = value;
@@ -230,19 +230,44 @@ namespace Pronome
 
         }
 
+        public static string CurrentIncrement = "1";
+        /// <summary>
+        /// Set a new increment amount
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void incrementInput_LostFocus(object sender, RoutedEventArgs e)
         {
             string input = ((TextBox)sender).Text;
 
             if (BeatCell.TryParse(input, out double incr))
             {
-                if (Cell.SelectedCells.Any())
+                if (Cell.SelectedCells.Cells.Any())
                 {
                     RemoveGridLines();
                     // draw new grid
-                    Cell.SelectedCells.First().Row.DrawGridLines(input);
+                    Cell.SelectedCells.Cells.First().Row.DrawGridLines(input);
+
+                    CurrentIncrement = input;
                 }
             }
+        }
+
+        /// <summary>
+        /// Shows the mouse position in BPM
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ScrollViewer_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            // convert mouse position to BPMs
+            mousePositionText.Text = (e.GetPosition((StackPanel)sender).X / Scale / BaseFactor).ToString("0.00");
+        }
+
+        private void layerPanel_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            // remove mouse location info when mouse leaves the work area
+            mousePositionText.Text = string.Empty;
         }
     }
 }

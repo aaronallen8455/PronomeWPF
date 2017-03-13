@@ -79,10 +79,18 @@ namespace Pronome.Editor
             Cells = pbr.Cells;
             SetBackground(pbr.Duration);
 
+            // handler for creating new cells on the grid
+            BaseElement.MouseLeftButtonDown += BaseElement_MouseLeftButtonDown;
+
             BaseElement.Children.Add(Canvas);
             BaseElement.Children.Add(Background);
         }
 
+        /// <summary>
+        /// Build the cell and group objects based on layer. Also adds all visuals to the canvas.
+        /// </summary>
+        /// <param name="beat"></param>
+        /// <returns></returns>
         protected ParsedBeatResult ParseBeat(string beat)
         {
             LinkedList<Cell> cells = new LinkedList<Cell>();
@@ -566,15 +574,27 @@ namespace Pronome.Editor
                 // get duration of selection and leftmost position
                 double duration = 0; // BPM
                 double positionBpm = double.MaxValue;
-                foreach (Cell cell in Cell.SelectedCells)
+                double maxPostion = -1;
+                foreach (Cell cell in Cell.SelectedCells.Cells)
                 {
                     duration += cell.Duration;
                     if (cell.Position < positionBpm)
                     {
                         positionBpm = cell.Position;
+                        Cell.SelectedCells.FirstCell = cell;
+                    }
+
+                    if (cell.Position > maxPostion)
+                    {
+                        maxPostion = cell.Position;
+                        Cell.SelectedCells.LastCell = cell;
                     }
                 }
-                duration -= Cell.SelectedCells.Last().Duration;
+                duration -= Cell.SelectedCells.Cells.Last().Duration;
+
+                // set postion and duration on Selection
+                Cell.SelectedCells.Duration = duration;
+                Cell.SelectedCells.Position = positionBpm;
 
                 Rectangle sizer = EditorWindow.Instance.GridSizer;
                 // set grid cell size
@@ -597,6 +617,87 @@ namespace Pronome.Editor
                 BaseElement.Children.Add(leftGrid);
                 BaseElement.Children.Add(rightGrid);
             }
+        }
+
+        /// <summary>
+        /// Create a new cell at the position on grid if within a certain range of a grid line
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BaseElement_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // in BPM
+            double position = e.GetPosition((Grid)sender).X / EditorWindow.Scale / EditorWindow.BaseFactor;
+            position -= Offset; // will be negative if inserting before the start
+
+            // is it before or after the current selection?
+            if (Cell.SelectedCells.Cells.Any())
+            {
+                // find the grid line within 10% of increment value of the click
+                double increment = BeatCell.Parse(EditorWindow.CurrentIncrement);
+
+                if (position > Cell.SelectedCells.LastCell.Position)
+                {
+                    // if the new cell will be above the current row
+                    if (position > Cells.Last.Value.Position)
+                    {
+                        // if placing cell outside of beat, correct the duration for preceding beat.
+                        double diff = position - Cell.SelectedCells.LastCell.Position;
+                        int div = (int)(diff / increment);
+                        double lower = increment * div + .1 * increment;
+                        double upper = lower + increment - .2 * increment;
+                        Cell cell = null;
+                        // use upper or lower grid line?
+                        if (diff <= lower && diff > 0)
+                        {
+                            // set new duration of previous cell
+                            Cells.Last.Value.Duration = increment * div - (Cells.Last.Value.Position - Cell.SelectedCells.LastCell.Position);
+                            // make new cell
+                            cell = new Cell(this) { Value = EditorWindow.CurrentIncrement };
+                            cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
+                        }
+                        else if (diff >= upper)
+                        {
+                            // set new duration of previous cell
+                            Cells.Last.Value.Duration = increment * (div + 1) - (Cells.Last.Value.Position - Cell.SelectedCells.LastCell.Position);
+                            // make new cell
+                            cell = new Cell(this) { Value = EditorWindow.CurrentIncrement };
+                            cell.Position = Cell.SelectedCells.LastCell.Position + increment * (div + 1);
+                        }
+
+                        if (cell != null)
+                        {
+                            Cells.AddLast(cell);
+                            Canvas.Children.Add(cell.Rectangle);
+                            cell.Duration = increment;
+                        }
+                    }
+                    else
+                    {
+                        // cell will be above selection but within the row
+                        // get cell below insertion point
+                        Cell below = Cells.TakeWhile(x => x.Position < position).First();
+                        Cell above = Cells.Find(below).Next.Value;
+                        // find nearest grid line
+
+
+
+                        Cell cell = new Cell(this);
+                    }
+                }
+                else if (position < Cell.SelectedCells.FirstCell.Position)
+                {
+
+                }
+            }
+
+            // insert new cell at this position in the row
+
+            // if it's placed before the first cell, adjust the row offset and the position of all subsequent cells
+            
+            // set the correct duration on the new cell and it's preceding cell if placing cell within beat
+            
+            
         }
     }
 }

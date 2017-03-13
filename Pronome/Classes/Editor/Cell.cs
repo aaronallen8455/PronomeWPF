@@ -17,7 +17,7 @@ namespace Pronome.Editor
         /// <summary>
         /// Currently selected cells
         /// </summary>
-        public static List<Cell> SelectedCells = new List<Cell>();
+        public static Selection SelectedCells = new Selection();
 
         protected double _duration;
         /// <summary>
@@ -146,6 +146,11 @@ namespace Pronome.Editor
             Rectangle.MouseDown += Rectangle_MouseDown; ;
         }
 
+        /// <summary>
+        /// Select the cell
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Rectangle_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (!IsReference) // ref cells should not be manipulable
@@ -154,6 +159,8 @@ namespace Pronome.Editor
 
                 EditorWindow.Instance.UpdateUiForSelectedCell();
             }
+
+            e.Handled = true;
         }
 
         private void ToggleSelect(bool Clicked = true)
@@ -177,30 +184,30 @@ namespace Pronome.Editor
                         }
                     }
                     else
-                    { // single select - deselect others
-                        while (SelectedCells.Any())
+                    { // single select : deselect others
+                        while (SelectedCells.Cells.Any())
                         {
-                            SelectedCells.First().ToggleSelect();
+                            SelectedCells.Cells.First().ToggleSelect();
                         }
                     }
                 }
 
-                SelectedCells.Add(this);
+                SelectedCells.Cells.Add(this);
                 EditorWindow.Instance.SetCellSelected(true);
             }
             else if (!IsSelected)
             { // deselect if not a cell in a multi-select being clicked
-                if (SelectedCells.Count > 1 && Clicked)
+                if (SelectedCells.Cells.Count > 1 && Clicked)
                 {
                     //ToggleSelect(false);
-                    foreach (Cell c in SelectedCells.ToArray())
+                    foreach (Cell c in SelectedCells.Cells.ToArray())
                     {
                         c.ToggleSelect(false);
                     }
                 }
 
-                SelectedCells.Remove(this);
-                if (!SelectedCells.Any())
+                SelectedCells.Cells.Remove(this);
+                if (!SelectedCells.Cells.Any())
                 {
                     // no cells selected
                     EditorWindow.Instance.SetCellSelected(false);
@@ -220,6 +227,33 @@ namespace Pronome.Editor
             Duration = BeatCell.Parse(Value);
         }
 
+        /// <summary>
+        /// Assign a new duration with altering the UI
+        /// </summary>
+        /// <param name="duration"></param>
+        public void SetDurationDirectly(double duration)
+        {
+            _duration = duration;
+        }
+
         
+        public class Selection
+        {
+            public List<Cell> Cells = new List<Cell>();
+            public Cell FirstCell;
+            public Cell LastCell;
+            public double Duration;
+            public double Position;
+
+            public void Clear()
+            {
+                Cells.Clear();
+                FirstCell = null;
+                LastCell = null;
+                Duration = 0;
+                Position = 0;
+            }
+        }
     }
+
 }
