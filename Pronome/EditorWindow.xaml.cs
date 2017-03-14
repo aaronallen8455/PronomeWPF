@@ -20,7 +20,14 @@ namespace Pronome
 
         List<Row> Rows = new List<Row>();
 
+        /// <summary>
+        /// The last row to have contained a selection
+        /// </summary>
         Row LastSelectedRow;
+
+        public enum ActionType { AddCell, DeleteCell, ChangeCellPosition, ChangeCellDuration, ChangeCellSource };
+
+        // TODO:: implement the Undo and Redo action queues
 
         /// <summary>
         /// Sizes the grid cells

@@ -163,7 +163,7 @@ namespace Pronome.Editor
             e.Handled = true;
         }
 
-        private void ToggleSelect(bool Clicked = true)
+        public void ToggleSelect(bool Clicked = true)
         {
             IsSelected = !IsSelected;
             Rectangle.Stroke = IsSelected ? System.Windows.Media.Brushes.DeepPink : System.Windows.Media.Brushes.Black;

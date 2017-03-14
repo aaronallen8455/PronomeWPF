@@ -36,14 +36,20 @@ namespace Pronome.Editor
                     double off = value * EditorWindow.Scale * EditorWindow.BaseFactor;
                     Canvas.Margin = new System.Windows.Thickness(off, 0, 0, 0);
                     // reposition background
+                    _offset = value;
                     if (Background != null)
                     {
-                        Background.Margin = new System.Windows.Thickness(off, 0, 0, 0);
+                        // repostion the background
+                        SetBackground(Duration);
                     }
-                    _offset = value;
                 }
             }
         }
+
+        /// <summary>
+        /// Total BPM length of the row
+        /// </summary>
+        public double Duration;
 
         /// <summary>
         /// All the mult groups in this row
@@ -557,6 +563,7 @@ namespace Pronome.Editor
         /// <param name="widthBpm"></param>
         protected void SetBackground(double widthBpm)
         {
+            Duration = widthBpm;
             // set background tile size
             double rowHeight = (double)EditorWindow.Instance.Resources["rowHeight"];
             double width = widthBpm * EditorWindow.Scale * EditorWindow.BaseFactor;
@@ -645,7 +652,7 @@ namespace Pronome.Editor
         /// <param name="e"></param>
         private void BaseElement_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            e.Handled = true;
+            //e.Handled = true;
 
             // in BPM
             double position = e.GetPosition((Grid)sender).X / EditorWindow.Scale / EditorWindow.BaseFactor;
@@ -670,27 +677,29 @@ namespace Pronome.Editor
                         // use upper or lower grid line?
                         if (diff <= lower && diff > 0)
                         {
-                            // set new duration of previous cell
-                            Cells.Last.Value.Duration = increment * div - (Cells.Last.Value.Position - Cell.SelectedCells.LastCell.Position);
+                            // use left grid line
                             // make new cell
                             cell = new Cell(this) { Value = EditorWindow.CurrentIncrement };
-                            cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
                         }
                         else if (diff >= upper)
                         {
-                            // set new duration of previous cell
-                            Cells.Last.Value.Duration = increment * (div + 1) - (Cells.Last.Value.Position - Cell.SelectedCells.LastCell.Position);
+                            // use right grid line
+                            div++;
                             // make new cell
                             cell = new Cell(this) { Value = EditorWindow.CurrentIncrement };
-                            cell.Position = Cell.SelectedCells.LastCell.Position + increment * (div + 1);
                         }
 
                         if (cell != null)
                         {
+                            // set new duration of previous cell
+                            Cells.Last.Value.Duration = increment * div - (Cells.Last.Value.Position - Cell.SelectedCells.LastCell.Position);
+                            cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
                             Cells.AddLast(cell);
                             Canvas.Children.Add(cell.Rectangle);
                             cell.Duration = increment;
                             //ChangeSizerWidthByAmount(Cells.Last.Value.Duration + increment);
+                            // set new duration of this row
+                            Duration = cell.Position + cell.Duration;
                         }
                     }
                     else
@@ -749,6 +758,7 @@ namespace Pronome.Editor
                 }
                 else if (position < Cell.SelectedCells.FirstCell.Position)
                 {
+                    // New cell is below selection
                     // is new cell in the offset area, or is inside the row?
                     if (position < (int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * .1)
                     {
@@ -762,7 +772,6 @@ namespace Pronome.Editor
                         {
                             // upper
                             cell = new Cell(this);
-                            Cells.AddFirst(cell);
                         }
                         else if (diff % increment >= increment * .1)
                         {
@@ -772,18 +781,6 @@ namespace Pronome.Editor
                         }
                         if (cell != null)
                         {
-                            Cells.AddFirst(cell);
-                            cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
-                            cell.Position = 0;
-                            // find new offset
-                            //StringBuilder os = new StringBuilder();
-                            //foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
-                            //{
-                            //    os.Append(c.Value).Append('+');
-                            //}
-                            //Offset = os.Append('-').Append(Offset).ToString();
-                            Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
-                            Canvas.Children.Add(cell.Rectangle);
                             // get the value string
                             StringBuilder val = new StringBuilder();
                             val.Append($"{EditorWindow.CurrentIncrement}*{div}");
@@ -792,6 +789,24 @@ namespace Pronome.Editor
                                 val.Append('-').Append(c.Value);
                             }
                             cell.Value = val.ToString();
+
+                            Cells.AddFirst(cell);
+                            cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
+                            cell.Position = 0;
+
+                            // set new duration of this row
+                            Duration += cell.Duration;
+
+                            // find new offset
+                            //StringBuilder os = new StringBuilder();
+                            //foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                            //{
+                            //    os.Append(c.Value).Append('+');
+                            //}
+                            //Offset = os.Append('-').Append(Offset).ToString();
+
+                            Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
+                            Canvas.Children.Add(cell.Rectangle);
                         }
                     }
                     else
