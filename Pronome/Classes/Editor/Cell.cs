@@ -9,7 +9,7 @@ using System.Windows.Input;
 
 namespace Pronome.Editor
 {
-    class Cell
+    class Cell : IComparable
     {
         public Row Row;
         public Rectangle Rectangle;
@@ -236,7 +236,15 @@ namespace Pronome.Editor
             _duration = duration;
         }
 
-        
+        public int CompareTo(object obj)
+        {
+            if (obj is Cell cell)
+            {
+                return Position > cell.Position ? 1 : -1;
+            }
+            return 0;
+        }
+
         public class Selection
         {
             public List<Cell> Cells = new List<Cell>();

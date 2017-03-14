@@ -22,6 +22,8 @@ namespace Pronome.Editor
         /// </summary>
         public LinkedList<Cell> Cells = new LinkedList<Cell>();
 
+        //public SortedSet<Cell> Cells = new SortedSet<Cell>(delegate (Cell a, Cell b) { return a.Position - b.Position; });
+
         protected double _offset;
         /// <summary>
         /// Amount of offset in BPM
@@ -789,7 +791,7 @@ namespace Pronome.Editor
                                 val.Append('-').Append(c.Value);
                             }
                             cell.Value = val.ToString();
-
+                            
                             Cells.AddFirst(cell);
                             cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
                             cell.Position = 0;
@@ -811,8 +813,48 @@ namespace Pronome.Editor
                     }
                     else
                     {
-                        // insert in row
+                        // insert withinin row, below selection
+                        double diff = Cell.SelectedCells.FirstCell.Position - position;
+                        int div = (int)(diff / increment);
+                        Cell cell = null;
+                        // is it in range of the left or right grid line?
+                        if (diff % increment  <= increment * .1)
+                        {
+                            // right
+                            cell = new Cell(this);
+                        }
+                        else if (diff % increment >= increment * .9)
+                        {
+                            // left
+                            cell = new Cell(this);
+                            div++;
+                        }
 
+                        if (cell != null)
+                        {
+                            cell.Position = Cell.SelectedCells.FirstCell.Position - div * increment;
+                            Cell below = Cells.TakeWhile(x => x.Position < cell.Position).Last();
+                            Cells.AddAfter(Cells.Find(below), cell);
+                            // find new duration of below cell
+                            double newDur = Cells.SkipWhile(x => x != below)
+                                .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
+                                .Select(x => x.Position)
+                                .Sum() - div * increment;
+                            cell.SetDurationDirectly(below.Duration - newDur);
+                            below.SetDurationDirectly(newDur);
+                            // get new value string for below
+                            StringBuilder val = new StringBuilder();
+                            foreach (Cell c in Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                            {
+                                val.Append(c.Value).Append('+');
+                            }
+                            val.Append('0');
+                            val.Append($"-{EditorWindow.CurrentIncrement}*{div}");
+                            cell.Value = below.Value + '-' + val.ToString();
+                            below.Value = val.ToString();
+
+                            Canvas.Children.Add(cell.Rectangle);
+                        }
                     }
                 }
             }
