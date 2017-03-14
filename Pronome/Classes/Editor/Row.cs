@@ -22,10 +22,28 @@ namespace Pronome.Editor
         /// </summary>
         public LinkedList<Cell> Cells = new LinkedList<Cell>();
 
+        protected double _offset;
         /// <summary>
         /// Amount of offset in BPM
         /// </summary>
-        public double Offset;
+        public double Offset
+        {
+            get => _offset;
+            set
+            {
+                if (value >= 0)
+                {
+                    double off = value * EditorWindow.Scale * EditorWindow.BaseFactor;
+                    Canvas.Margin = new System.Windows.Thickness(off, 0, 0, 0);
+                    // reposition background
+                    if (Background != null)
+                    {
+                        Background.Margin = new System.Windows.Thickness(off, 0, 0, 0);
+                    }
+                    _offset = value;
+                }
+            }
+        }
 
         /// <summary>
         /// All the mult groups in this row
@@ -66,10 +84,10 @@ namespace Pronome.Editor
         public Row(Layer layer)
         {
             Layer = layer;
-            Offset = layer.Offset;
             Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
+            Offset = layer.Offset;
             //Panel.SetZIndex(Canvas, 20);
-            Canvas.Margin = new System.Windows.Thickness(Offset * EditorWindow.Scale * EditorWindow.BaseFactor, 0, 0, 0);
+            //Canvas.Margin = new System.Windows.Thickness(Offset * EditorWindow.Scale * EditorWindow.BaseFactor, 0, 0, 0);
             Background = EditorWindow.Instance.Resources["rowBackgroundRectangle"] as Rectangle;
             BackgroundBrush = new VisualBrush(Canvas);
             BackgroundBrush.TileMode = TileMode.Tile;
@@ -82,6 +100,7 @@ namespace Pronome.Editor
             // handler for creating new cells on the grid
             BaseElement.MouseLeftButtonDown += BaseElement_MouseLeftButtonDown;
 
+            BaseElement.Background = Brushes.Transparent;
             BaseElement.Children.Add(Canvas);
             BaseElement.Children.Add(Background);
         }
@@ -562,7 +581,7 @@ namespace Pronome.Editor
             Sizer.Width += change;
             // reposition background
             BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, Sizer.Width, rowHeight);
-            Background.Margin = new System.Windows.Thickness(Background.Margin.Left + change + offset, 0, 0, 0);
+            Background.Margin = new System.Windows.Thickness(Background.Margin.Left + change, 0, 0, 0);
         }
 
         public void DrawGridLines(string intervalCode)
@@ -626,6 +645,8 @@ namespace Pronome.Editor
         /// <param name="e"></param>
         private void BaseElement_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            e.Handled = true;
+
             // in BPM
             double position = e.GetPosition((Grid)sender).X / EditorWindow.Scale / EditorWindow.BaseFactor;
             position -= Offset; // will be negative if inserting before the start
@@ -641,7 +662,6 @@ namespace Pronome.Editor
                     // if the new cell will be above the current row
                     if (position > Cells.Last.Value.Position)
                     {
-                        // if placing cell outside of beat, correct the duration for preceding beat.
                         double diff = position - Cell.SelectedCells.LastCell.Position;
                         int div = (int)(diff / increment);
                         double lower = increment * div + .1 * increment;
@@ -670,24 +690,115 @@ namespace Pronome.Editor
                             Cells.AddLast(cell);
                             Canvas.Children.Add(cell.Rectangle);
                             cell.Duration = increment;
+                            //ChangeSizerWidthByAmount(Cells.Last.Value.Duration + increment);
                         }
                     }
                     else
                     {
                         // cell will be above selection but within the row
-                        // get cell below insertion point
-                        Cell below = Cells.TakeWhile(x => x.Position < position).First();
-                        Cell above = Cells.Find(below).Next.Value;
                         // find nearest grid line
+                        double lastCellPosition = Cell.SelectedCells.LastCell.Position;
+                        double diff = position - lastCellPosition;
+                        int div = (int)(diff / increment);
+                        double lower = increment * div;// + .1 * increment;
+                        double upper = lower + increment;// - .2 * increment;
 
+                        Cell cell = null;
+                        Cell below = null;
+                        // is lower, or upper in range?
+                        if (lower + .1 * increment > diff)
+                        {
+                            below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
+                            cell = new Cell(this);
+                            cell.Position = lastCellPosition + lower;
+                        }
+                        else if (upper - .1 * increment < diff)
+                        {
+                            below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
+                            cell = new Cell(this);
+                            cell.Position = lastCellPosition + upper;
+                            div++;
+                        }
 
+                        if (cell != null)
+                        {
+                            Cells.AddAfter(Cells.Find(below), cell);
+                            double duration = below.Position + below.Duration - cell.Position;
+                            below.SetDurationDirectly(below.Duration - duration);
+                            Canvas.Children.Add(cell.Rectangle);
+                            cell.SetDurationDirectly(duration);
 
-                        Cell cell = new Cell(this);
+                            // determine new value for the below cell
+                            StringBuilder val = new StringBuilder();
+                            foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.LastCell))
+                            {
+                                val.Append(c.Value + "+");
+                            }
+                            val.Append($"{EditorWindow.CurrentIncrement}*{div}");
+                            foreach (Cell c in Cells.TakeWhile(x => x != below))
+                            {
+                                val.Append("-" + c.Value);
+                            }
+
+                            // get new cells value by subtracting old value of below cell by new value.
+                            cell.Value = $"{below.Value}-{val.ToString()}";
+                            below.Value = val.ToString();
+                            // TODO: compact the value string
+                        }
                     }
                 }
                 else if (position < Cell.SelectedCells.FirstCell.Position)
                 {
+                    // is new cell in the offset area, or is inside the row?
+                    if (position < (int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * .1)
+                    {
+                        // in the offset area
+                        // how many increments back from first cell selected
+                        double diff = (Cell.SelectedCells.FirstCell.Position + Offset) - (position + Offset);
+                        int div = (int)(diff / increment);
+                        // is it closer to lower of upper grid line?
+                        Cell cell = null;
+                        if (diff % increment <= increment * .1)
+                        {
+                            // upper
+                            cell = new Cell(this);
+                            Cells.AddFirst(cell);
+                        }
+                        else if (diff % increment >= increment * .1)
+                        {
+                            // lower
+                            cell = new Cell(this);
+                            div++;
+                        }
+                        if (cell != null)
+                        {
+                            Cells.AddFirst(cell);
+                            cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
+                            cell.Position = 0;
+                            // find new offset
+                            //StringBuilder os = new StringBuilder();
+                            //foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                            //{
+                            //    os.Append(c.Value).Append('+');
+                            //}
+                            //Offset = os.Append('-').Append(Offset).ToString();
+                            Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
+                            Canvas.Children.Add(cell.Rectangle);
+                            // get the value string
+                            StringBuilder val = new StringBuilder();
+                            val.Append($"{EditorWindow.CurrentIncrement}*{div}");
+                            foreach(Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                            {
+                                val.Append('-').Append(c.Value);
+                            }
+                            cell.Value = val.ToString();
+                        }
+                    }
+                    else
+                    {
+                        // insert in row
 
+                    }
                 }
             }
 

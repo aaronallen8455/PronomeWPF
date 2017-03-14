@@ -189,7 +189,13 @@
         <!--Mouse position tracker-->
         <TextBlock Name="mousePositionText" DockPanel.Dock="Bottom"></TextBlock>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-            <StackPanel Name="layerPanel" SnapsToDevicePixels="True" Margin="10,0,0,0" MouseMove="ScrollViewer_MouseMove" MouseLeave="layerPanel_MouseLeave"/>
+            <StackPanel 
+                Name="layerPanel" 
+                SnapsToDevicePixels="True"
+                Margin="10,0,0,0" 
+                MouseMove="ScrollViewer_MouseMove" 
+                MouseLeave="layerPanel_MouseLeave"
+                Background="Transparent"/>
         </ScrollViewer>
     </DockPanel>
 </Window>

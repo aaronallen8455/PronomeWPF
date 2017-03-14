@@ -100,11 +100,11 @@ namespace Pronome.Editor
                 _position = value;
                 Canvas.SetLeft(Rectangle, value * EditorWindow.Scale * EditorWindow.BaseFactor);
 
-                // if this is first cell in row, adjust the row offset
-                if (Row.Cells.Any() && Row.Cells.First.Value == this)
-                {
-                    Row.Offset = value;
-                }
+                //// if this is first cell in row, adjust the row offset
+                //if (Row.Cells.Any() && Row.Cells.First.Value == this)
+                //{
+                //    Row.Offset = value;
+                //}
             }
         }
         public bool IsSelected = false;

@@ -126,9 +126,6 @@ namespace Pronome
                         pitchInput.Text = source;
                         sourceSelector.SelectedItem = "Pitch";
                     }
-                    //pitchInput.Text = source;
-
-
                 }
                 else
                 {
