@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Pronome.Editor
 {
-    class Row
+    public class Row
     {
         /// <summary>
         /// Layer that this row is based on
@@ -20,9 +20,10 @@ namespace Pronome.Editor
         /// <summary>
         /// All the cells in this row, including referenced cells
         /// </summary>
-        public LinkedList<Cell> Cells = new LinkedList<Cell>();
+        public CellList Cells; //= new CellList();
 
         //public SortedSet<Cell> Cells = new SortedSet<Cell>(delegate (Cell a, Cell b) { return a.Position - b.Position; });
+        //public SortedSet<Cell> Cells = new SortedSet<Cell>();
 
         protected double _offset;
         /// <summary>
@@ -120,7 +121,7 @@ namespace Pronome.Editor
         /// <returns></returns>
         protected ParsedBeatResult ParseBeat(string beat)
         {
-            LinkedList<Cell> cells = new LinkedList<Cell>();
+            CellList cells = new CellList();
 
             string[] chunks = beat.Split(new char[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries);
             Stack<MultGroup> OpenMultGroups = new Stack<MultGroup>();
@@ -192,7 +193,7 @@ namespace Pronome.Editor
 
                     foreach (Cell c in pbr.Cells)
                     {
-                        cells.AddLast(c);
+                        cells.Add(c);
                     }
 
                     // draw reference rect
@@ -217,7 +218,7 @@ namespace Pronome.Editor
                     if (!string.IsNullOrEmpty(bpm))
                     {
                         cell.Value = bpm;
-                        cell.Duration = BeatCell.Parse(bpm);
+                        cell.SetDurationDirectly(BeatCell.Parse(bpm));
                         // progress position
                         position += cell.Duration;
                     }
@@ -304,7 +305,7 @@ namespace Pronome.Editor
                     cell.IsBreak = true;
                 }
 
-                cells.AddLast(cell);
+                cells.Add(cell);
             }
 
             // set the background tiling
@@ -315,9 +316,9 @@ namespace Pronome.Editor
 
         protected struct ParsedBeatResult
         {
-            public LinkedList<Cell> Cells;
+            public CellList Cells;
             public double Duration;
-            public ParsedBeatResult(LinkedList<Cell> cells, double duration)
+            public ParsedBeatResult(CellList cells, double duration)
             {
                 Cells = cells;
                 Duration = duration;
@@ -669,7 +670,7 @@ namespace Pronome.Editor
                 if (position > Cell.SelectedCells.LastCell.Position)
                 {
                     // if the new cell will be above the current row
-                    if (position > Cells.Last.Value.Position)
+                    if (position > Cells.Last().Position)
                     {
                         double diff = position - Cell.SelectedCells.LastCell.Position;
                         int div = (int)(diff / increment);
@@ -694,9 +695,9 @@ namespace Pronome.Editor
                         if (cell != null)
                         {
                             // set new duration of previous cell
-                            Cells.Last.Value.Duration = increment * div - (Cells.Last.Value.Position - Cell.SelectedCells.LastCell.Position);
+                            Cells.Last().Duration = increment * div - (Cells.Last().Position - Cell.SelectedCells.LastCell.Position);
                             cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
-                            Cells.AddLast(cell);
+                            Cells.Add(cell);
                             Canvas.Children.Add(cell.Rectangle);
                             cell.Duration = increment;
                             //ChangeSizerWidthByAmount(Cells.Last.Value.Duration + increment);
@@ -715,17 +716,17 @@ namespace Pronome.Editor
                         double upper = lower + increment;// - .2 * increment;
 
                         Cell cell = null;
-                        Cell below = null;
+                        //Cell below = null;
                         // is lower, or upper in range?
                         if (lower + .1 * increment > diff)
                         {
-                            below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
+                            //below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
                             cell = new Cell(this);
                             cell.Position = lastCellPosition + lower;
                         }
                         else if (upper - .1 * increment < diff)
                         {
-                            below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
+                            //below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
                             cell = new Cell(this);
                             cell.Position = lastCellPosition + upper;
                             div++;
@@ -733,28 +734,32 @@ namespace Pronome.Editor
 
                         if (cell != null)
                         {
-                            Cells.AddAfter(Cells.Find(below), cell);
-                            double duration = below.Position + below.Duration - cell.Position;
-                            below.SetDurationDirectly(below.Duration - duration);
-                            Canvas.Children.Add(cell.Rectangle);
-                            cell.SetDurationDirectly(duration);
-
-                            // determine new value for the below cell
-                            StringBuilder val = new StringBuilder();
-                            foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.LastCell))
+                            int index = Cells.InsertSorted(cell);
+                            if (index > -1)
                             {
-                                val.Append(c.Value + "+");
-                            }
-                            val.Append($"{EditorWindow.CurrentIncrement}*{div}");
-                            foreach (Cell c in Cells.TakeWhile(x => x != below))
-                            {
-                                val.Append("-" + c.Value);
-                            }
+                                Cell below = Cells[index - 1];
+                                double duration = below.Position + below.Duration - cell.Position;
+                                below.SetDurationDirectly(below.Duration - duration);
+                                Canvas.Children.Add(cell.Rectangle);
+                                cell.SetDurationDirectly(duration);
 
-                            // get new cells value by subtracting old value of below cell by new value.
-                            cell.Value = $"{below.Value}-{val.ToString()}";
-                            below.Value = val.ToString();
-                            // TODO: compact the value string
+                                // determine new value for the below cell
+                                StringBuilder val = new StringBuilder();
+                                foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.LastCell))
+                                {
+                                    val.Append(c.Value + "+");
+                                }
+                                val.Append($"{EditorWindow.CurrentIncrement}*{div}");
+                                foreach (Cell c in Cells.TakeWhile(x => x != below))
+                                {
+                                    val.Append("-" + c.Value);
+                                }
+
+                                // get new cells value by subtracting old value of below cell by new value.
+                                cell.Value = $"{below.Value}-{val.ToString()}";
+                                below.Value = val.ToString();
+                                // TODO: compact the value string
+                            }
                         }
                     }
                 }
@@ -791,8 +796,9 @@ namespace Pronome.Editor
                                 val.Append('-').Append(c.Value);
                             }
                             cell.Value = val.ToString();
-                            
-                            Cells.AddFirst(cell);
+
+                            Cells.Insert(0, cell);
+                            //Cells.AddFirst(cell);
                             cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
                             cell.Position = 0;
 
@@ -833,27 +839,31 @@ namespace Pronome.Editor
                         if (cell != null)
                         {
                             cell.Position = Cell.SelectedCells.FirstCell.Position - div * increment;
-                            Cell below = Cells.TakeWhile(x => x.Position < cell.Position).Last();
-                            Cells.AddAfter(Cells.Find(below), cell);
-                            // find new duration of below cell
-                            double newDur = Cells.SkipWhile(x => x != below)
-                                .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
-                                .Select(x => x.Position)
-                                .Sum() - div * increment;
-                            cell.SetDurationDirectly(below.Duration - newDur);
-                            below.SetDurationDirectly(newDur);
-                            // get new value string for below
-                            StringBuilder val = new StringBuilder();
-                            foreach (Cell c in Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                            int index = Cells.InsertSorted(cell);
+                            if (index > -1)
                             {
-                                val.Append(c.Value).Append('+');
-                            }
-                            val.Append('0');
-                            val.Append($"-{EditorWindow.CurrentIncrement}*{div}");
-                            cell.Value = below.Value + '-' + val.ToString();
-                            below.Value = val.ToString();
+                                Cell below = Cells[index - 1];
+                                //Cells.AddAfter(Cells.Find(below), cell);
+                                // find new duration of below cell
+                                double newDur = Cells.SkipWhile(x => x != below)
+                                    .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
+                                    .Select(x => x.Position)
+                                    .Sum() - div * increment;
+                                cell.SetDurationDirectly(below.Duration - newDur);
+                                below.SetDurationDirectly(newDur);
+                                // get new value string for below
+                                StringBuilder val = new StringBuilder();
+                                foreach (Cell c in Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                                {
+                                    val.Append(c.Value).Append('+');
+                                }
+                                val.Append('0');
+                                val.Append($"-{EditorWindow.CurrentIncrement}*{div}");
+                                cell.Value = below.Value + '-' + val.ToString();
+                                below.Value = val.ToString();
 
-                            Canvas.Children.Add(cell.Rectangle);
+                                Canvas.Children.Add(cell.Rectangle);
+                            }
                         }
                     }
                 }

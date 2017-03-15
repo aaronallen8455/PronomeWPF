@@ -9,7 +9,7 @@ using System.Windows.Controls;
 
 namespace Pronome.Editor
 {
-    abstract class Group
+    public abstract class Group
     {
         public Row Row;
         public LinkedList<Cell> Cells = new LinkedList<Cell>();
@@ -54,7 +54,7 @@ namespace Pronome.Editor
         }
     }
 
-    class MultGroup : Group
+    public class MultGroup : Group
     {
         /// <summary>
         /// The factor to multiply by. ex 1+1/3
@@ -68,7 +68,7 @@ namespace Pronome.Editor
         }
     }
 
-    class RepeatGroup : Group
+    public class RepeatGroup : Group
     {
         /// <summary>
         /// Number of times to repeat

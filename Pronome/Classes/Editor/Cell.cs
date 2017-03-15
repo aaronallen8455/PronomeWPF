@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 using System.Windows.Shapes;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Collections;
 
 namespace Pronome.Editor
 {
-    class Cell : IComparable
+    public class Cell : IComparable
     {
         public Row Row;
         public Rectangle Rectangle;
@@ -264,4 +265,52 @@ namespace Pronome.Editor
         }
     }
 
+    public class CellList : List<Cell>
+    {
+        public int InsertSorted(Cell item, int startIndex = 0, int endIndex = -1)
+        {
+            int index = InsertSorted(startIndex, endIndex == -1 ? Count - 1 : endIndex, item.Position);
+            if (index > -1)
+            {
+                Insert(index, item);
+                return index;
+            }
+            return -1;
+        }
+
+        protected int InsertSorted(int start, int end, double position)
+        {
+            int offset = (end - start) / 2;
+            double comp = this[start + offset].Position;
+            if (position < comp)
+            {
+                if (offset == 0)
+                {
+                    return end;
+                }
+                return InsertSorted(start, start + offset, position);
+            }
+            else if (position > comp)
+            {
+                if (offset == 0)
+                {
+                    return end;
+                }
+                return InsertSorted(start + offset, end, position);
+            }
+
+            return -1;
+        }
+
+        public Cell FindCellBelowPosition(double position)
+        {
+            int index = InsertSorted(0, Count - 1, position);
+            if (index != -1)
+            {
+                return this[index - 1];
+            }
+
+            return null;
+        }
+    }
 }
