@@ -148,6 +148,7 @@ namespace Pronome.Editor
                     cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
                     OpenMultGroups.Peek().Cells.AddLast(cell);
                     OpenMultGroups.Peek().Position = cell.Position;
+                    MultGroups.AddLast(OpenMultGroups.Peek());
                 }
                 else if (OpenMultGroups.Any())
                 {
@@ -161,8 +162,9 @@ namespace Pronome.Editor
                     cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
                     OpenRepeatGroups.Peek().Cells.AddLast(cell);
                     OpenRepeatGroups.Peek().Position = cell.Position;
+                    RepeatGroups.AddLast(OpenRepeatGroups.Peek());
                 }
-                else if (RepeatGroups.Any())
+                else if (OpenRepeatGroups.Any())
                 {
                     cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
                 }
@@ -261,7 +263,6 @@ namespace Pronome.Editor
                     mg.Factor = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
                     // set duration
                     mg.Duration = cell.Position + cell.Duration - mg.Position;
-                    MultGroups.AddLast(mg);
                     // render
                     Canvas.Children.Add(mg.Rectangle);
                 }
@@ -669,96 +670,138 @@ namespace Pronome.Editor
 
                 if (position > Cell.SelectedCells.LastCell.Position)
                 {
-                    // if the new cell will be above the current row
-                    if (position > Cells.Last().Position)
+                    // check if position is within the ghosted area of a repeat
+                    bool outsideRepeat = true;
+                    foreach (RepeatGroup rg in RepeatGroups)
                     {
-                        double diff = position - Cell.SelectedCells.LastCell.Position;
-                        int div = (int)(diff / increment);
-                        double lower = increment * div + .1 * increment;
-                        double upper = lower + increment - .2 * increment;
-                        Cell cell = null;
-                        // use upper or lower grid line?
-                        if (diff <= lower && diff > 0)
+                        if (position > rg.Position + rg.Duration && position < rg.Position + rg.Duration * rg.Times)
                         {
-                            // use left grid line
-                            // make new cell
-                            cell = new Cell(this) { Value = EditorWindow.CurrentIncrement };
-                        }
-                        else if (diff >= upper)
-                        {
-                            // use right grid line
-                            div++;
-                            // make new cell
-                            cell = new Cell(this) { Value = EditorWindow.CurrentIncrement };
-                        }
-
-                        if (cell != null)
-                        {
-                            // set new duration of previous cell
-                            Cells.Last().Duration = increment * div - (Cells.Last().Position - Cell.SelectedCells.LastCell.Position);
-                            cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
-                            Cells.Add(cell);
-                            Canvas.Children.Add(cell.Rectangle);
-                            cell.Duration = increment;
-                            //ChangeSizerWidthByAmount(Cells.Last.Value.Duration + increment);
-                            // set new duration of this row
-                            Duration = cell.Position + cell.Duration;
+                            outsideRepeat = false;
+                            break;
                         }
                     }
-                    else
+                    if (outsideRepeat)
                     {
-                        // cell will be above selection but within the row
-                        // find nearest grid line
-                        double lastCellPosition = Cell.SelectedCells.LastCell.Position;
-                        double diff = position - lastCellPosition;
-                        int div = (int)(diff / increment);
-                        double lower = increment * div;// + .1 * increment;
-                        double upper = lower + increment;// - .2 * increment;
-
-                        Cell cell = null;
-                        //Cell below = null;
-                        // is lower, or upper in range?
-                        if (lower + .1 * increment > diff)
+                        // if the new cell will be above the current row
+                        if (position > Cells.Last().Position)
                         {
-                            //below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
-                            cell = new Cell(this);
-                            cell.Position = lastCellPosition + lower;
-                        }
-                        else if (upper - .1 * increment < diff)
-                        {
-                            //below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
-                            cell = new Cell(this);
-                            cell.Position = lastCellPosition + upper;
-                            div++;
-                        }
-
-                        if (cell != null)
-                        {
-                            int index = Cells.InsertSorted(cell);
-                            if (index > -1)
+                            double diff = position - Cell.SelectedCells.LastCell.Position;
+                            int div = (int)(diff / increment);
+                            double lower = increment * div + .1 * increment;
+                            double upper = lower + increment - .2 * increment;
+                            Cell cell = null;
+                            // use upper or lower grid line?
+                            if (diff <= lower && diff > 0)
                             {
-                                Cell below = Cells[index - 1];
-                                double duration = below.Position + below.Duration - cell.Position;
-                                below.SetDurationDirectly(below.Duration - duration);
-                                Canvas.Children.Add(cell.Rectangle);
-                                cell.SetDurationDirectly(duration);
+                                // use left grid line
+                                // make new cell
+                                cell = new Cell(this) { Value = EditorWindow.CurrentIncrement };
+                            }
+                            else if (diff >= upper)
+                            {
+                                // use right grid line
+                                div++;
+                                // make new cell
+                                cell = new Cell(this) { Value = EditorWindow.CurrentIncrement };
+                            }
 
-                                // determine new value for the below cell
-                                StringBuilder val = new StringBuilder();
-                                foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.LastCell))
+                            if (cell != null)
+                            {
+                                // set new duration of previous cell
+                                Cell below = Cells.Last();
+                                // add to groups and put rectangle in correct canvas
+                                if (Group.AddToGroups(cell, below))
                                 {
-                                    val.Append(c.Value + "+");
+                                    cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
                                 }
+                                else
+                                {
+                                    Canvas.Children.Add(cell.Rectangle);
+                                }
+
+                                below.Duration = increment * div - (Cells.Last().Position - Cell.SelectedCells.LastCell.Position);
+                                // find the value string
+                                StringBuilder val = new StringBuilder();
                                 val.Append($"{EditorWindow.CurrentIncrement}*{div}");
                                 foreach (Cell c in Cells.TakeWhile(x => x != below))
                                 {
-                                    val.Append("-" + c.Value);
+                                    val.Append('-').Append(c.Value);
                                 }
-
-                                // get new cells value by subtracting old value of below cell by new value.
-                                cell.Value = $"{below.Value}-{val.ToString()}";
                                 below.Value = val.ToString();
-                                // TODO: compact the value string
+                                cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
+                                Cells.Add(cell);
+                                //Canvas.Children.Add(cell.Rectangle);
+                                cell.Duration = increment;
+                                //ChangeSizerWidthByAmount(Cells.Last.Value.Duration + increment);
+                                // set new duration of this row
+                                Duration = cell.Position + cell.Duration;
+                            }
+                        }
+                        else
+                        {
+                            // cell will be above selection but within the row
+                            // find nearest grid line
+                            double lastCellPosition = Cell.SelectedCells.LastCell.Position;
+                            double diff = position - lastCellPosition;
+                            int div = (int)(diff / increment);
+                            double lower = increment * div;// + .1 * increment;
+                            double upper = lower + increment;// - .2 * increment;
+
+                            Cell cell = null;
+                            //Cell below = null;
+                            // is lower, or upper in range?
+                            if (lower + .1 * increment > diff)
+                            {
+                                //below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
+                                cell = new Cell(this);
+                                cell.Position = lastCellPosition + lower;
+                            }
+                            else if (upper - .1 * increment < diff)
+                            {
+                                //below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
+                                cell = new Cell(this);
+                                cell.Position = lastCellPosition + upper;
+                                div++;
+                            }
+
+                            if (cell != null)
+                            {
+                                int index = Cells.InsertSorted(cell);
+                                if (index > -1)
+                                {
+                                    Cell below = Cells[index - 1];
+                                    // add to groups and add it's rectangle to appropriate canvas
+                                    if (Group.AddToGroups(cell, below))
+                                    {
+                                        cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
+                                    }
+                                    else
+                                    {
+                                        Canvas.Children.Add(cell.Rectangle);
+                                    }
+
+                                    double duration = below.Position + below.Duration - cell.Position;
+                                    below.SetDurationDirectly(below.Duration - duration);
+                                    //Canvas.Children.Add(cell.Rectangle);
+                                    cell.SetDurationDirectly(duration);
+
+                                    // determine new value for the below cell
+                                    StringBuilder val = new StringBuilder();
+                                    foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.LastCell))
+                                    {
+                                        val.Append(c.Value + "+");
+                                    }
+                                    val.Append($"{EditorWindow.CurrentIncrement}*{div}");
+                                    foreach (Cell c in Cells.TakeWhile(x => x != below))
+                                    {
+                                        val.Append("-" + c.Value);
+                                    }
+
+                                    // get new cells value by subtracting old value of below cell by new value.
+                                    cell.Value = $"{below.Value}-{val.ToString()}";
+                                    below.Value = val.ToString();
+                                    // TODO: compact the value string
+                                }
                             }
                         }
                     }
@@ -767,7 +810,8 @@ namespace Pronome.Editor
                 {
                     // New cell is below selection
                     // is new cell in the offset area, or is inside the row?
-                    if (position < (int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * .1)
+                    // check by seeing if the position is less than the least posible grid line position within the row from the selected cell.
+                    if (position < Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * .1))
                     {
                         // in the offset area
                         // how many increments back from first cell selected
@@ -820,62 +864,76 @@ namespace Pronome.Editor
                     else
                     {
                         // insert withinin row, below selection
-                        double diff = Cell.SelectedCells.FirstCell.Position - position;
-                        int div = (int)(diff / increment);
-                        Cell cell = null;
-                        // is it in range of the left or right grid line?
-                        if (diff % increment  <= increment * .1)
+                        // check if it's within a repeat's ghosted zone
+                        bool outsideRepeat = true;
+                        foreach (RepeatGroup rg in RepeatGroups)
                         {
-                            // right
-                            cell = new Cell(this);
-                        }
-                        else if (diff % increment >= increment * .9)
-                        {
-                            // left
-                            cell = new Cell(this);
-                            div++;
-                        }
-
-                        if (cell != null)
-                        {
-                            cell.Position = Cell.SelectedCells.FirstCell.Position - div * increment;
-                            int index = Cells.InsertSorted(cell);
-                            if (index > -1)
+                            if (position > rg.Position + rg.Duration && position < rg.Position + rg.Duration * rg.Times)
                             {
-                                Cell below = Cells[index - 1];
-                                //Cells.AddAfter(Cells.Find(below), cell);
-                                // find new duration of below cell
-                                double newDur = Cells.SkipWhile(x => x != below)
-                                    .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
-                                    .Select(x => x.Position)
-                                    .Sum() - div * increment;
-                                cell.SetDurationDirectly(below.Duration - newDur);
-                                below.SetDurationDirectly(newDur);
-                                // get new value string for below
-                                StringBuilder val = new StringBuilder();
-                                foreach (Cell c in Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
-                                {
-                                    val.Append(c.Value).Append('+');
-                                }
-                                val.Append('0');
-                                val.Append($"-{EditorWindow.CurrentIncrement}*{div}");
-                                cell.Value = below.Value + '-' + val.ToString();
-                                below.Value = val.ToString();
+                                outsideRepeat = false;
+                                break;
+                            }
+                        }
+                        if (outsideRepeat)
+                        {
+                            double diff = Cell.SelectedCells.FirstCell.Position - position;
+                            int div = (int)(diff / increment);
+                            Cell cell = null;
+                            // is it in range of the left or right grid line?
+                            if (diff % increment  <= increment * .1)
+                            {
+                                // right
+                                cell = new Cell(this);
+                            }
+                            else if (diff % increment >= increment * .9)
+                            {
+                                // left
+                                cell = new Cell(this);
+                                div++;
+                            }
 
-                                Canvas.Children.Add(cell.Rectangle);
+                            if (cell != null)
+                            {
+                                cell.Position = Cell.SelectedCells.FirstCell.Position - div * increment;
+                                int index = Cells.InsertSorted(cell);
+                                if (index > -1)
+                                {
+                                    Cell below = Cells[index - 1];
+                                    
+                                    // add to groups and add rectangle to correct canvas
+                                    if (Group.AddToGroups(cell, below))
+                                    {
+                                        cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
+                                    }
+                                    else
+                                    {
+                                        Canvas.Children.Add(cell.Rectangle);
+                                    }
+
+                                    // find new duration of below cell
+                                    double newDur = Cells.SkipWhile(x => x != below)
+                                        .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
+                                        .Select(x => x.Position)
+                                        .Sum() - div * increment;
+                                    cell.SetDurationDirectly(below.Duration - newDur);
+                                    below.SetDurationDirectly(newDur);
+                                    // get new value string for below
+                                    StringBuilder val = new StringBuilder();
+                                    foreach (Cell c in Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                                    {
+                                        val.Append(c.Value).Append('+');
+                                    }
+                                    val.Append('0');
+                                    val.Append($"-{EditorWindow.CurrentIncrement}*{div}");
+                                    cell.Value = below.Value + '-' + val.ToString();
+                                    below.Value = val.ToString();
+
+                                }
                             }
                         }
                     }
                 }
             }
-
-            // insert new cell at this position in the row
-
-            // if it's placed before the first cell, adjust the row offset and the position of all subsequent cells
-            
-            // set the correct duration on the new cell and it's preceding cell if placing cell within beat
-            
-            
         }
     }
 }

@@ -273,9 +273,9 @@ namespace Pronome.Editor
             if (index > -1)
             {
                 Insert(index, item);
-                return index;
             }
-            return -1;
+
+            return index;
         }
 
         protected int InsertSorted(int start, int end, double position)

@@ -52,6 +52,69 @@ namespace Pronome.Editor
         {
             Canvas.SetLeft(Rectangle, value * EditorWindow.Scale * EditorWindow.BaseFactor);
         }
+
+        /// <summary>
+        /// Determine if the cell in part of any repeat or mult groups based on the it's lower neighbor cell. If it's part of repeat group, will return true, otherwise return false.
+        /// </summary>
+        /// <param name="cell">The cell to be tested</param>
+        /// <param name="below">The cell's below neighbor</param>
+        /// <returns></returns>
+        static public bool AddToGroups(Cell cell, Cell below)
+        {
+            // does the cell belong in a group of either kind?
+            if (below.MultGroups.Any())
+            {
+                foreach (MultGroup mg in below.MultGroups)
+                {
+                    if (cell.Position < mg.Position + mg.Duration)
+                    {
+                        cell.MultGroups.AddLast(mg);
+                        mg.Cells.AddLast(cell);
+                    }
+                    else break;
+                }
+            }
+            if (below.RepeatGroups.Any())
+            {
+                //cell.RepeatGroups = new LinkedList<RepeatGroup>(below.RepeatGroups);
+                foreach (RepeatGroup rg in below.RepeatGroups)
+                {
+                    if (cell.Position < rg.Position + rg.Duration)
+                    {
+                        cell.RepeatGroups.AddLast(rg);
+                        //rg.Cells.AddLast(cell);
+                        int count = 0;
+                        foreach (Cell c in rg.Cells)
+                        {
+                            // add in position if it won't be last
+                            if (c.Position > cell.Position)
+                            {
+                                rg.Cells.AddBefore(rg.Cells.Find(c), cell);
+                                break;
+                            }
+                            count++;
+                        }
+                        if (count == rg.Cells.Count)
+                        {
+                            // need to resize the host rects because the cell we're adding is the last in the rep group
+                            foreach (Rectangle rect in rg.HostRects)
+                            {
+                                rect.Width = rect.Width + (rg.Cells.Last.Value.Duration * EditorWindow.Scale * EditorWindow.BaseFactor);
+                            }
+                            rg.Cells.AddLast(cell);
+                        }
+                    }
+                    else break;
+                }
+            }
+            else
+            {
+                // no repeat group, add to base canvas
+                return false;
+            }
+
+            return true;
+        }
     }
 
     public class MultGroup : Group
