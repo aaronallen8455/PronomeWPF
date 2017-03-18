@@ -174,7 +174,7 @@ namespace Pronome
             value = value.Replace('x', '*').Replace('X', '*'); // replace multiply symbol
 
             // merge all fractions based on least common denominator
-            int lcd = 0;
+            int lcd = 1;
 
             Func<double, double, double> Gcf = null;
             Gcf = delegate (double x, double y)
@@ -213,17 +213,13 @@ namespace Pronome
                 int index = value.IndexOf(m.Value);
                 value = value.Substring(0, index) + n.ToString() + '/' + d.ToString() + value.Substring(index + m.Length);
             }
-            //while (Regex.IsMatch(value, @"\d+*\d+/\d+|\d+/\d+*\d+"))
-            //{
-            //
-            //}
 
             var denoms = Regex.Matches(value, @"(?<=/)\d+(?!\.)");
 
             foreach (Match m in denoms)
             {
                 int d = int.Parse(m.Value);
-                if (lcd == 0)
+                if (lcd == 1)
                 {
                     lcd = d;
                 }
@@ -234,7 +230,7 @@ namespace Pronome
             }
 
             // aggregate the fractions
-            var fracs = Regex.Matches(value, @"(?<!\.)(+|-|^)(\d+/\d+)(?!\.)");
+            var fracs = Regex.Matches(value, @"(?<!\.)(\+|-|^)(\d+/\d+)(?!\.)");
             int numerator = 0;
             foreach (Match m in fracs)
             {
@@ -250,11 +246,38 @@ namespace Pronome
                 int index = value.IndexOf(m.Value);
                 value = value.Substring(0, index) + value.Substring(index + m.Length);
             }
-            value += numerator.ToString() + '/' + lcd.ToString();
+            //value = numerator.ToString() + '/' + lcd.ToString() + value;
+            int whole = numerator / lcd;
+            numerator -= whole * lcd;
+            string fractionPart = numerator.ToString() + '/' + lcd.ToString();
 
             // merge all whole numbers and decimals
-            // deal with fractions that have a decimal in denominator
-            return value;
+            double numbers = whole + Parse("0+" + value);
+
+            string result = numbers != 0 ? numbers.ToString() : "";
+            // append the fractional portion of it's not zero
+            if (numerator != 0)
+            {
+                if (numbers != 0)
+                {
+                    result += fractionPart[0] != '-' ? "+" : "";
+                }
+                result += fractionPart;
+            }
+
+            return result;
+        }
+
+        static public string MultiplyTerms(string exp, double factor)
+        {
+            string[] terms = Regex.Split(exp, @"(?<!^)(?=[+\-])");
+            // multiply each seperate term by the factor
+            for (int i = 0; i < terms.Length; i++)
+            {
+                terms[i] += '*' + factor.ToString();
+            }
+
+            return string.Join(string.Empty, terms);
         }
     }
 }
