@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace Pronome
 {
@@ -165,6 +167,94 @@ namespace Pronome
             }
             val = 0;
             return false;
+        }
+
+        public static string SimplifyValue(string value)
+        {
+            value = value.Replace('x', '*').Replace('X', '*'); // replace multiply symbol
+
+            // merge all fractions based on least common denominator
+            int lcd = 0;
+
+            Func<double, double, double> Gcf = null;
+            Gcf = delegate (double x, double y)
+            {
+                double r = x % y;
+                if (Math.Round(r, 5) == 0) return y;
+
+                return Gcf(y, r);
+            };
+
+            Func<double, double, double> Lcm = delegate (double x, double y)
+            {
+                return x * y / Gcf(x, y);
+            };
+
+            // simplify all fractions
+            var multDiv = Regex.Matches(value, @"(?<!\.)(\d+[*/](?=\d+))+\d+(?!\.)");
+            foreach (Match m in multDiv)
+            {
+                int n = 1; // numerator
+                int d = 1; // denominator
+                foreach (Match num in Regex.Matches(m.Value, @"(?<=\*)\d+"))
+                {
+                    n *= int.Parse(num.Value);
+                }
+                n *= int.Parse(Regex.Match(m.Value, @"\d+").Value);
+                foreach (Match num in Regex.Matches(m.Value, @"(?<=/)\d+"))
+                {
+                    d *= int.Parse(num.Value);
+                }
+
+                int gcf = (int)Gcf(n, d);
+                n /= gcf;
+                d /= gcf;
+                // replace with simplified fraction
+                int index = value.IndexOf(m.Value);
+                value = value.Substring(0, index) + n.ToString() + '/' + d.ToString() + value.Substring(index + m.Length);
+            }
+            //while (Regex.IsMatch(value, @"\d+*\d+/\d+|\d+/\d+*\d+"))
+            //{
+            //
+            //}
+
+            var denoms = Regex.Matches(value, @"(?<=/)\d+(?!\.)");
+
+            foreach (Match m in denoms)
+            {
+                int d = int.Parse(m.Value);
+                if (lcd == 0)
+                {
+                    lcd = d;
+                }
+                else
+                {
+                    lcd = (int)Lcm(lcd, d);
+                }
+            }
+
+            // aggregate the fractions
+            var fracs = Regex.Matches(value, @"(?<!\.)(+|-|^)(\d+/\d+)(?!\.)");
+            int numerator = 0;
+            foreach (Match m in fracs)
+            {
+                int[] fraction = Array.ConvertAll(m.Groups[2].Value.Split('/'), Convert.ToInt32);
+                int num = fraction[0]; // numerator
+                int den = fraction[1]; // denominator
+
+                int ratio = lcd / den;
+                string sign = m.Groups[1].Value;
+                numerator += num * ratio * (sign == "-" ? -1 : 1);
+
+                // remove all individual fraction to be replaced by 1 big fraction
+                int index = value.IndexOf(m.Value);
+                value = value.Substring(0, index) + value.Substring(index + m.Length);
+            }
+            value += numerator.ToString() + '/' + lcd.ToString();
+
+            // merge all whole numbers and decimals
+            // deal with fractions that have a decimal in denominator
+            return value;
         }
     }
 }

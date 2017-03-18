@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Shapes;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Collections;
 
 namespace Pronome.Editor
 {
@@ -28,59 +25,98 @@ namespace Pronome.Editor
         {
             get => _duration;
             set {
-                // reposition all subsequent cells and groups
-                HashSet<RepeatGroup> touchedRepGroups = new HashSet<RepeatGroup>();
-                HashSet<MultGroup> touchedMultGroups = new HashSet<MultGroup>();
-                bool isFirst = true;
+                //HashSet<RepeatGroup> touchedRepGroups = new HashSet<RepeatGroup>();
+                //HashSet<MultGroup> touchedMultGroups = new HashSet<MultGroup>();
+                HashSet<Group> touchedGroups = new HashSet<Group>();
                 double diff = value - _duration;
+                _duration = value;
+                // resize groups of which this cell is a part
+                foreach (RepeatGroup rg in RepeatGroups)
+                {
+                    touchedGroups.Add(rg);
+                    rg.Duration += diff;
+                }
+                foreach (MultGroup mg in MultGroups)
+                {
+                    touchedGroups.Add(mg);
+                    mg.Duration += diff;
+                }
+                // reposition all subsequent cells and groups and references
                 foreach (Cell cell in Row.Cells.SkipWhile(x => x != this).Skip(1))
                 {
                     cell.Position += diff;
-                    // reposition groups
-                    foreach (RepeatGroup rg in RepeatGroups)
-                    {
-                        if (!touchedRepGroups.Contains(rg))
-                        {
-                            touchedRepGroups.Add(rg);
-                            if (isFirst && cell == this) // if positioning from within group, increase duration
-                            {
-                                rg.Duration += diff;
-                            }
-                            else
-                            {
-                                rg.Position += diff;
-                            }
-                        }
-                    }
-                    foreach (MultGroup mg in MultGroups)
-                    {
-                        if (!touchedMultGroups.Contains(mg))
-                        {
-                            touchedMultGroups.Add(mg);
-                            if (isFirst && cell == this)
-                            {
-                                mg.Duration += diff;
-                            }
-                            else
-                            {
-                                mg.Position += diff;
-                            }
-                        }
-                    }
                     // reposition reference rect
                     if (cell.ReferenceRectangle != null)
                     {
                         double cur = Canvas.GetLeft(cell.ReferenceRectangle);
                         Canvas.SetLeft(cell.ReferenceRectangle, cur + diff);
                     }
-
-                    isFirst = false;
                 }
-
+                // reposition groups
+                foreach (RepeatGroup rg in Row.RepeatGroups.Where(x => !touchedGroups.Contains(x) && x.Position > Position))
+                {
+                    rg.Position += diff;
+                }
+                foreach (MultGroup mg in Row.MultGroups.Where(x => !touchedGroups.Contains(x) && x.Position > Position))
+                {
+                    mg.Position += diff;
+                }
                 // resize sizer
                 Row.ChangeSizerWidthByAmount(diff);
 
-                _duration = value;
+                //// reposition all subsequent cells and groups
+                //HashSet<RepeatGroup> touchedRepGroups = new HashSet<RepeatGroup>();
+                //HashSet<MultGroup> touchedMultGroups = new HashSet<MultGroup>();
+                //bool isFirst = true;
+                //double diff = value - _duration;
+                //foreach (Cell cell in Row.Cells.SkipWhile(x => x != this).Skip(1))
+                //{
+                //    cell.Position += diff;
+                //    // reposition groups
+                //    foreach (RepeatGroup rg in cell.RepeatGroups)
+                //    {
+                //        if (!touchedRepGroups.Contains(rg))
+                //        {
+                //            touchedRepGroups.Add(rg);
+                //            if (isFirst && cell == this) // if positioning from within group, increase duration
+                //            {
+                //                rg.Duration += diff;
+                //            }
+                //            else
+                //            {
+                //                rg.Position += diff;
+                //            }
+                //        }
+                //    }
+                //    foreach (MultGroup mg in cell.MultGroups)
+                //    {
+                //        if (!touchedMultGroups.Contains(mg))
+                //        {
+                //            touchedMultGroups.Add(mg);
+                //            if (isFirst && cell == this)
+                //            {
+                //                mg.Duration += diff;
+                //            }
+                //            else
+                //            {
+                //                mg.Position += diff;
+                //            }
+                //        }
+                //    }
+                //    // reposition reference rect
+                //    if (cell.ReferenceRectangle != null)
+                //    {
+                //        double cur = Canvas.GetLeft(cell.ReferenceRectangle);
+                //        Canvas.SetLeft(cell.ReferenceRectangle, cur + diff);
+                //    }
+                //
+                //    isFirst = false;
+                //}
+                //
+                //// resize sizer
+                //Row.ChangeSizerWidthByAmount(diff);
+                //
+                //_duration = value;
             }
         }
 
