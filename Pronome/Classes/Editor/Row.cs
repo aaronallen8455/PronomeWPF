@@ -671,6 +671,7 @@ namespace Pronome.Editor
                 if (position > Cell.SelectedCells.LastCell.Position)
                 {
                     // check if position is within the ghosted area of a repeat
+                    // TODO: what about last term modifiers? nested repeats?
                     bool outsideRepeat = true;
                     foreach (RepeatGroup rg in RepeatGroups)
                     {
@@ -683,128 +684,14 @@ namespace Pronome.Editor
                     if (outsideRepeat)
                     {
                         // if the new cell will be above the current row
-                        if (position > Cells.Last().Position)
+                        if (position > Cells.Last().Position + Cells.Last().Duration) // should a cell placed within duration of prev cell maintain overall duration?
                         {
-                            double diff = position - Cell.SelectedCells.LastCell.Position;
-                            int div = (int)(diff / increment);
-                            double lower = increment * div + .1 * increment;
-                            double upper = lower + increment - .2 * increment;
-                            Cell cell = null;
-                            // use upper or lower grid line?
-                            if (diff <= lower && diff > 0)
-                            {
-                                // use left grid line
-                                // make new cell
-                                cell = new Cell(this);
-                            }
-                            else if (diff >= upper)
-                            {
-                                // use right grid line
-                                div++;
-                                // make new cell
-                                cell = new Cell(this);
-                            }
-
-                            if (cell != null)
-                            {
-                                cell.Value = BeatCell.SimplifyValue(EditorWindow.CurrentIncrement);
-                                // set new duration of previous cell
-                                Cell below = Cells.Last();
-                                // add to groups and put rectangle in correct canvas
-                                if (Group.AddToGroups(cell, below))
-                                {
-                                    cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
-                                }
-                                else
-                                {
-                                    Canvas.Children.Add(cell.Rectangle);
-                                }
-
-                                below.Duration = increment * div - (Cells.Last().Position - Cell.SelectedCells.LastCell.Position);
-                                // find the value string
-                                StringBuilder val = new StringBuilder();
-                                val.Append($"{EditorWindow.CurrentIncrement}*{div}");
-                                foreach (Cell c in Cells.TakeWhile(x => x != below))
-                                {
-                                    val.Append('-').Append(c.Value);
-                                }
-                                below.Value = BeatCell.SimplifyValue(val.ToString());
-                                cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
-                                Cells.Add(cell);
-                                //Canvas.Children.Add(cell.Rectangle);
-                                cell.Duration = increment;
-                                //ChangeSizerWidthByAmount(Cells.Last.Value.Duration + increment);
-                                // set new duration of this row
-                                Duration = cell.Position + cell.Duration;
-                            }
+                            AddCellAboveRow(position, increment);
                         }
                         else
                         {
                             // cell will be above selection but within the row
-                            // find nearest grid line
-                            double lastCellPosition = Cell.SelectedCells.LastCell.Position;
-                            double diff = position - lastCellPosition;
-                            int div = (int)(diff / increment);
-                            double lower = increment * div;// + .1 * increment;
-                            double upper = lower + increment;// - .2 * increment;
-
-                            Cell cell = null;
-                            //Cell below = null;
-                            // is lower, or upper in range?
-                            if (lower + .1 * increment > diff)
-                            {
-                                //below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
-                                cell = new Cell(this);
-                                cell.Position = lastCellPosition + lower;
-                            }
-                            else if (upper - .1 * increment < diff)
-                            {
-                                //below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
-                                cell = new Cell(this);
-                                cell.Position = lastCellPosition + upper;
-                                div++;
-                            }
-
-                            if (cell != null)
-                            {
-                                int index = Cells.InsertSorted(cell);
-                                if (index > -1)
-                                {
-                                    Cell below = Cells[index - 1];
-                                    // add to groups and add it's rectangle to appropriate canvas
-                                    if (Group.AddToGroups(cell, below))
-                                    {
-                                        cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
-                                    }
-                                    else
-                                    {
-                                        Canvas.Children.Add(cell.Rectangle);
-                                    }
-
-                                    double duration = below.Position + below.Duration - cell.Position;
-                                    below.SetDurationDirectly(below.Duration - duration);
-                                    //Canvas.Children.Add(cell.Rectangle);
-                                    cell.SetDurationDirectly(duration);
-
-                                    // determine new value for the below cell
-                                    StringBuilder val = new StringBuilder();
-                                    foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.LastCell))
-                                    {
-                                        val.Append(c.Value + "+");
-                                    }
-                                    val.Append($"{EditorWindow.CurrentIncrement}*{div}");
-                                    foreach (Cell c in Cells.TakeWhile(x => x != below))
-                                    {
-                                        val.Append("-" + c.Value);
-                                    }
-
-                                    // get new cells value by subtracting old value of below cell by new value.
-                                    string newVal = BeatCell.SimplifyValue(val.ToString());
-                                    cell.Value = BeatCell.SimplifyValue($"{below.Value}-{newVal}");
-                                    below.Value = BeatCell.SimplifyValue(newVal);
-                                    // TODO: factor in repeat groups
-                                }
-                            }
+                            AddCellToRowAboveSelection(position, increment);
                         }
                     }
                 }
@@ -815,53 +702,7 @@ namespace Pronome.Editor
                     // check by seeing if the position is less than the least posible grid line position within the row from the selected cell.
                     if (position < Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * .1))
                     {
-                        // in the offset area
-                        // how many increments back from first cell selected
-                        double diff = (Cell.SelectedCells.FirstCell.Position + Offset) - (position + Offset);
-                        int div = (int)(diff / increment);
-                        // is it closer to lower of upper grid line?
-                        Cell cell = null;
-                        if (diff % increment <= increment * .1)
-                        {
-                            // upper
-                            cell = new Cell(this);
-                        }
-                        else if (diff % increment >= increment * .1)
-                        {
-                            // lower
-                            cell = new Cell(this);
-                            div++;
-                        }
-                        if (cell != null)
-                        {
-                            // get the value string
-                            StringBuilder val = new StringBuilder();
-                            val.Append($"{EditorWindow.CurrentIncrement}*{div}");
-                            foreach(Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
-                            {
-                                val.Append('-').Append(c.Value);
-                            }
-                            cell.Value = BeatCell.SimplifyValue(val.ToString());
-
-                            Cells.Insert(0, cell);
-                            //Cells.AddFirst(cell);
-                            cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
-                            cell.Position = 0;
-
-                            // set new duration of this row
-                            Duration += cell.Duration;
-
-                            // find new offset
-                            //StringBuilder os = new StringBuilder();
-                            //foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
-                            //{
-                            //    os.Append(c.Value).Append('+');
-                            //}
-                            //Offset = os.Append('-').Append(Offset).ToString();
-
-                            Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
-                            Canvas.Children.Add(cell.Rectangle);
-                        }
+                        AddCellBelowRow(position, increment);
                     }
                     else
                     {
@@ -887,17 +728,272 @@ namespace Pronome.Editor
 
         protected void AddCellAboveRow(double position, double increment)
         {
+            double diff = position - Cell.SelectedCells.LastCell.Position;
+            int div = (int)(diff / increment);
+            double lower = increment * div + .1 * increment;
+            double upper = lower + increment - .2 * increment;
+            Cell cell = null;
+            // use upper or lower grid line?
+            if (diff <= lower && diff > 0)
+            {
+                // use left grid line
+                // make new cell
+                cell = new Cell(this);
+            }
+            else if (diff >= upper)
+            {
+                // use right grid line
+                div++;
+                // make new cell
+                cell = new Cell(this);
+            }
 
+            if (cell != null)
+            {
+                cell.Value = BeatCell.SimplifyValue(EditorWindow.CurrentIncrement);
+                // set new duration of previous cell
+                Cell below = Cells.Last();
+                // add to groups and put rectangle in correct canvas
+                if (Group.AddToGroups(cell, below))
+                {
+                    cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
+                }
+                else
+                {
+                    Canvas.Children.Add(cell.Rectangle);
+                }
+
+                below.Duration = increment * div - (Cells.Last().Position - Cell.SelectedCells.LastCell.Position);
+                // find the value string
+                StringBuilder val = new StringBuilder();
+                val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
+
+                HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
+                foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell))
+                {
+                    val.Append("-0").Append(c.Value);
+                    // account for rep groups and their LTMs
+                    Dictionary<RepeatGroup, int> ltmTimes = new Dictionary<RepeatGroup, int>();
+                    foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
+                    {
+                        if (repGroups.Contains(rg)) continue;
+
+                        foreach (Cell ce in rg.Cells)
+                        {
+                            val.Append("-0").Append(BeatCell.MultiplyTerms(ce.Value, rg.Times - 1));
+                        }
+                        foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
+                        {
+                            ltmTimes[kv.Key] = kv.Value * rg.Times;
+                        }
+
+                        repGroups.Add(rg);
+                        ltmTimes.Add(rg, 1);
+                    }
+                    foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
+                    {
+                        val.Append("-0").Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value));
+                    }
+                }
+
+                // if last cell is in a rep group, we need to increase the LTM for that group
+                if (below.RepeatGroups.Any())
+                {
+                    // add to the bottom repeat group's LTM
+                    below.RepeatGroups.First.Value.LastTermModifier = BeatCell.SimplifyValue(val.ToString());
+                }
+                else
+                {
+                    // add to last cell's duration
+                    below.Value = BeatCell.SimplifyValue(val.ToString());
+                }
+
+                cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
+                Cells.Add(cell);
+                cell.Duration = increment;
+                // set new duration of this row
+                Duration = cell.Position + cell.Duration;
+            }
         }
 
         protected void AddCellToRowAboveSelection(double position, double increment)
         {
+            // find nearest grid line
+            double lastCellPosition = Cell.SelectedCells.LastCell.Position;
+            double diff = position - lastCellPosition;
+            int div = (int)(diff / increment);
+            double lower = increment * div;// + .1 * increment;
+            double upper = lower + increment;// - .2 * increment;
 
+            Cell cell = null;
+            //Cell below = null;
+            // is lower, or upper in range?
+            if (lower + .1 * increment > diff)
+            {
+                //below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
+                cell = new Cell(this);
+                cell.Position = lastCellPosition + lower;
+            }
+            else if (upper - .1 * increment < diff)
+            {
+                //below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
+                cell = new Cell(this);
+                cell.Position = lastCellPosition + upper;
+                div++;
+            }
+
+            if (cell != null)
+            {
+                int index = Cells.InsertSorted(cell);
+                if (index > -1)
+                {
+                    Cell below = Cells[index - 1];
+                    // add to groups and add it's rectangle to appropriate canvas
+                    if (Group.AddToGroups(cell, below))
+                    {
+                        cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
+                    }
+                    else
+                    {
+                        Canvas.Children.Add(cell.Rectangle);
+                    }
+
+                    double duration = below.Position + below.Duration - cell.Position;
+                    below.SetDurationDirectly(below.Duration - duration);
+                    //Canvas.Children.Add(cell.Rectangle);
+                    cell.SetDurationDirectly(duration);
+
+                    // determine new value for the below cell
+                    StringBuilder val = new StringBuilder();
+                    // take and the distance from the end of the selection
+                    val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
+                    // subtract the values up to the previous cell
+                    HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
+                    foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != cell))
+                    {
+                        val.Append("-0").Append(c.Value);
+                        // account for rep group repititions.
+                        Dictionary<RepeatGroup, int> ltmTimes = new Dictionary<RepeatGroup, int>();
+                        foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
+                        {
+                            if (repGroups.Contains(rg)) continue;
+                            // don't include a rep group if the end point is included in it.
+                            if (cell.RepeatGroups.Contains(rg))
+                            {
+                                repGroups.Add(rg);
+                                continue;
+                            }
+
+                            foreach (Cell ce in rg.Cells)
+                            {
+                                val.Append("-0").Append(BeatCell.MultiplyTerms(ce.Value, rg.Times - 1));
+                            }
+                            // get times to count LTMs for each rg
+                            foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
+                            {
+                                ltmTimes[kv.Key] = kv.Value * rg.Times;
+                            }
+
+                            ltmTimes.Add(rg, 1);
+                            repGroups.Add(rg);
+                        }
+                        // subtract the LTMs
+                        foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
+                        {
+                            val.Append("-0").Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value));
+                        }
+                    }
+                    //foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.LastCell))
+                    //{
+                    //    val.Append(c.Value + "+");
+                    //}
+                    //val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
+                    ////val.Append($"{EditorWindow.CurrentIncrement}*{div}");
+                    //foreach (Cell c in Cells.TakeWhile(x => x != below))
+                    //{
+                    //    val.Append("-" + c.Value);
+                    //}
+
+                    // get new cells value by subtracting old value of below cell by new value.
+                    string newVal = BeatCell.SimplifyValue(val.ToString());
+                    cell.Value = BeatCell.SimplifyValue($"{below.Value}-{newVal}");
+                    below.Value = BeatCell.SimplifyValue(newVal);
+                }
+            }
         }
 
         protected void AddCellBelowRow(double position, double increment)
         {
+            // in the offset area
+            // how many increments back from first cell selected
+            double diff = (Cell.SelectedCells.FirstCell.Position + Offset) - (position + Offset);
+            int div = (int)(diff / increment);
+            // is it closer to lower of upper grid line?
+            Cell cell = null;
+            if (diff % increment <= increment * .1)
+            {
+                // upper
+                cell = new Cell(this);
+            }
+            else if (diff % increment >= increment * .1)
+            {
+                // lower
+                cell = new Cell(this);
+                div++;
+            }
+            if (cell != null)
+            {
+                // get the value string
+                StringBuilder val = new StringBuilder();
+                // value of grid lines, the 
+                val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
 
+                HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
+                foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                {
+                    val.Append("-0").Append(c.Value);
+                    // deal with repeat groups
+                    Dictionary<RepeatGroup, int> lcmTimes = new Dictionary<RepeatGroup, int>();
+                    foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
+                    {
+                        if (repGroups.Contains(rg)) continue;
+                        // if the selected cell is in this rep group, we don't want to include repetitions
+                        if (Cell.SelectedCells.FirstCell.RepeatGroups.Contains(rg))
+                        {
+                            repGroups.Add(rg);
+                            continue;
+                        }
+                        foreach (Cell ce in rg.Cells)
+                        {
+                            val.Append("-0").Append(BeatCell.MultiplyTerms(ce.Value, rg.Times - 1));
+                        }
+
+                        foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
+                        {
+                            lcmTimes[kv.Key] = kv.Value * rg.Times;
+                        }
+                        repGroups.Add(rg);
+                        lcmTimes.Add(rg, 1);
+                    }
+                    // subtract the LCMs
+                    foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
+                    {
+                        val.Append("-0").Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value));
+                    }
+                }
+                cell.Value = BeatCell.SimplifyValue(val.ToString());
+
+                Cells.Insert(0, cell);
+                //Cells.AddFirst(cell);
+                cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
+                cell.Position = 0;
+
+                // set new duration of this row
+                Duration += cell.Duration;
+
+                Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
+                Canvas.Children.Add(cell.Rectangle);
+            }
         }
 
         protected void AddCellToRowBelowSelection(double position, double increment)
@@ -958,6 +1054,12 @@ namespace Pronome.Editor
                         foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
                         {
                             if (repGroups.Contains(rg)) continue;
+                            // don't count reps for groups that contain the selection
+                            if (Cell.SelectedCells.FirstCell.RepeatGroups.Contains(rg))
+                            {
+                                repGroups.Add(rg);
+                                continue;
+                            }
                             foreach (Cell ce in rg.Cells)
                             {
                                 val.Append('0').Append(
@@ -980,29 +1082,9 @@ namespace Pronome.Editor
                                 .Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value))
                                 .Append('+');
                         }
-
-                        //string[] terms = Regex.Split(c.Value, @"(?<!^)(?=[+\-])");
-                        //foreach (RepeatGroup rg in c.RepeatGroups)
-                        //{
-                        //    // don't increment if cell is in this group
-                        //    if (rg.Cells.Contains(cell)) continue;
-                        //
-                        //    for (int i = 0; i < terms.Length; i++)
-                        //    {
-                        //        terms[i] += "*" + rg.Times.ToString();
-                        //    }
-                        //    // prepare to add the LTM
-                        //    repGroups.Add(rg);
-                        //}
-                        //val.Append(string.Join(string.Empty, terms)).Append('+');
                     }
-                    //// add LTM from rep groups
-                    //foreach (RepeatGroup rg in repGroups)
-                    //{
-                    //    val.Append('0').Append(rg.LastTermModifier).Append('+');
-                    //}
+
                     val.Append('0');
-                    // TODO: need to multiply each term
                     val.Append('-').Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
                     cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
                     below.Value = BeatCell.SimplifyValue(val.ToString());
