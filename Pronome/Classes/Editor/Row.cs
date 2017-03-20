@@ -144,11 +144,16 @@ namespace Pronome.Editor
                 // check for opening mult group
                 if (chunk.IndexOf('{') > -1)
                 {
-                    OpenMultGroups.Push(new MultGroup() { Row = this });
-                    cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
-                    OpenMultGroups.Peek().Cells.AddLast(cell);
-                    OpenMultGroups.Peek().Position = cell.Position;
-                    MultGroups.AddLast(OpenMultGroups.Peek());
+                    while (chunk.Contains('{'))
+                    {
+                        OpenMultGroups.Push(new MultGroup() { Row = this });
+                        cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
+                        OpenMultGroups.Peek().Cells.AddLast(cell);
+                        OpenMultGroups.Peek().Position = cell.Position;
+                        MultGroups.AddLast(OpenMultGroups.Peek());
+
+                        chunk = chunk.Remove(chunk.IndexOf('{'), 1);
+                    }
                 }
                 else if (OpenMultGroups.Any())
                 {
@@ -158,11 +163,16 @@ namespace Pronome.Editor
                 // check for opening repeat group
                 if (chunk.IndexOf('[') > -1)
                 {
-                    OpenRepeatGroups.Push(new RepeatGroup() { Row = this });
-                    cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
-                    OpenRepeatGroups.Peek().Cells.AddLast(cell);
-                    OpenRepeatGroups.Peek().Position = cell.Position;
-                    RepeatGroups.AddLast(OpenRepeatGroups.Peek());
+                    while (chunk.Contains('['))
+                    {
+                        OpenRepeatGroups.Push(new RepeatGroup() { Row = this });
+                        cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
+                        OpenRepeatGroups.Peek().Cells.AddLast(cell);
+                        OpenRepeatGroups.Peek().Position = cell.Position;
+                        RepeatGroups.AddLast(OpenRepeatGroups.Peek());
+
+                        chunk = chunk.Remove(chunk.IndexOf('['), 1);
+                    }
                 }
                 else if (OpenRepeatGroups.Any())
                 {
@@ -257,35 +267,55 @@ namespace Pronome.Editor
                 }
 
                 // check for closing mult group
-                if (chunk.IndexOf('}') > -1)
+                //if (chunk.IndexOf('}') > -1)
+                //{
+                    // handle multiple groups
+                while (chunk.Contains('}'))
                 {
                     MultGroup mg = OpenMultGroups.Pop();
                     mg.Factor = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
                     // set duration
                     mg.Duration = cell.Position + cell.Duration - mg.Position;
                     // render
-                    Canvas.Children.Add(mg.Rectangle);
+                    if (OpenRepeatGroups.Any())
+                    {
+                        OpenRepeatGroups.Peek().Canvas.Children.Add(mg.Rectangle);
+                    }
+                    else
+                    {
+                        Canvas.Children.Add(mg.Rectangle);
+                    }
+                    var m = Regex.Match(chunk, @"\}[\d.+\-/*]+");
+
+                    chunk = chunk.Remove(m.Index, m.Length);
                 }
+                //}
 
                 // check for closing repeat group, getting times and last term modifier
                 if (chunk.IndexOf(']') > -1)
                 {
-                    RepeatGroup rg = OpenRepeatGroups.Pop();
-                    rg.Duration = cell.Position + cell.Duration - rg.Position;
-                    Match mtch = Regex.Match(chunk, @"](\d+)");
-                    if (mtch.Length == 0)
+                    // handle closely nested repeat group ends
+                    while (chunk.Contains(']'))
                     {
-                        mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
-                        rg.Times = int.Parse(mtch.Groups[1].Value);
-                        rg.LastTermModifier = mtch.Groups[2].Value;//.Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
-                    }
-                    else
-                    {
-                        rg.Times = int.Parse(mtch.Groups[1].Value);
-                    }
+                        RepeatGroup rg = OpenRepeatGroups.Pop();
+                        rg.Duration = cell.Position + cell.Duration - rg.Position;
+                        Match mtch = Regex.Match(chunk, @"](\d+)");
+                        if (mtch.Length == 0)
+                        {
+                            mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
+                            rg.Times = int.Parse(mtch.Groups[1].Value);
+                            rg.LastTermModifier = mtch.Groups[2].Value;//.Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
+                        }
+                        else
+                        {
+                            rg.Times = int.Parse(mtch.Groups[1].Value);
+                        }
 
-                    // build the group
-                    position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position);
+                        // build the group
+                        position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position);
+                        // move to outer group if exists
+                        chunk = chunk.Substring(chunk.IndexOf(']') + 1);
+                    }
                 }
                 else
                 {
@@ -671,7 +701,7 @@ namespace Pronome.Editor
                 if (position > Cell.SelectedCells.LastCell.Position)
                 {
                     // check if position is within the ghosted area of a repeat
-                    // TODO: what about last term modifiers? nested repeats?
+                    // TODO: what about last term modifiers?
                     bool outsideRepeat = true;
                     foreach (RepeatGroup rg in RepeatGroups)
                     {
@@ -725,6 +755,29 @@ namespace Pronome.Editor
                 }
             }
         }
+
+        /**
+         * Test Cases:
+         * 
+         * 1) Above row
+         * 2) Above row where last cell is in a repeat
+         * 3) Above row and within the duration of the last cell
+         * 4) Above selection and within row
+         * 5) ^ Where selection is in a repeat and new cell is not
+         * 6) ^ Where selection and new cell are in the same repeat
+         * 7) ^ Where new cell is in a repeat group
+         * 8) ^ Selection is in a repeat group that is nested
+         * 9) ^ new cell is in a repeat group that is nested
+         * 10) Below selection and within row
+         * 11) ^ Where selection is in a repeat and new cell is not
+         * 12) ^ Where selection and new cell are in the same repeat
+         * 13) ^ Where new cell is in a repeat group
+         * 14) ^ Selection is in a repeat group that is nested
+         * 15) ^ new cell is in a repeat group that is nested
+         * 16) Below the row, in offset area
+         * 17) ^ selection is in a repeat group
+         * 18) ^ there is a repeat group between the selection and the start
+         */
 
         protected void AddCellAboveRow(double position, double increment)
         {
@@ -869,7 +922,7 @@ namespace Pronome.Editor
                     val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
                     // subtract the values up to the previous cell
                     HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
-                    foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != cell))
+                    foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != below))
                     {
                         val.Append("-0").Append(c.Value);
                         // account for rep group repititions.
@@ -916,8 +969,8 @@ namespace Pronome.Editor
 
                     // get new cells value by subtracting old value of below cell by new value.
                     string newVal = BeatCell.SimplifyValue(val.ToString());
-                    cell.Value = BeatCell.SimplifyValue($"{below.Value}-{newVal}");
-                    below.Value = BeatCell.SimplifyValue(newVal);
+                    cell.Value = BeatCell.SimplifyValue($"{below.Value}-0{newVal}");
+                    below.Value = newVal;
                 }
             }
         }

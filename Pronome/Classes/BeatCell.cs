@@ -244,7 +244,7 @@ namespace Pronome
 
                 // remove all individual fraction to be replaced by 1 big fraction
                 int index = value.IndexOf(m.Value);
-                value = value.Substring(0, index) + value.Substring(index + m.Length);
+                value = value.Remove(index, m.Length);
             }
             //value = numerator.ToString() + '/' + lcd.ToString() + value;
             int whole = numerator / lcd;
@@ -252,7 +252,11 @@ namespace Pronome
             string fractionPart = numerator.ToString() + '/' + lcd.ToString();
 
             // merge all whole numbers and decimals
-            double numbers = whole + Parse("0+" + value);
+            double numbers = 0;
+            if (!string.IsNullOrEmpty(value))
+            {
+                numbers = whole + Parse("0+0" + value);
+            }
 
             string result = numbers != 0 ? numbers.ToString() : "";
             // append the fractional portion of it's not zero
