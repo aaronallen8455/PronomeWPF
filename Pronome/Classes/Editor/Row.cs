@@ -158,6 +158,7 @@ namespace Pronome.Editor
                 else if (OpenMultGroups.Any())
                 {
                     cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
+                    OpenMultGroups.Peek().Cells.AddLast(cell);
                 }
 
                 // check for opening repeat group
@@ -177,6 +178,7 @@ namespace Pronome.Editor
                 else if (OpenRepeatGroups.Any())
                 {
                     cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
+                    OpenRepeatGroups.Peek().Cells.AddLast(cell);
                 }
 
                 // parse the BPM value or get reference
@@ -701,7 +703,7 @@ namespace Pronome.Editor
                 if (position > Cell.SelectedCells.LastCell.Position)
                 {
                     // check if position is within the ghosted area of a repeat
-                    // TODO: what about last term modifiers?
+                    // TODO: what about last term modifiers? If a new cell is placed in the last term modifier area, what to do?
                     bool outsideRepeat = true;
                     foreach (RepeatGroup rg in RepeatGroups)
                     {
@@ -714,7 +716,7 @@ namespace Pronome.Editor
                     if (outsideRepeat)
                     {
                         // if the new cell will be above the current row
-                        if (position > Cells.Last().Position + Cells.Last().Duration) // should a cell placed within duration of prev cell maintain overall duration?
+                        if (position > Cells.Last().Position + Cells.Last().Duration - increment * .1) // should a cell placed within duration of prev cell maintain overall duration?
                         {
                             AddCellAboveRow(position, increment);
                         }
@@ -804,6 +806,7 @@ namespace Pronome.Editor
             if (cell != null)
             {
                 cell.Value = BeatCell.SimplifyValue(EditorWindow.CurrentIncrement);
+                cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
                 // set new duration of previous cell
                 Cell below = Cells.Last();
                 // add to groups and put rectangle in correct canvas
@@ -816,7 +819,6 @@ namespace Pronome.Editor
                     Canvas.Children.Add(cell.Rectangle);
                 }
 
-                below.Duration = increment * div - (Cells.Last().Position - Cell.SelectedCells.LastCell.Position);
                 // find the value string
                 StringBuilder val = new StringBuilder();
                 val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
@@ -858,14 +860,16 @@ namespace Pronome.Editor
                 else
                 {
                     // add to last cell's duration
+                    below.Duration = increment * div - (Cells.Last().Position - Cell.SelectedCells.LastCell.Position);
+                    val.Append("+0").Append(below.Value);
                     below.Value = BeatCell.SimplifyValue(val.ToString());
                 }
 
-                cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
                 Cells.Add(cell);
                 cell.Duration = increment;
                 // set new duration of this row
                 Duration = cell.Position + cell.Duration;
+                SetBackground(Duration);
             }
         }
 
@@ -956,16 +960,6 @@ namespace Pronome.Editor
                             val.Append("-0").Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value));
                         }
                     }
-                    //foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.LastCell))
-                    //{
-                    //    val.Append(c.Value + "+");
-                    //}
-                    //val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
-                    ////val.Append($"{EditorWindow.CurrentIncrement}*{div}");
-                    //foreach (Cell c in Cells.TakeWhile(x => x != below))
-                    //{
-                    //    val.Append("-" + c.Value);
-                    //}
 
                     // get new cells value by subtracting old value of below cell by new value.
                     string newVal = BeatCell.SimplifyValue(val.ToString());

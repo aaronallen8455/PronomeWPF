@@ -249,6 +249,12 @@ namespace Pronome
             //value = numerator.ToString() + '/' + lcd.ToString() + value;
             int whole = numerator / lcd;
             numerator -= whole * lcd;
+            // if the fraction is negative, subtract it from the whole number
+            if (numerator < 0)
+            {
+                numerator += lcd;
+                whole--;
+            }
             string fractionPart = numerator.ToString() + '/' + lcd.ToString();
 
             // merge all whole numbers and decimals
@@ -274,6 +280,8 @@ namespace Pronome
 
         static public string MultiplyTerms(string exp, double factor)
         {
+            if (string.IsNullOrEmpty(exp)) return "";
+
             string[] terms = Regex.Split(exp, @"(?<!^)(?=[+\-])");
             // multiply each seperate term by the factor
             for (int i = 0; i < terms.Length; i++)

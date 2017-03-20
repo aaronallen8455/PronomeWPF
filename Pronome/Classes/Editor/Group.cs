@@ -113,7 +113,12 @@ namespace Pronome.Editor
                 return false;
             }
 
-            return true;
+            if (cell.RepeatGroups.Any())
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 

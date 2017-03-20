@@ -305,7 +305,25 @@ namespace Pronome.Editor
     {
         public int InsertSorted(Cell item, int startIndex = 0, int endIndex = -1)
         {
-            int index = InsertSorted(startIndex, endIndex == -1 ? Count - 1 : endIndex, item.Position);
+            int index;
+
+            if (endIndex == -1) endIndex = Count - 1;
+
+            if (item.Position < this[startIndex].Position)
+            {
+                index = startIndex;
+            }
+            else if (item.Position > this[endIndex].Position)
+            {
+                Add(item);
+                return Count - 1;
+            }
+            else
+            {
+                // place in order within the collection
+                index = InsertSorted(startIndex, endIndex, item.Position);
+            }
+
             if (index > -1)
             {
                 Insert(index, item);
