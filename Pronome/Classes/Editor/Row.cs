@@ -50,6 +50,11 @@ namespace Pronome.Editor
         }
 
         /// <summary>
+        /// Determines how close a mouse click needs to be to a grid line to count as that line. It's a factor of the increment size.
+        /// </summary>
+        public const float GridProx = .1f;
+
+        /// <summary>
         /// Total BPM length of the row
         /// </summary>
         public double Duration;
@@ -716,7 +721,7 @@ namespace Pronome.Editor
                     if (outsideRepeat)
                     {
                         // if the new cell will be above the current row
-                        if (position > Cells.Last().Position + Cells.Last().Duration - increment * .1) // should a cell placed within duration of prev cell maintain overall duration?
+                        if (position > Cells.Last().Position + Cells.Last().Duration - increment * GridProx) // should a cell placed within duration of prev cell maintain overall duration?
                         {
                             AddCellAboveRow(position, increment);
                         }
@@ -732,7 +737,7 @@ namespace Pronome.Editor
                     // New cell is below selection
                     // is new cell in the offset area, or is inside the row?
                     // check by seeing if the position is less than the least posible grid line position within the row from the selected cell.
-                    if (position < Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * .1))
+                    if (position < Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * GridProx))
                     {
                         AddCellBelowRow(position, increment);
                     }
@@ -785,8 +790,8 @@ namespace Pronome.Editor
         {
             double diff = position - Cell.SelectedCells.LastCell.Position;
             int div = (int)(diff / increment);
-            double lower = increment * div + .1 * increment;
-            double upper = lower + increment - .2 * increment;
+            double lower = increment * div + GridProx * increment;
+            double upper = lower + increment - GridProx * 2 * increment;
             Cell cell = null;
             // use upper or lower grid line?
             if (diff <= lower && diff > 0)
@@ -826,7 +831,7 @@ namespace Pronome.Editor
                 HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
                 foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell))
                 {
-                    val.Append("-0").Append(c.Value);
+                    val.Append("+0").Append(BeatCell.Invert(c.Value));
                     // account for rep groups and their LTMs
                     Dictionary<RepeatGroup, int> ltmTimes = new Dictionary<RepeatGroup, int>();
                     foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
@@ -835,7 +840,7 @@ namespace Pronome.Editor
 
                         foreach (Cell ce in rg.Cells)
                         {
-                            val.Append("-0").Append(BeatCell.MultiplyTerms(ce.Value, rg.Times - 1));
+                            val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
                         }
                         foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
                         {
@@ -847,7 +852,7 @@ namespace Pronome.Editor
                     }
                     foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
                     {
-                        val.Append("-0").Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value));
+                        val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
                     }
                 }
 
@@ -885,13 +890,13 @@ namespace Pronome.Editor
             Cell cell = null;
             //Cell below = null;
             // is lower, or upper in range?
-            if (lower + .1 * increment > diff)
+            if (lower + GridProx * increment > diff)
             {
                 //below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
                 cell = new Cell(this);
                 cell.Position = lastCellPosition + lower;
             }
-            else if (upper - .1 * increment < diff)
+            else if (upper - GridProx * increment < diff)
             {
                 //below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
                 cell = new Cell(this);
@@ -928,7 +933,8 @@ namespace Pronome.Editor
                     HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
                     foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != below))
                     {
-                        val.Append("-0").Append(c.Value);
+                        // subtract each value from the total
+                        val.Append("+0").Append(BeatCell.Invert(c.Value));
                         // account for rep group repititions.
                         Dictionary<RepeatGroup, int> ltmTimes = new Dictionary<RepeatGroup, int>();
                         foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
@@ -943,7 +949,7 @@ namespace Pronome.Editor
 
                             foreach (Cell ce in rg.Cells)
                             {
-                                val.Append("-0").Append(BeatCell.MultiplyTerms(ce.Value, rg.Times - 1));
+                                val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
                             }
                             // get times to count LTMs for each rg
                             foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
@@ -957,13 +963,15 @@ namespace Pronome.Editor
                         // subtract the LTMs
                         foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
                         {
-                            val.Append("-0").Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value));
+                            val.Append("+0").Append(
+                                BeatCell.MultiplyTerms(
+                                    BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
                         }
                     }
 
                     // get new cells value by subtracting old value of below cell by new value.
                     string newVal = BeatCell.SimplifyValue(val.ToString());
-                    cell.Value = BeatCell.SimplifyValue($"{below.Value}-0{newVal}");
+                    cell.Value = BeatCell.Subtract(below.Value, newVal);
                     below.Value = newVal;
                 }
             }
@@ -977,12 +985,12 @@ namespace Pronome.Editor
             int div = (int)(diff / increment);
             // is it closer to lower of upper grid line?
             Cell cell = null;
-            if (diff % increment <= increment * .1)
+            if (diff % increment <= increment * GridProx)
             {
                 // upper
                 cell = new Cell(this);
             }
-            else if (diff % increment >= increment * .1)
+            else if (diff % increment >= increment * GridProx)
             {
                 // lower
                 cell = new Cell(this);
@@ -998,7 +1006,7 @@ namespace Pronome.Editor
                 HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
                 foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
                 {
-                    val.Append("-0").Append(c.Value);
+                    val.Append("+0").Append(BeatCell.Invert(c.Value));
                     // deal with repeat groups
                     Dictionary<RepeatGroup, int> lcmTimes = new Dictionary<RepeatGroup, int>();
                     foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
@@ -1012,7 +1020,7 @@ namespace Pronome.Editor
                         }
                         foreach (Cell ce in rg.Cells)
                         {
-                            val.Append("-0").Append(BeatCell.MultiplyTerms(ce.Value, rg.Times - 1));
+                            val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
                         }
 
                         foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
@@ -1025,7 +1033,7 @@ namespace Pronome.Editor
                     // subtract the LCMs
                     foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
                     {
-                        val.Append("-0").Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value));
+                        val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
                     }
                 }
                 cell.Value = BeatCell.SimplifyValue(val.ToString());
@@ -1049,12 +1057,12 @@ namespace Pronome.Editor
             int div = (int)(diff / increment);
             Cell cell = null;
             // is it in range of the left or right grid line?
-            if (diff % increment <= increment * .1)
+            if (diff % increment <= increment * GridProx)
             {
                 // right
                 cell = new Cell(this);
             }
-            else if (diff % increment >= increment * .9)
+            else if (diff % increment >= increment * (1 - GridProx))
             {
                 // left
                 cell = new Cell(this);
@@ -1092,6 +1100,7 @@ namespace Pronome.Editor
                     HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
                     foreach (Cell c in Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
                     {
+                        if (c == cell) continue; // don't include the new cell
                         // add the cells value
                         val.Append(c.Value).Append('+');
                         // we need to track how many times to multiply each rep group's LTM
@@ -1132,8 +1141,9 @@ namespace Pronome.Editor
                     }
 
                     val.Append('0');
-                    val.Append('-').Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
-                    cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
+                    val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(EditorWindow.CurrentIncrement), div));
+                    cell.Value = BeatCell.Subtract(below.Value, val.ToString());
+                    //cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
                     below.Value = BeatCell.SimplifyValue(val.ToString());
                 }
             }

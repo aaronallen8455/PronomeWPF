@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Pronome
 {
@@ -278,6 +279,12 @@ namespace Pronome
             return result;
         }
 
+        /// <summary>
+        /// Multiply all terms in an expression by the factor
+        /// </summary>
+        /// <param name="exp"></param>
+        /// <param name="factor"></param>
+        /// <returns></returns>
         static public string MultiplyTerms(string exp, double factor)
         {
             if (string.IsNullOrEmpty(exp)) return "";
@@ -290,6 +297,70 @@ namespace Pronome
             }
 
             return string.Join(string.Empty, terms);
+        }
+
+        /// <summary>
+        /// Subtract the right term from the left.
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        static public string Subtract(string left, string right)
+        {
+            //StringBuilder sb = new StringBuilder(right);
+            //for (int i = 0; i < right.Length; i++)
+            //{
+            //    if (right[i] == '+') sb[i] = '-';
+            //    else if (right[i] == '-') sb[i] = '+';
+            //}
+            right = Invert(right);
+
+            return SimplifyValue($"{left}+0{right}");
+        }
+
+        /// <summary>
+        /// Invert an expression
+        /// </summary>
+        /// <param name="exp"></param>
+        /// <returns></returns>
+        static public string Invert(string exp)
+        {
+
+            char[] ops = new char[] { '+', '-', '/', '*' };
+            StringBuilder sb = new StringBuilder(exp);
+
+            if (exp[0] == '-')
+            {
+                sb.Remove(0, 1);
+            }
+            else
+            {
+                sb.Insert(0, '-');
+            }
+
+            for (int i = 1; i < sb.Length; i++)
+            {
+                if (sb[i] == '+') sb[i] = '-';
+                else if (sb[i] == '-') {
+                    if (ops.Contains(sb[i - 1]))
+                    {
+                        sb.Remove(i, 1);
+                        i--;
+                    }
+                    else
+                    {
+                        sb[i] = '+';
+                    }
+                }
+                //else if (sb[i-1] == '*')
+                //{
+                //    // If dividing/multiplying by a positive number, make it negative
+                //    sb.Insert(i, '-');
+                //    i++;
+                //}
+            }
+
+            return sb.ToString();
         }
     }
 }
