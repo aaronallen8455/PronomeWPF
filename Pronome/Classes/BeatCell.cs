@@ -102,54 +102,141 @@ namespace Pronome
         {
             if (string.IsNullOrEmpty(str)) return 0;
 
+            StringBuilder ops = new StringBuilder();
             string operators = "";
+            StringBuilder number = new StringBuilder();
+            List<double> numbers = new List<double>();
+            // parse out the numbers and operators
             for (int i = 0; i < str.Length; i++)
             {
-                if (str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '/')
-                    operators += str[i];
-            }
-            double[] numbers = str.Split(new char[] { '+', '-', '*', '/' }).Select((x) => Convert.ToDouble(x)).ToArray();
-
-            // do mult and div
-            while (operators.IndexOfAny(new[] { '*', '/' }) > -1)
-            {
-                int index = operators.IndexOfAny(new[] { '*', '/' });
-
-                switch (operators[index])
+                if (str[i] == '+' || str[i] == '*' || str[i] == '/' || (str[i] == '-' && (str[i-1] != '*' || str[i-1] != '/')))
                 {
-                    case '*':
-                        numbers[index] *= numbers[index + 1];
-                        numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
-                        break;
-                    case '/':
-                        numbers[index] /= numbers[index + 1];
-                        numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
-                        break;
+                    numbers.Add(double.Parse(number.ToString()));
+                    number.Clear();
+                    ops.Append(str[i]);
                 }
-                operators = operators.Remove(index, 1);
-            }
-            // do addition and subtraction
-            while (operators.IndexOfAny(new[] { '+', '-' }) > -1)
-            {
-                int index = operators.IndexOfAny(new[] { '+', '-' });
-
-                switch (operators[index])
+                else if (str[i] == 'x' || str[i] == 'X')
                 {
-                    case '+':
-                        numbers[index] += numbers[index + 1];
-                        numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
-                        break;
-                    case '-':
-                        numbers[index] -= numbers[index + 1];
-                        numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
-                        break;
+                    ops.Append('*');
                 }
-                operators = operators.Remove(index, 1);
+                else
+                {
+                    number.Append(str[i]);
+                }
             }
+            numbers.Add(double.Parse(number.ToString()));
+            operators = ops.ToString();
+            //double[] numbers = str.Split(new char[] { '+', '-', '*', '/' }).Select((x) => Convert.ToDouble(x)).ToArray();
 
-            if (numbers[0] > long.MaxValue) throw new Exception(numbers[0].ToString());
+            double result = 0;
+            double current = numbers[0];
+            char connector = '+';
+            // perform arithmetic
+            for (int i = 0; i < operators.Length; i++)
+            {
+                char op = operators[i];
+                if (op == '*')
+                {
+                    current *= numbers[i + 1];
+                }
+                else if (op == '/')
+                {
+                    current /= numbers[i + 1];
+                }
+                else
+                {
+                    if (connector == '+')
+                    {
+                        result += current;
+                    }
+                    else if (connector == '-')
+                    {
+                        result -= current;
+                    }
+                    //result += current;
+                    if (i < operators.Length - 1)
+                    {
+                        
+                        if (operators[i + 1] == '+' || operators[i + 1] == '-')
+                        {
+                            current = 0;
 
-            return numbers[0];
+                            if (op == '+')
+                            {
+                                result += numbers[i + 1];
+                            }
+                            else
+                            {
+                                result -= numbers[i + 1];
+                            }
+                        }
+                        else
+                        {
+                            connector = op;
+                            current = numbers[i + 1];
+                        }
+                    }
+                    else
+                    {
+                        current = 0;
+
+                        if (op == '+')
+                        {
+                            result += numbers[i + 1];
+                        }
+                        else
+                        {
+                            result -= numbers[i + 1];
+                        }
+                    }
+                }
+            }
+            result = connector == '+' ? result + current : result - current;
+
+            return result;
+
+            //// do mult and div
+            //while (operators.IndexOfAny(new[] { '*', '/' }) > -1)
+            //{
+            //    int index = operators.IndexOfAny(new[] { '*', '/' });
+            //
+            //    switch (operators[index])
+            //    {
+            //        case '*':
+            //            numbers[index] *= numbers[index + 1];
+            //            numbers.Remove(index + 1);
+            //            //numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
+            //            break;
+            //        case '/':
+            //            numbers[index] /= numbers[index + 1];
+            //            numbers.Remove(index + 1);
+            //            //numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
+            //            break;
+            //    }
+            //    operators = operators.Remove(index, 1);
+            //}
+            //// do addition and subtraction
+            //while (operators.IndexOfAny(new[] { '+', '-' }) > -1)
+            //{
+            //    int index = operators.IndexOfAny(new[] { '+', '-' });
+            //
+            //    switch (operators[index])
+            //    {
+            //        case '+':
+            //            numbers[index] += numbers[index + 1];
+            //            numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
+            //            break;
+            //        case '-':
+            //            numbers[index] -= numbers[index + 1];
+            //            numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
+            //            break;
+            //    }
+            //    operators = operators.Remove(index, 1);
+            //}
+            //
+            //if (numbers[0] > long.MaxValue) throw new Exception(numbers[0].ToString());
+            //
+            //return numbers[0];
         }
 
         /// <summary>
@@ -160,7 +247,7 @@ namespace Pronome
         /// <returns></returns>
         static public bool TryParse(string str, out double val)
         {
-            if (System.Text.RegularExpressions.Regex.IsMatch(str, @"(\d+\.?\d*[\-+*/xX]?)*\d+\.?\d*$"))
+            if (Regex.IsMatch(str, @"(\d+\.?\d*[\-+*/xX]?)*\d+\.?\d*$"))
             {
                 val = Parse(str);
 

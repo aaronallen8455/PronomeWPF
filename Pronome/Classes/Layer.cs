@@ -23,6 +23,11 @@ namespace Pronome
         /** <summary>If this layer has any pitch sounds, they are held here.</summary> */
         public PitchStream BasePitchSource; // only use one pitch source per layer
 
+        /// <summary>
+        /// The UI object
+        /// </summary>
+        private LayerUI UI;
+
         /** <summary>True if the base source is a pitch.</summary> */
         [DataMember]
         public bool IsPitch;
@@ -633,6 +638,15 @@ namespace Pronome
         {
             double os = BeatCell.Parse(offset);
             SetOffset(os);
+        }
+
+        /// <summary>
+        /// Gets the UI string representation of the offset value.
+        /// </summary>
+        /// <returns></returns>
+        public string GetOffsetValue()
+        {
+            return UI.GetOffsetValue();
         }
 
         /** <summary>Add array of beat cells and create all audio sources.</summary>

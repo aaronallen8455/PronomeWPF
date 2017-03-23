@@ -361,6 +361,11 @@ namespace Pronome
                 controlPanel.Children.Add(panel);
         }
 
+        public string GetOffsetValue()
+        {
+            return offsetInput.Text;
+        }
+
         public string ValidateBeatCode()
         {
             textMarkerService.RemoveAll(x => true);

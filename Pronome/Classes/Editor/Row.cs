@@ -22,9 +22,6 @@ namespace Pronome.Editor
         /// </summary>
         public CellList Cells; //= new CellList();
 
-        //public SortedSet<Cell> Cells = new SortedSet<Cell>(delegate (Cell a, Cell b) { return a.Position - b.Position; });
-        //public SortedSet<Cell> Cells = new SortedSet<Cell>();
-
         protected double _offset;
         /// <summary>
         /// Amount of offset in BPM
@@ -48,6 +45,11 @@ namespace Pronome.Editor
                 }
             }
         }
+
+        /// <summary>
+        /// The UI friendly string version of the offset value
+        /// </summary>
+        public string OffsetValue;
 
         /// <summary>
         /// Determines how close a mouse click needs to be to a grid line to count as that line. It's a factor of the increment size.
@@ -100,6 +102,7 @@ namespace Pronome.Editor
             Layer = layer;
             Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
             Offset = layer.Offset;
+            OffsetValue = layer.GetOffsetValue();
             //Panel.SetZIndex(Canvas, 20);
             //Canvas.Margin = new System.Windows.Thickness(Offset * EditorWindow.Scale * EditorWindow.BaseFactor, 0, 0, 0);
             Background = EditorWindow.Instance.Resources["rowBackgroundRectangle"] as Rectangle;
@@ -856,6 +859,7 @@ namespace Pronome.Editor
                     }
                 }
 
+                string oldPrevCellValue = below.Value;
                 // if last cell is in a rep group, we need to increase the LTM for that group
                 if (below.RepeatGroups.Any())
                 {
@@ -875,6 +879,9 @@ namespace Pronome.Editor
                 // set new duration of this row
                 Duration = cell.Position + cell.Duration;
                 SetBackground(Duration);
+
+                // add action to undo stack
+                EditorWindow.Instance.UndoStack.Push(new AddCell(cell, below, oldPrevCellValue));
             }
         }
 
@@ -972,7 +979,11 @@ namespace Pronome.Editor
                     // get new cells value by subtracting old value of below cell by new value.
                     string newVal = BeatCell.SimplifyValue(val.ToString());
                     cell.Value = BeatCell.Subtract(below.Value, newVal);
+                    string oldValue = below.Value;
                     below.Value = newVal;
+
+                    // add action to undo stack
+                    EditorWindow.Instance.UndoStack.Push(new AddCell(cell, below, oldValue));
                 }
             }
         }
@@ -1047,7 +1058,10 @@ namespace Pronome.Editor
                 Duration += cell.Duration;
 
                 Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
+                OffsetValue = BeatCell.Subtract(OffsetValue, cell.Value);
                 Canvas.Children.Add(cell.Rectangle);
+
+                EditorWindow.Instance.UndoStack.Push(new AddCell(cell));
             }
         }
 
@@ -1144,7 +1158,11 @@ namespace Pronome.Editor
                     val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(EditorWindow.CurrentIncrement), div));
                     cell.Value = BeatCell.Subtract(below.Value, val.ToString());
                     //cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
+                    string oldValue = below.Value;
                     below.Value = BeatCell.SimplifyValue(val.ToString());
+
+                    EditorWindow.Instance.UndoStack.Push(
+                        new AddCell(cell, below, oldValue));
                 }
             }
         }

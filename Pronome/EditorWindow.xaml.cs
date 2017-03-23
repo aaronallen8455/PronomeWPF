@@ -25,9 +25,15 @@ namespace Pronome
         /// </summary>
         Row LastSelectedRow;
 
-        public enum ActionType { AddCell, DeleteCell, ChangeCellPosition, ChangeCellDuration, ChangeCellSource };
+        /// <summary>
+        /// Actions that can be undone
+        /// </summary>
+        public Stack<IAction> UndoStack = new Stack<IAction>(50);
 
-        // TODO:: implement the Undo and Redo action queues
+        /// <summary>
+        /// Actions that can be redone
+        /// </summary>
+        public Stack<IAction> RedoStack = new Stack<IAction>();
 
         /// <summary>
         /// Sizes the grid cells
