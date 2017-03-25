@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Controls;
 using System.Windows.Shapes;
 using System.Windows.Media;
@@ -28,12 +29,12 @@ namespace Pronome
         /// <summary>
         /// Actions that can be undone
         /// </summary>
-        public Stack<IAction> UndoStack = new Stack<IAction>(50);
+        public ActionStack UndoStack;
 
         /// <summary>
         /// Actions that can be redone
         /// </summary>
-        public Stack<IAction> RedoStack = new Stack<IAction>();
+        public ActionStack RedoStack;
 
         /// <summary>
         /// Sizes the grid cells
@@ -96,6 +97,9 @@ namespace Pronome
             GridRight.Fill = GridBrush;
             GridCanvas.Children.Add(GridSizer);
             GridCanvas.Children.Add(GridTick);
+
+            UndoStack = new ActionStack(undoMenuItem, 50);
+            RedoStack = new ActionStack(redoMenuItem, 50);
         }
 
         public void BuildUI()
@@ -113,6 +117,9 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// Will alter the UI to reflect a change in cell selection. Includes grid lines and inputs.
+        /// </summary>
         public void UpdateUiForSelectedCell()
         {
             if (Cell.SelectedCells.Cells.Any())
@@ -177,6 +184,16 @@ namespace Pronome
                 LastSelectedRow.BaseElement.Children.Remove(GridLeft);
                 LastSelectedRow.BaseElement.Children.Remove(GridRight);
             }
+        }
+
+        /// <summary>
+        /// Push a new action onto the undo stack and clear the redo stack
+        /// </summary>
+        /// <param name="action"></param>
+        public void AddUndoAction(IAction action)
+        {
+            RedoStack.Clear();
+            UndoStack.Push(action);
         }
 
         public bool KeepOpen = true;
@@ -279,5 +296,97 @@ namespace Pronome
             // remove mouse location info when mouse leaves the work area
             mousePositionText.Text = string.Empty;
         }
+
+        /** COMMANDS **/
+
+        private void Undo_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = UndoStack.Any();
+        }
+
+        private void Undo_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            // undo the last action
+            IAction action = UndoStack.Pop();
+            action.Undo();
+            RedoStack.Push(action);
+        }
+
+        private void Redo_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = RedoStack.Any();
+        }
+
+        private void Redo_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            // redo the last undone action
+            IAction action = RedoStack.Pop();
+            action.Redo();
+            UndoStack.Push(action);
+        }
+
+        private void CreateRepeatGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Cell.SelectedCells.Cells.Any();
+        }
+
+        private void CreateRepeatGroup_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
+
+        private void RemoveRepeatGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            Cell.Selection selection = Cell.SelectedCells;
+
+            if (selection.Cells.Any())
+            {
+                // check if any repeat group is represented by the selection
+                foreach (RepeatGroup rg in selection.FirstCell.RepeatGroups)
+                {
+                    if (rg.Cells.First.Value == selection.FirstCell && rg.Cells.Last.Value == selection.LastCell)
+                    {
+                        e.CanExecute = true;
+                        return;
+                    }
+                }
+            }
+
+            e.CanExecute = false;
+        }
+
+        private void RemoveRepeatGroup_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
+
+    }
+
+    public static class Commands
+    {
+        public static readonly RoutedUICommand CreateRepeatGroup = new RoutedUICommand(
+            "Create Repeat Group",
+            "Create Repeat Group", 
+            typeof(Commands));
+
+        public static readonly RoutedUICommand RemoveRepeatGroup = new RoutedUICommand(
+            "Remove Repeat Group",
+            "Remove Repeat Group",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand CreateMultGroup = new RoutedUICommand(
+            "Create Multiply Group",
+            "Create Multiply Group",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand RemoveMultGroup = new RoutedUICommand(
+            "Remove Multiply Group",
+            "Remove Multiply Group",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand DeleteSelection = new RoutedUICommand(
+            "Delete Selection",
+            "Delete Selection",
+            typeof(Commands));
     }
 }

@@ -26,7 +26,7 @@ namespace Pronome
         /// <summary>
         /// The UI object
         /// </summary>
-        private LayerUI UI;
+        public LayerUI UI;
 
         /** <summary>True if the base source is a pitch.</summary> */
         [DataMember]

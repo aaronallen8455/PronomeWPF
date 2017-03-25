@@ -15,7 +15,7 @@ using ICSharpCode.AvalonEdit.AddIn;
 namespace Pronome
 {
     /**<summary>Provides the user interface for a beat layer.</summary>*/
-    class LayerUI
+    public class LayerUI
     {
         public static List<LayerUI> Items = new List<LayerUI>();
 
@@ -79,6 +79,7 @@ namespace Pronome
             if (layer == null)
                 Layer = new Layer("1");
             else Layer = layer;
+            Layer.UI = this;
 
             // the grid that seperates beat input from other controls
             controlGrid = resources["controlGrid"] as Grid;

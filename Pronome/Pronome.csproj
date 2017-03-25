@@ -91,6 +91,7 @@
     <Compile Include="Classes\Bounce\Lane.cs" />
     <Compile Include="Classes\Bounce\Tick.cs" />
     <Compile Include="Classes\ColorHelper.cs" />
+    <Compile Include="Classes\Editor\Action.cs" />
     <Compile Include="Classes\Editor\Cell.cs" />
     <Compile Include="Classes\Editor\Group.cs" />
     <Compile Include="Classes\Editor\Row.cs" />

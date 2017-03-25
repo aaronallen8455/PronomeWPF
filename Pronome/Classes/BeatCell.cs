@@ -346,11 +346,11 @@ namespace Pronome
             string fractionPart = numerator.ToString() + '/' + lcd.ToString();
 
             // merge all whole numbers and decimals
-            double numbers = 0;
-            if (!string.IsNullOrEmpty(value))
-            {
-                numbers = whole + Parse("0+0" + value);
-            }
+            double numbers = whole + Parse("0+0" + value);// 0;
+            //if (!string.IsNullOrEmpty(value))
+            //{
+            //    numbers = whole + Parse("0+0" + value);
+            //}
 
             string result = numbers != 0 ? numbers.ToString() : "";
             // append the fractional portion of it's not zero

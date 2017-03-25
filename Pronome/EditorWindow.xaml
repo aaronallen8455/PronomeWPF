@@ -4,8 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:self="clr-namespace:Pronome"
         mc:Ignorable="d"
         Title="Editor" Height="300" Width="600">
+    <Window.CommandBindings>
+        <CommandBinding Command="Undo" CanExecute="Undo_CanExecute" Executed="Undo_Executed"/>
+        <CommandBinding Command="Redo" CanExecute="Redo_CanExecute" Executed="Redo_Executed"/>
+        <CommandBinding Command="self:Commands.CreateRepeatGroup" CanExecute="CreateRepeatGroup_CanExecute" Executed="CreateRepeatGroup_Executed"/>
+    </Window.CommandBindings>
     <Window.Resources>
         <sys:Double x:Key="rowHeight">40</sys:Double>
         <sys:Double x:Key="cellHeight">25</sys:Double>
@@ -136,6 +142,30 @@
     </Window.Resources>
     
     <DockPanel>
+        <!--Main menu-->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_Edit">
+                <MenuItem Header="Undo" InputGestureText="Ctrl+Z" Command="Undo" x:Name="undoMenuItem"/>
+                <MenuItem Header="Redo" InputGestureText="Ctrl+Y" Command="Redo" x:Name="redoMenuItem"/>
+            </MenuItem>
+            <MenuItem Header="Selection">
+                <MenuItem Header="Deselect All"/>
+                <MenuItem Header="Create Group...">
+                    <MenuItem Header="Repeat Group" Command="self:Commands.CreateRepeatGroup"/>
+                    <MenuItem Header="Multiply Group"/>
+                </MenuItem>
+                <MenuItem Header="Remove Group...">
+                    <MenuItem Header="Repeat Group"/>
+                    <MenuItem Header="Multiply Group"/>
+                </MenuItem>
+                <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del"/>
+                <MenuItem Header="Reference...">
+                    <MenuItem Header="Insert Reference"/>
+                    <MenuItem Header="Remove Reference"/>
+                </MenuItem>
+            </MenuItem>
+        </Menu>
+        <!--Inputs at top of window-->
         <WrapPanel DockPanel.Dock="Top" FlowDirection="LeftToRight">
             <WrapPanel.Resources>
                 <Style TargetType="StackPanel">

@@ -562,11 +562,13 @@ namespace Pronome.Editor
             {
                 // nested repeats
                 openRepeatGroups.Peek().Canvas.Children.Add(rg.Canvas);
+                rg.HostCanvas = openRepeatGroups.Peek().Canvas;
             }
             else
             {
                 // added to row canvas
                 Canvas.Children.Add(rg.Canvas);
+                rg.HostCanvas = Canvas;
             }
 
             rg.Canvas.Children.Add(cell.Rectangle);
@@ -881,7 +883,7 @@ namespace Pronome.Editor
                 SetBackground(Duration);
 
                 // add action to undo stack
-                EditorWindow.Instance.UndoStack.Push(new AddCell(cell, below, oldPrevCellValue));
+                EditorWindow.Instance.AddUndoAction(new AddCell(cell, below, oldPrevCellValue));
             }
         }
 
@@ -983,7 +985,7 @@ namespace Pronome.Editor
                     below.Value = newVal;
 
                     // add action to undo stack
-                    EditorWindow.Instance.UndoStack.Push(new AddCell(cell, below, oldValue));
+                    EditorWindow.Instance.AddUndoAction(new AddCell(cell, below, oldValue));
                 }
             }
         }
@@ -1061,7 +1063,8 @@ namespace Pronome.Editor
                 OffsetValue = BeatCell.Subtract(OffsetValue, cell.Value);
                 Canvas.Children.Add(cell.Rectangle);
 
-                EditorWindow.Instance.UndoStack.Push(new AddCell(cell));
+                // add undo action
+                EditorWindow.Instance.AddUndoAction(new AddCell(cell));
             }
         }
 
@@ -1161,7 +1164,8 @@ namespace Pronome.Editor
                     string oldValue = below.Value;
                     below.Value = BeatCell.SimplifyValue(val.ToString());
 
-                    EditorWindow.Instance.UndoStack.Push(
+                    // add undo action
+                    EditorWindow.Instance.AddUndoAction(
                         new AddCell(cell, below, oldValue));
                 }
             }

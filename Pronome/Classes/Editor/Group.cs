@@ -42,6 +42,11 @@ namespace Pronome.Editor
         }
         public Rectangle Rectangle = new Rectangle();// = EditorWindow.Instance.Resources["groupRectangle"] as Rectangle;
 
+        /// <summary>
+        /// The canvas in which this group's canvas is being hosted. Also hosts the the HostRects rectangles with dupe content.
+        /// </summary>
+        public Canvas HostCanvas;
+
         public void RefreshRectParams()
         {
             Rectangle.Width = Duration * EditorWindow.Scale * EditorWindow.BaseFactor;
@@ -52,6 +57,8 @@ namespace Pronome.Editor
         {
             Canvas.SetLeft(Rectangle, value * EditorWindow.Scale * EditorWindow.BaseFactor);
         }
+
+        abstract public void RemoveGroupFromRow();
 
         /// <summary>
         /// Determine if the cell in part of any repeat or mult groups based on the it's lower neighbor cell. If it's part of repeat group, will return true, otherwise return false.
@@ -134,6 +141,12 @@ namespace Pronome.Editor
             Rectangle.Style = EditorWindow.Instance.Resources["multRectStyle"] as System.Windows.Style;
             Panel.SetZIndex(Rectangle, 5);
         }
+
+        override public void RemoveGroupFromRow()
+        {
+            Row.MultGroups.Remove(this);
+            HostCanvas.Children.Remove(Rectangle);
+        }
     }
 
     public class RepeatGroup : Group
@@ -179,6 +192,17 @@ namespace Pronome.Editor
             }
 
             base.SetRectPosition(value);
+        }
+
+        public override void RemoveGroupFromRow()
+        {
+            Row.RepeatGroups.Remove(this);
+            Row.Canvas.Children.Remove(Rectangle);
+            HostCanvas.Children.Remove(Canvas);
+            foreach (Rectangle rect in HostRects)
+            {
+                HostCanvas.Children.Remove(rect);
+            }
         }
     }
 }
