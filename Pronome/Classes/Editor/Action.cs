@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Windows.Shapes;
 
 namespace Pronome.Editor
 {
@@ -12,7 +13,7 @@ namespace Pronome.Editor
     /// </summary>
     public enum ActionType { AddCell, DeleteCell, ChangeCellPosition, ChangeCellDuration, ChangeCellSource };
 
-    public interface IAction
+    public interface IEditorAction
     {
         void Redo();
         void Undo();
@@ -23,7 +24,7 @@ namespace Pronome.Editor
         string HeaderText { get; }
     }
 
-    public class AddCell : AddRemoveCell, IAction
+    public class AddCell : AddRemoveCell, IEditorAction
     {
         private string _headerText = "Add Cell";
         public string HeaderText { get => _headerText; }
@@ -43,7 +44,7 @@ namespace Pronome.Editor
         }
     }
 
-    public class RemoveCell : AddRemoveCell, IAction
+    public class RemoveCell : AddRemoveCell, IEditorAction
     {
         private string _headerText = "Remove Cell";
         public string HeaderText { get => _headerText; }
@@ -244,10 +245,153 @@ namespace Pronome.Editor
         }
     }
 
+    public class RemoveCells : IEditorAction
+    {
+        public string HeaderText { get => "Remove Cell(s)"; }
+
+        protected Cell[] Cells;
+
+        protected string PreviousCellValue;
+
+        protected HashSet<RepeatGroup> RepGroups = new HashSet<RepeatGroup>();
+
+        protected HashSet<MultGroup> MultGroups = new HashSet<MultGroup>();
+
+        /// <summary>
+        /// Total duration in BPM of the group
+        /// </summary>
+        protected double Duration = 0;
+
+        /// <summary>
+        /// Index of the first cell in the selection
+        /// </summary>
+        protected int Index;
+
+        public RemoveCells(Cell[] cells, string previousCellValue)
+        {
+            Cells = cells;
+            PreviousCellValue = previousCellValue;
+            Index = cells[0].Row.Cells.IndexOf(cells[0]);
+
+            // find all groups that are encompassed by the selection
+            HashSet<Group> touchedGroups = new HashSet<Group>();
+            foreach (Cell c in Cells)
+            {
+                Duration += c.Duration;
+
+                // TODO: need to allow for removal from within a rep group. Group (and it's dupes) needs to be resized and all effected cells repositioned
+
+                foreach (RepeatGroup rg in c.RepeatGroups)
+                {
+                    if (touchedGroups.Contains(rg)) continue;
+                    touchedGroups.Add(rg);
+                    if (
+                        (Cells[0] == rg.Cells.First.Value || rg.Position >= Cells[0].Position) 
+                        && (Cells[Cells.Length - 1] == rg.Cells.Last.Value || rg.Position + rg.Duration <= Cells[Cells.Length - 1].Position + Cells[Cells.Length - 1].Duration))
+                    {
+                        RepGroups.Add(rg);
+                    }
+                    // if a rep group ends on this cell, add it's dupes to the duration
+                    if (rg.Cells.Last.Value == c)
+                    {
+                        Duration += rg.Duration * (rg.Times - 1);
+                    }
+                }
+                foreach (MultGroup mg in c.MultGroups)
+                {
+                    if (touchedGroups.Contains(mg)) continue;
+                    touchedGroups.Add(mg);
+                    if (
+                        (Cells[0] == mg.Cells.First.Value || mg.Position >= Cells[0].Position)
+                        && (Cells[Cells.Length - 1] == mg.Cells.Last.Value || mg.Position + mg.Duration <= Cells[Cells.Length - 1].Position + Cells[Cells.Length - 1].Duration))
+                    {
+                        MultGroups.Add(mg);
+                    }
+                }
+            }
+        }
+
+        public void Undo()
+        {
+
+        }
+
+        public void Redo()
+        {
+            Row row = Cells[0].Row;
+
+            // is the selection at the front, middle, or back of the row?
+            if (Index == 0)
+            {
+                // can't delete all cells in row
+                if (Cells.Length == row.Cells.Count)
+                {
+                    return;
+                }
+                // remove from front
+                row.Cells.RemoveRange(Index, Cells.Length);
+                foreach (Cell c in Cells)
+                {
+                    row.Cells.Remove(c);
+                    // remove rectangle
+                    if (!c.RepeatGroups.Any())
+                    {
+                        row.Canvas.Children.Remove(c.Rectangle);
+                    }
+                    else if (!RepGroups.Contains(c.RepeatGroups.Last.Value))
+                    {
+                        c.RepeatGroups.Last.Value.Canvas.Children.Remove(c.Rectangle);
+                    }
+                }
+                // remove groups that are in selection
+                foreach (RepeatGroup rg in RepGroups)
+                {
+                    row.Canvas.Children.Remove(rg.Rectangle);
+                    rg.HostCanvas.Children.Remove(rg.Canvas);
+                    foreach (Rectangle rect in rg.HostRects)
+                    {
+                        rg.HostCanvas.Children.Remove(rect);
+                    }
+
+                    row.RepeatGroups.Remove(rg);
+                }
+                foreach (MultGroup mg in MultGroups)
+                {
+                    row.Canvas.Children.Remove(mg.Rectangle);
+                    row.MultGroups.Remove(mg);
+                }
+                // reposition other cells
+                bool isFirst = true;
+                double offset = 0;
+                foreach (Cell c in row.Cells)
+                {
+                    if (isFirst)
+                    {
+                        offset = c.Position;
+                        isFirst = false;
+                    }
+
+                    c.Position -= offset;
+                }
+
+                row.Duration -= offset;
+                row.ChangeSizerWidthByAmount(-offset);
+            }
+            else if (Cells.Last() != row.Cells.Last())
+            {
+                // remove from middle
+            }
+            else
+            {
+                // remove from end
+            }
+        }
+    }
+
     /// <summary>
     /// Adds extra functionality to a stack to implement Undo/Redo
     /// </summary>
-    public class ActionStack : Stack<IAction>
+    public class ActionStack : Stack<IEditorAction>
     {
         private MenuItem MenuItem;
 
@@ -259,7 +403,7 @@ namespace Pronome.Editor
             Prefix = menuItem.Header.ToString();
         }
 
-        new public void Push(IAction action)
+        new public void Push(IEditorAction action)
         {
             // append the header text
             MenuItem.Header = Prefix + " " + action.HeaderText;
@@ -267,10 +411,10 @@ namespace Pronome.Editor
             base.Push(action);
         }
 
-        new public IAction Pop()
+        new public IEditorAction Pop()
         {
             // return to default if empty
-            IAction action = base.Pop();
+            IEditorAction action = base.Pop();
             if (Count == 0)
             {
                 MenuItem.Header = Prefix;

@@ -190,7 +190,7 @@ namespace Pronome
         /// Push a new action onto the undo stack and clear the redo stack
         /// </summary>
         /// <param name="action"></param>
-        public void AddUndoAction(IAction action)
+        public void AddUndoAction(IEditorAction action)
         {
             RedoStack.Clear();
             UndoStack.Push(action);
@@ -307,7 +307,7 @@ namespace Pronome
         private void Undo_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
             // undo the last action
-            IAction action = UndoStack.Pop();
+            IEditorAction action = UndoStack.Pop();
             action.Undo();
             RedoStack.Push(action);
         }
@@ -320,7 +320,7 @@ namespace Pronome
         private void Redo_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
             // redo the last undone action
-            IAction action = RedoStack.Pop();
+            IEditorAction action = RedoStack.Pop();
             action.Redo();
             UndoStack.Push(action);
         }
