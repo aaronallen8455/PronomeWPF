@@ -63,67 +63,27 @@ namespace Pronome.Editor
                 }
                 // resize sizer
                 Row.ChangeSizerWidthByAmount(diff);
-
-                //// reposition all subsequent cells and groups
-                //HashSet<RepeatGroup> touchedRepGroups = new HashSet<RepeatGroup>();
-                //HashSet<MultGroup> touchedMultGroups = new HashSet<MultGroup>();
-                //bool isFirst = true;
-                //double diff = value - _duration;
-                //foreach (Cell cell in Row.Cells.SkipWhile(x => x != this).Skip(1))
-                //{
-                //    cell.Position += diff;
-                //    // reposition groups
-                //    foreach (RepeatGroup rg in cell.RepeatGroups)
-                //    {
-                //        if (!touchedRepGroups.Contains(rg))
-                //        {
-                //            touchedRepGroups.Add(rg);
-                //            if (isFirst && cell == this) // if positioning from within group, increase duration
-                //            {
-                //                rg.Duration += diff;
-                //            }
-                //            else
-                //            {
-                //                rg.Position += diff;
-                //            }
-                //        }
-                //    }
-                //    foreach (MultGroup mg in cell.MultGroups)
-                //    {
-                //        if (!touchedMultGroups.Contains(mg))
-                //        {
-                //            touchedMultGroups.Add(mg);
-                //            if (isFirst && cell == this)
-                //            {
-                //                mg.Duration += diff;
-                //            }
-                //            else
-                //            {
-                //                mg.Position += diff;
-                //            }
-                //        }
-                //    }
-                //    // reposition reference rect
-                //    if (cell.ReferenceRectangle != null)
-                //    {
-                //        double cur = Canvas.GetLeft(cell.ReferenceRectangle);
-                //        Canvas.SetLeft(cell.ReferenceRectangle, cur + diff);
-                //    }
-                //
-                //    isFirst = false;
-                //}
-                //
-                //// resize sizer
-                //Row.ChangeSizerWidthByAmount(diff);
-                //
-                //_duration = value;
             }
         }
 
+        protected string _value;
         /// <summary>
         /// The string representation of the duration. ie 1+2/3
         /// </summary>
-        public string Value;
+        public string Value
+        {
+            get => _value;
+            set
+            {
+                // update the duration UI input if this is the only selected cell
+                if (IsSelected && SelectedCells.Cells.Count == 1)
+                {
+                    EditorWindow.Instance.durationInput.Text = value;
+                }
+
+                _value = value;
+            }
+        }
 
         protected double _position;
         /// <summary>
@@ -176,11 +136,14 @@ namespace Pronome.Editor
             Row = row;
             Rectangle = EditorWindow.Instance.Resources["cellRectangle"] as Rectangle;
             Rectangle.Height = (double)EditorWindow.Instance.Resources["cellHeight"];
+            // the ref rect
+            ReferenceRectangle = EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle;
             // set Canvas.Top
             Canvas.SetTop(Rectangle,
                 (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2);
             Panel.SetZIndex(Rectangle, 10);
-            Rectangle.MouseDown += Rectangle_MouseDown; ;
+            Rectangle.MouseDown += Rectangle_MouseDown;
+            ReferenceRectangle.MouseDown += Rectangle_MouseDown;
         }
 
         /// <summary>
@@ -203,7 +166,13 @@ namespace Pronome.Editor
         public void ToggleSelect(bool Clicked = true)
         {
             IsSelected = !IsSelected;
+            // set selection color
             Rectangle.Stroke = IsSelected ? System.Windows.Media.Brushes.DeepPink : System.Windows.Media.Brushes.Black;
+            // select the reference rect if this cell is a ref
+            if (ReferenceRectangle != null)
+            {
+                ReferenceRectangle.Opacity += .4 * (IsSelected ? 1 : -1);
+            }
             // if not a multi select, deselect currently selected cell(s)
             if (IsSelected)
             {
@@ -214,7 +183,7 @@ namespace Pronome.Editor
                     {
                         foreach (Cell c in Row.Cells
                             .SkipWhile(x => !x.IsSelected)
-                            .SkipWhile(x => x.IsSelected)
+                            .SkipWhile(x => x.IsSelected && x != this)
                             .TakeWhile(x => !x.IsSelected))
                         {
                             c.ToggleSelect(false);
@@ -297,6 +266,19 @@ namespace Pronome.Editor
                 LastCell = null;
                 Duration = 0;
                 Position = 0;
+            }
+
+            /// <summary>
+            /// Deselect all curently selected cells
+            /// </summary>
+            public void DeselectAll()
+            {
+                foreach (Cell c in Cells.ToArray())
+                {
+                    c.ToggleSelect();
+                }
+
+                EditorWindow.Instance.UpdateUiForSelectedCell();
             }
         }
     }

@@ -24,6 +24,31 @@ namespace Pronome.Editor
         string HeaderText { get; }
     }
 
+    public abstract class AbstractAction
+    {
+        protected Row Row;
+
+        /// <summary>
+        /// Redraw the rows which reference the row being modified
+        /// </summary>
+        public void RedrawReferencers()
+        {
+            if (Row.ReferenceMap.ContainsKey(Row.Index))
+            {
+                if (!Row.BeatCodeIsCurrent)
+                {
+                    Row.UpdateBeatCode();
+                }
+                foreach (int rowIndex in Row.ReferenceMap[Row.Index])
+                {
+                    Row r = EditorWindow.Instance.Rows[rowIndex];
+
+                    r.Redraw();
+                }
+            }
+        }
+    }
+
     public class AddCell : AddRemoveCell, IEditorAction
     {
         private string _headerText = "Add Cell";
@@ -68,7 +93,7 @@ namespace Pronome.Editor
     /// <summary>
     /// Holds the methods used by the AddCell and RemoveCell actions
     /// </summary>
-    public abstract class AddRemoveCell
+    public abstract class AddRemoveCell : AbstractAction
     {
         protected Cell Cell;
 
@@ -87,6 +112,7 @@ namespace Pronome.Editor
         public AddRemoveCell(Cell cell, Cell previousCell = null, string prevBeforeVal = null)
         {
             Cell = cell;
+            Row = cell.Row;
             Index = Cell.Row.Cells.IndexOf(cell);
 
             PreviousCell = previousCell;
@@ -100,9 +126,8 @@ namespace Pronome.Editor
 
         public void Add()
         {
-            Row row = Cell.Row;
             // Add in the cell
-            row.Cells.Insert(Index, Cell);
+            Row.Cells.Insert(Index, Cell);
             
             // render the rectangle
             if (Cell.RepeatGroups.Any())
@@ -111,7 +136,7 @@ namespace Pronome.Editor
             }
             else
             {
-                row.Canvas.Children.Add(Cell.Rectangle);
+                Row.Canvas.Children.Add(Cell.Rectangle);
             }
 
             // modify the previous cell or the row's offset
@@ -119,23 +144,23 @@ namespace Pronome.Editor
 
             if (Index == 0)
             {
-                row.Duration += Cell.Duration;
-                row.Offset -= Cell.Duration;
-                row.OffsetValue = BeatCell.Subtract(row.OffsetValue, Cell.Value);
+                Row.Duration += Cell.Duration;
+                Row.Offset -= Cell.Duration;
+                Row.OffsetValue = BeatCell.Subtract(Row.OffsetValue, Cell.Value);
             }
             else
             {
-                below = row.Cells[Index - 1];
+                below = Row.Cells[Index - 1];
 
                 below.Value = PreviousCellAfterValue;
                 below.SetDurationDirectly(BeatCell.Parse(below.Value));
 
-                if (Index == row.Cells.Count - 1)
+                if (Index == Row.Cells.Count - 1)
                 {
                     // it's the last cell, resize sizer
-                    double oldDur = row.Duration;
-                    row.Duration = Cell.Position + Cell.Duration;
-                    row.ChangeSizerWidthByAmount(row.Duration - oldDur);
+                    double oldDur = Row.Duration;
+                    Row.Duration = Cell.Position + Cell.Duration;
+                    Row.ChangeSizerWidthByAmount(Row.Duration - oldDur);
                 }
             }
             //TODO: check if need to adjust the LCM of the last repeat group if this is the last cell in row
@@ -163,12 +188,14 @@ namespace Pronome.Editor
                     mg.Cells.AddFirst(Cell);
                 }
             }
+
+            Row.BeatCodeIsCurrent = false;
+
+            RedrawReferencers();
         }
 
         public void Remove()
         {
-            Row row = Cell.Row;
-
             // deselect cell if selected
             if (Cell.IsSelected)
             {
@@ -183,27 +210,27 @@ namespace Pronome.Editor
             }
             else
             {
-                row.Canvas.Children.Remove(Cell.Rectangle);
+                Row.Canvas.Children.Remove(Cell.Rectangle);
             }
             // modify previous cell or row's offset
             if (Index == 0)
             {
-                row.Duration -= Cell.Duration;
+                Row.Duration -= Cell.Duration;
                 // need to set the row's offset
-                row.Offset += Cell.Duration;
-                row.OffsetValue = BeatCell.SimplifyValue(row.OffsetValue + "+0" + Cell.Value);
+                Row.Offset += Cell.Duration;
+                Row.OffsetValue = BeatCell.SimplifyValue(Row.OffsetValue + "+0" + Cell.Value);
                 // place above cell at front of sizer and shrink sizer width
-                Cell above = row.Cells[1];
+                Cell above = Row.Cells[1];
                 above.Position = 0;
                 //row.ChangeSizerWidthByAmount(-Cell.Duration);
             }
             else
             {
-                Cell below = row.Cells[Index - 1];
+                Cell below = Row.Cells[Index - 1];
 
                 below.Value = PreviousCellBeforeValue;
                 // if cell is the last cell, resize the below cell. Otherwise set duration directly
-                if (row.Cells.Last() == Cell)
+                if (Row.Cells.Last() == Cell)
                 {
                     // preserve cell's position
                     double oldPos = Cell.Position;
@@ -213,8 +240,8 @@ namespace Pronome.Editor
                     Cell.Position = oldPos;
                     Canvas.SetLeft(Cell.Rectangle, oldOffset);
                     // resize row
-                    row.Duration = below.Position + below.Duration;
-                    row.ChangeSizerWidthByAmount(-Cell.Duration);
+                    Row.Duration = below.Position + below.Duration;
+                    Row.ChangeSizerWidthByAmount(-Cell.Duration);
                 }
                 else
                 {
@@ -241,21 +268,29 @@ namespace Pronome.Editor
                 //}
             }
 
-            row.Cells.Remove(Cell);
+            Row.Cells.Remove(Cell);
+
+            Row.BeatCodeIsCurrent = false;
+
+            RedrawReferencers();
         }
     }
 
-    public class RemoveCells : IEditorAction
+    public class RemoveCells : AbstractAction, IEditorAction
     {
         public string HeaderText { get => "Remove Cell(s)"; }
 
         protected Cell[] Cells;
 
-        protected string PreviousCellValue;
+        //protected string PreviousCellValue;
 
         protected HashSet<RepeatGroup> RepGroups = new HashSet<RepeatGroup>();
 
         protected HashSet<MultGroup> MultGroups = new HashSet<MultGroup>();
+
+        protected string BeatCodeBefore;
+
+        protected string BeatCodeAfter;
 
         /// <summary>
         /// Total duration in BPM of the group
@@ -267,11 +302,14 @@ namespace Pronome.Editor
         /// </summary>
         protected int Index;
 
-        public RemoveCells(Cell[] cells, string previousCellValue)
+        public RemoveCells(Cell[] cells)//, string previousCellValue)
         {
             Cells = cells;
-            PreviousCellValue = previousCellValue;
+            Row = cells[0].Row;
+            //PreviousCellValue = previousCellValue;
             Index = cells[0].Row.Cells.IndexOf(cells[0]);
+
+            BeatCodeBefore = cells[0].Row.Stringify();
 
             // find all groups that are encompassed by the selection
             HashSet<Group> touchedGroups = new HashSet<Group>();
@@ -280,6 +318,7 @@ namespace Pronome.Editor
                 Duration += c.Duration;
 
                 // TODO: need to allow for removal from within a rep group. Group (and it's dupes) needs to be resized and all effected cells repositioned
+                // TODO: don't forget LTMs
 
                 foreach (RepeatGroup rg in c.RepeatGroups)
                 {
@@ -313,78 +352,120 @@ namespace Pronome.Editor
 
         public void Undo()
         {
+            // unselect
+            Cell.SelectedCells.DeselectAll();
 
+            EditorWindow.Instance.UpdateUiForSelectedCell();
+
+            Row.Reset();
+
+            Row.FillFromBeatCode(BeatCodeBefore);
+            Row.BeatCode = BeatCodeBefore;
+            Row.BeatCodeIsCurrent = true;
+
+            RedrawReferencers();
         }
 
         public void Redo()
         {
-            Row row = Cells[0].Row;
-
-            // is the selection at the front, middle, or back of the row?
-            if (Index == 0)
+            // check if afterBeatCode has already been generated, if not, make it
+            if (string.IsNullOrEmpty(BeatCodeAfter))
             {
-                // can't delete all cells in row
-                if (Cells.Length == row.Cells.Count)
-                {
-                    return;
-                }
-                // remove from front
-                row.Cells.RemoveRange(Index, Cells.Length);
-                foreach (Cell c in Cells)
-                {
-                    row.Cells.Remove(c);
-                    // remove rectangle
-                    if (!c.RepeatGroups.Any())
-                    {
-                        row.Canvas.Children.Remove(c.Rectangle);
-                    }
-                    else if (!RepGroups.Contains(c.RepeatGroups.Last.Value))
-                    {
-                        c.RepeatGroups.Last.Value.Canvas.Children.Remove(c.Rectangle);
-                    }
-                }
-                // remove groups that are in selection
+                // remove cells
+                Row.Cells.RemoveRange(Index, Cells.Length);
+                // remove groups
                 foreach (RepeatGroup rg in RepGroups)
                 {
-                    row.Canvas.Children.Remove(rg.Rectangle);
-                    rg.HostCanvas.Children.Remove(rg.Canvas);
-                    foreach (Rectangle rect in rg.HostRects)
-                    {
-                        rg.HostCanvas.Children.Remove(rect);
-                    }
-
-                    row.RepeatGroups.Remove(rg);
+                    Row.RepeatGroups.Remove(rg);
                 }
                 foreach (MultGroup mg in MultGroups)
                 {
-                    row.Canvas.Children.Remove(mg.Rectangle);
-                    row.MultGroups.Remove(mg);
-                }
-                // reposition other cells
-                bool isFirst = true;
-                double offset = 0;
-                foreach (Cell c in row.Cells)
-                {
-                    if (isFirst)
-                    {
-                        offset = c.Position;
-                        isFirst = false;
-                    }
-
-                    c.Position -= offset;
+                    Row.MultGroups.Remove(mg);
                 }
 
-                row.Duration -= offset;
-                row.ChangeSizerWidthByAmount(-offset);
+                BeatCodeAfter = Row.Stringify();
             }
-            else if (Cells.Last() != row.Cells.Last())
-            {
-                // remove from middle
-            }
-            else
-            {
-                // remove from end
-            }
+
+            // unselect
+            Cell.SelectedCells.DeselectAll();
+
+            EditorWindow.Instance.UpdateUiForSelectedCell();
+
+            Row.Reset();
+
+            Row.FillFromBeatCode(BeatCodeAfter);
+            Row.BeatCode = BeatCodeAfter;
+            Row.BeatCodeIsCurrent = true;
+
+            RedrawReferencers();
+
+            // TODO: removing cells from the middle of a row shouldn't shrink the row.
+
+            //// is the selection at the front, middle, or back of the row?
+            //if (Index == 0)
+            //{
+            //    // can't delete all cells in row
+            //    if (Cells.Length == row.Cells.Count)
+            //    {
+            //        return;
+            //    }
+            //    // remove from front
+            //    row.Cells.RemoveRange(Index, Cells.Length);
+            //    foreach (Cell c in Cells)
+            //    {
+            //        row.Cells.Remove(c);
+            //        // remove rectangle
+            //        if (!c.RepeatGroups.Any())
+            //        {
+            //            row.Canvas.Children.Remove(c.Rectangle);
+            //        }
+            //        else if (!RepGroups.Contains(c.RepeatGroups.Last.Value))
+            //        {
+            //            c.RepeatGroups.Last.Value.Canvas.Children.Remove(c.Rectangle);
+            //        }
+            //    }
+            //    // remove groups that are in selection
+            //    foreach (RepeatGroup rg in RepGroups)
+            //    {
+            //        row.Canvas.Children.Remove(rg.Rectangle);
+            //        rg.HostCanvas.Children.Remove(rg.Canvas);
+            //        foreach (Rectangle rect in rg.HostRects)
+            //        {
+            //            rg.HostCanvas.Children.Remove(rect);
+            //        }
+            //
+            //        row.RepeatGroups.Remove(rg);
+            //    }
+            //    foreach (MultGroup mg in MultGroups)
+            //    {
+            //        row.Canvas.Children.Remove(mg.Rectangle);
+            //        row.MultGroups.Remove(mg);
+            //    }
+            //    // reposition other cells
+            //    bool isFirst = true;
+            //    double offset = 0;
+            //    foreach (Cell c in row.Cells)
+            //    {
+            //        if (isFirst)
+            //        {
+            //            offset = c.Position;
+            //            isFirst = false;
+            //        }
+            //
+            //        c.Position -= offset;
+            //    }
+            //
+            //    row.Duration -= offset;
+            //    row.ChangeSizerWidthByAmount(-offset);
+            //}
+            //else if (Cells.Last() != row.Cells.Last())
+            //{
+            //    // remove from middle
+            //}
+            //else
+            //{
+            //    // remove from end
+            //}
         }
     }
 

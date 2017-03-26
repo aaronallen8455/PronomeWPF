@@ -18,6 +18,11 @@ namespace Pronome.Editor
         public Layer Layer;
 
         /// <summary>
+        /// A beat code representation of the row. Must be manually updated.
+        /// </summary>
+        public string BeatCode;
+
+        /// <summary>
         /// All the cells in this row, including referenced cells
         /// </summary>
         public CellList Cells; //= new CellList();
@@ -97,9 +102,23 @@ namespace Pronome.Editor
         /// </summary>
         public HashSet<int> ReferencedLayers = new HashSet<int>();
 
+        /// <summary>
+        /// Maps the index of a row to the indexes of the rows that reference it.
+        /// </summary>
+        public static Dictionary<int, HashSet<int>> ReferenceMap = new Dictionary<int, HashSet<int>>();
+
+        /// <summary>
+        /// The index of this row
+        /// </summary>
+        public int Index;
+
         public Row(Layer layer)
         {
             Layer = layer;
+            Index = Metronome.GetInstance().Layers.IndexOf(Layer);
+            touchedRefs.Add(Index); // current layer ref should recurse only once
+            BeatCode = Layer.ParsedString;
+
             Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
             Offset = layer.Offset;
             OffsetValue = layer.GetOffsetValue();
@@ -110,9 +129,11 @@ namespace Pronome.Editor
             BackgroundBrush.TileMode = TileMode.Tile;
             Background.Fill = BackgroundBrush;
             Canvas.Children.Add(Sizer);
-            ParsedBeatResult pbr = ParseBeat(layer.ParsedString);
-            Cells = pbr.Cells;
-            SetBackground(pbr.Duration);
+
+            FillFromBeatCode(layer.ParsedString);
+            //ParsedBeatResult pbr = ParseBeat(layer.ParsedString);
+            //Cells = pbr.Cells;
+            //SetBackground(pbr.Duration);
 
             // handler for creating new cells on the grid
             BaseElement.MouseLeftButtonDown += BaseElement_MouseLeftButtonDown;
@@ -120,6 +141,17 @@ namespace Pronome.Editor
             BaseElement.Background = Brushes.Transparent;
             BaseElement.Children.Add(Canvas);
             BaseElement.Children.Add(Background);
+        }
+
+        /// <summary>
+        /// Generate the UI from a beat code string.
+        /// </summary>
+        /// <param name="beatCode"></param>
+        public void FillFromBeatCode(string beatCode)
+        {
+            ParsedBeatResult result = ParseBeat(beatCode);
+            Cells = result.Cells;
+            SetBackground(result.Duration);
         }
 
         /// <summary>
@@ -219,7 +251,7 @@ namespace Pronome.Editor
                     }
 
                     // draw reference rect
-                    cell.ReferenceRectangle = EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle;
+                    //cell.ReferenceRectangle = EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle;
                     Canvas.SetLeft(cell.ReferenceRectangle, cell.Position * EditorWindow.Scale * EditorWindow.BaseFactor);
                     cell.ReferenceRectangle.Width = pbr.Duration * EditorWindow.Scale * EditorWindow.BaseFactor;
                     Panel.SetZIndex(cell.ReferenceRectangle, 30);
@@ -370,7 +402,16 @@ namespace Pronome.Editor
 
         protected ParsedBeatResult ResolveReference(int refIndex, double position)
         {
-            string beat = Metronome.GetInstance().Layers[refIndex].ParsedString;
+            // get beat code from the layer, or from the row if available
+            string beat;
+            if (EditorWindow.Instance.Rows.Count > refIndex)
+            {
+                beat = EditorWindow.Instance.Rows[refIndex].BeatCode;
+            }
+            else
+            {
+                beat = Metronome.GetInstance().Layers[refIndex].ParsedString;
+            }
             // remove comments
             beat = Regex.Replace(beat, @"!.*?!", "");
             // remove whitespace
@@ -438,8 +479,52 @@ namespace Pronome.Editor
             touchedRefs.Remove(refIndex);
 
             ReferencedLayers.Add(refIndex);
+            // map referenced layer to this one
+            if (ReferenceMap.ContainsKey(refIndex))
+            {
+                ReferenceMap[refIndex].Add(Index);
+            }
+            else
+            {
+                ReferenceMap.Add(refIndex, new HashSet<int>(new int[] { Index }));
+            }
 
             return pbr;
+        }
+
+        /// <summary>
+        /// Clear out all the data, prepare row to be rebuilt using a code string.
+        /// </summary>
+        public void Reset()
+        {
+            Canvas.Children.Clear();
+            Canvas.Children.Add(Sizer);
+            RepeatGroups.Clear();
+            MultGroups.Clear();
+            ReferencedLayers.Clear();
+            Cells.Clear();
+        }
+
+        public void Redraw()
+        {
+            string code = Stringify();
+            Reset();
+            FillFromBeatCode(code);
+        }
+
+        /// <summary>
+        /// True if the BeatCode field represents the current state of the row.
+        /// </summary>
+        public bool BeatCodeIsCurrent = true;
+
+        /// <summary>
+        /// Update the beat code for this row
+        /// </summary>
+        public void UpdateBeatCode()
+        {
+            BeatCode = Stringify();
+
+            BeatCodeIsCurrent = true;
         }
 
         /// <summary>
@@ -480,7 +565,7 @@ namespace Pronome.Editor
                     result.Append($"${cell.Reference}");
                 }
                 // check for source modifier
-                if (cell.Source != Layer.BaseSourceName)
+                if (cell.Source != null && cell.Source != Layer.BaseSourceName)
                 {
                     string source;
                     // is pitch or wav?
@@ -698,15 +783,14 @@ namespace Pronome.Editor
         /// <param name="e"></param>
         private void BaseElement_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            //e.Handled = true;
-
-            // in BPM
+            // click position in BPM
             double position = e.GetPosition((Grid)sender).X / EditorWindow.Scale / EditorWindow.BaseFactor;
             position -= Offset; // will be negative if inserting before the start
 
             // is it before or after the current selection?
             if (Cell.SelectedCells.Cells.Any())
             {
+                AbstractAction action = null;
                 // find the grid line within 10% of increment value of the click
                 double increment = BeatCell.Parse(EditorWindow.CurrentIncrement);
 
@@ -728,12 +812,12 @@ namespace Pronome.Editor
                         // if the new cell will be above the current row
                         if (position > Cells.Last().Position + Cells.Last().Duration - increment * GridProx) // should a cell placed within duration of prev cell maintain overall duration?
                         {
-                            AddCellAboveRow(position, increment);
+                            action = AddCellAboveRow(position, increment);
                         }
                         else
                         {
                             // cell will be above selection but within the row
-                            AddCellToRowAboveSelection(position, increment);
+                            action = AddCellToRowAboveSelection(position, increment);
                         }
                     }
                 }
@@ -744,7 +828,7 @@ namespace Pronome.Editor
                     // check by seeing if the position is less than the least posible grid line position within the row from the selected cell.
                     if (position < Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * GridProx))
                     {
-                        AddCellBelowRow(position, increment);
+                        action = AddCellBelowRow(position, increment);
                     }
                     else
                     {
@@ -761,9 +845,19 @@ namespace Pronome.Editor
                         }
                         if (outsideRepeat)
                         {
-                            AddCellToRowBelowSelection(position, increment);
+                            action = AddCellToRowBelowSelection(position, increment);
                         }
                     }
+                }
+
+                if (action != null)
+                {
+                    // add the action to the undo stack
+                    EditorWindow.Instance.AddUndoAction(action as IEditorAction);
+                    // invalidate beat code
+                    BeatCodeIsCurrent = false;
+                    // update the referencer rows
+                    action.RedrawReferencers();
                 }
             }
         }
@@ -791,7 +885,7 @@ namespace Pronome.Editor
          * 18) ^ there is a repeat group between the selection and the start
          */
 
-        protected void AddCellAboveRow(double position, double increment)
+        protected AbstractAction AddCellAboveRow(double position, double increment)
         {
             double diff = position - Cell.SelectedCells.LastCell.Position;
             int div = (int)(diff / increment);
@@ -882,12 +976,16 @@ namespace Pronome.Editor
                 Duration = cell.Position + cell.Duration;
                 SetBackground(Duration);
 
-                // add action to undo stack
-                EditorWindow.Instance.AddUndoAction(new AddCell(cell, below, oldPrevCellValue));
+                // create the action
+                AddCell action = new AddCell(cell, below, oldPrevCellValue);
+
+                return action;
             }
+
+            return null;
         }
 
-        protected void AddCellToRowAboveSelection(double position, double increment)
+        protected AbstractAction AddCellToRowAboveSelection(double position, double increment)
         {
             // find nearest grid line
             double lastCellPosition = Cell.SelectedCells.LastCell.Position;
@@ -984,13 +1082,17 @@ namespace Pronome.Editor
                     string oldValue = below.Value;
                     below.Value = newVal;
 
-                    // add action to undo stack
-                    EditorWindow.Instance.AddUndoAction(new AddCell(cell, below, oldValue));
+                    // create the action
+                    AddCell action = new AddCell(cell, below, oldValue);
+
+                    return action;
                 }
             }
+
+            return null;
         }
 
-        protected void AddCellBelowRow(double position, double increment)
+        protected AbstractAction AddCellBelowRow(double position, double increment)
         {
             // in the offset area
             // how many increments back from first cell selected
@@ -1064,11 +1166,13 @@ namespace Pronome.Editor
                 Canvas.Children.Add(cell.Rectangle);
 
                 // add undo action
-                EditorWindow.Instance.AddUndoAction(new AddCell(cell));
+                return new AddCell(cell);
             }
+
+            return null;
         }
 
-        protected void AddCellToRowBelowSelection(double position, double increment)
+        protected AbstractAction AddCellToRowBelowSelection(double position, double increment)
         {
             double diff = Cell.SelectedCells.FirstCell.Position - position;
             int div = (int)(diff / increment);
@@ -1165,10 +1269,11 @@ namespace Pronome.Editor
                     below.Value = BeatCell.SimplifyValue(val.ToString());
 
                     // add undo action
-                    EditorWindow.Instance.AddUndoAction(
-                        new AddCell(cell, below, oldValue));
+                    return new AddCell(cell, below, oldValue);
                 }
             }
+
+            return null;
         }
     }
 }

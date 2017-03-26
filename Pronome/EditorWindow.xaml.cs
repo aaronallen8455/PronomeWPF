@@ -19,7 +19,7 @@ namespace Pronome
     {
         public static EditorWindow Instance;
 
-        List<Row> Rows = new List<Row>();
+        public List<Row> Rows = new List<Row>();
 
         /// <summary>
         /// The last row to have contained a selection
@@ -360,6 +360,25 @@ namespace Pronome
 
         }
 
+        private void DeleteSelection_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Cell.SelectedCells.Cells.Any();
+        }
+
+        private void DeleteSelection_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            Cell[] selection = Cell.SelectedCells.Cells.ToArray();
+
+            // don't delete entire row
+            if (selection.Length < selection[0].Row.Cells.Count)
+            {
+                RemoveCells removeAction = new RemoveCells(selection);
+                // execute the action
+                removeAction.Redo();
+                // add to undo stack
+                UndoStack.Push(removeAction);
+            }
+        }
     }
 
     public static class Commands
@@ -384,9 +403,12 @@ namespace Pronome
             "Remove Multiply Group",
             typeof(Commands));
 
+        static InputGesture deleteKey = new KeyGesture(Key.Delete);
+
         public static readonly RoutedUICommand DeleteSelection = new RoutedUICommand(
             "Delete Selection",
             "Delete Selection",
-            typeof(Commands));
+            typeof(Commands), 
+            new InputGestureCollection(new InputGesture[] { deleteKey }));
     }
 }

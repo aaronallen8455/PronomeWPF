@@ -10,6 +10,7 @@
     <Window.CommandBindings>
         <CommandBinding Command="Undo" CanExecute="Undo_CanExecute" Executed="Undo_Executed"/>
         <CommandBinding Command="Redo" CanExecute="Redo_CanExecute" Executed="Redo_Executed"/>
+        <CommandBinding Command="self:Commands.DeleteSelection" CanExecute="DeleteSelection_CanExecute" Executed="DeleteSelection_Executed" />
         <CommandBinding Command="self:Commands.CreateRepeatGroup" CanExecute="CreateRepeatGroup_CanExecute" Executed="CreateRepeatGroup_Executed"/>
     </Window.CommandBindings>
     <Window.Resources>
@@ -158,7 +159,7 @@
                     <MenuItem Header="Repeat Group"/>
                     <MenuItem Header="Multiply Group"/>
                 </MenuItem>
-                <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del"/>
+                <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del" Command="self:Commands.DeleteSelection"/>
                 <MenuItem Header="Reference...">
                     <MenuItem Header="Insert Reference"/>
                     <MenuItem Header="Remove Reference"/>
