@@ -108,6 +108,12 @@ namespace Pronome
                 if (layer.BasePitchSource != default(PitchStream))
                     layer.BasePitchSource.SetSilentInterval(AudibleInterval, SilentInterval);
             }
+
+            // need to prime the playback so that there isn't a delay the first time playing.
+            if (!Recorder.IsInitialized)
+            {
+                Player.Play();
+            }
         }
 
         /** <summary>Remove designated layer.</summary>

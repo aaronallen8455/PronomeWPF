@@ -155,6 +155,10 @@ namespace Pronome.Editor
         }
 
         /// <summary>
+        /// Used in the ParseBeat method to track the currently open, nested repeat groups
+        /// </summary>
+        Stack<RepeatGroup> OpenRepeatGroups = new Stack<RepeatGroup>();
+        /// <summary>
         /// Build the cell and group objects based on layer. Also adds all visuals to the canvas.
         /// </summary>
         /// <param name="beat"></param>
@@ -165,7 +169,7 @@ namespace Pronome.Editor
 
             string[] chunks = beat.Split(new char[] { ',', '|' }, StringSplitOptions.RemoveEmptyEntries);
             Stack<MultGroup> OpenMultGroups = new Stack<MultGroup>();
-            Stack<RepeatGroup> OpenRepeatGroups = new Stack<RepeatGroup>();
+            
             // BPM value
             double position = 0;// Offset;
 
@@ -173,6 +177,8 @@ namespace Pronome.Editor
             beat = Regex.Replace(beat, @"!.*?!", "");
             // remove whitespace
             beat = Regex.Replace(beat, @"\s", "");
+            // switch single cell repeats to bracket notation
+            beat = Regex.Replace(beat, @"(?<=^|\[|\{|,|\|)([^\]\}\,\|]*?)(?=\(\d+\))", "[$1]");
 
             // split the string into cells
             foreach (Match match in Regex.Matches(beat, @".+?([,|]|$)"))
@@ -244,6 +250,7 @@ namespace Pronome.Editor
                     //cells = new LinkedList<Cell>(cells.Concat(pbr.Cells));
                     // progress position
                     position += pbr.Duration;
+                    cell.SetDurationDirectly(pbr.Duration);
 
                     foreach (Cell c in pbr.Cells)
                     {
@@ -287,26 +294,26 @@ namespace Pronome.Editor
 
                 // check for cell repeat
                 bool singleCellRepeat = false;
-                if (Regex.IsMatch(chunk, @"\(\d+\)[\d+\-/*.]*"))
-                {
-                    singleCellRepeat = true;
-                    Match m = Regex.Match(chunk, @"\((\d+)\)([\d+\-/*.]*)");
-                    //cell.Repeat = new Cell.CellRepeat()
-                    //{
-                    //    Times = int.Parse(m.Groups[1].Value),
-                    //    LastTermModifier = m.Groups[2].Length != 0 ? BeatCell.Parse(m.Groups[2].Value) : 0
-                    //};
-                    
-                    var rg = new RepeatGroup() { Row = this };
-                    rg.Cells.AddLast(cell);
-                    rg.Position = cell.Position;
-                    rg.Duration = cell.Duration;
-                    rg.Times = int.Parse(m.Groups[1].Value);
-                    rg.LastTermModifier = m.Groups[2].Value;
-                    cell.RepeatGroups.AddLast(rg);
-
-                    position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position);
-                }
+                //if (Regex.IsMatch(chunk, @"\(\d+\)[\d+\-/*.]*"))
+                //{
+                //    singleCellRepeat = true;
+                //    Match m = Regex.Match(chunk, @"\((\d+)\)([\d+\-/*.]*)");
+                //    //cell.Repeat = new Cell.CellRepeat()
+                //    //{
+                //    //    Times = int.Parse(m.Groups[1].Value),
+                //    //    LastTermModifier = m.Groups[2].Length != 0 ? BeatCell.Parse(m.Groups[2].Value) : 0
+                //    //};
+                //    
+                //    var rg = new RepeatGroup() { Row = this };
+                //    rg.Cells.AddLast(cell);
+                //    rg.Position = cell.Position;
+                //    rg.Duration = cell.Duration;
+                //    rg.Times = int.Parse(m.Groups[1].Value);
+                //    rg.LastTermModifier = m.Groups[2].Value;
+                //    cell.RepeatGroups.AddLast(rg);
+                //
+                //    position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position);
+                //}
 
                 // check for closing mult group
                 //if (chunk.IndexOf('}') > -1)
@@ -346,7 +353,10 @@ namespace Pronome.Editor
                         {
                             mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
                             rg.Times = int.Parse(mtch.Groups[1].Value);
-                            rg.LastTermModifier = mtch.Groups[2].Value;//.Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
+                            if (mtch.Groups[2].Length != 0)
+                            {
+                                rg.LastTermModifier = mtch.Groups[2].Value;//.Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
+                            }
                         }
                         else
                         {
@@ -359,14 +369,14 @@ namespace Pronome.Editor
                         chunk = chunk.Substring(chunk.IndexOf(']') + 1);
                     }
                 }
-                else
+                else if (!singleCellRepeat)
                 {
                     // add cell rect to canvas or repeat group sub-canvas
                     if (OpenRepeatGroups.Any())
                     {
                         OpenRepeatGroups.Peek().Canvas.Children.Add(cell.Rectangle);
                     }
-                    else if (string.IsNullOrEmpty(cell.Reference) && !singleCellRepeat) // cell's rect is not used if it's a reference
+                    else if (string.IsNullOrEmpty(cell.Reference)) // cell's rect is not used if it's a reference
                     {
                         Canvas.Children.Add(cell.Rectangle);
                     }
@@ -453,6 +463,7 @@ namespace Pronome.Editor
             // recurse
             var pbr = ParseBeat(beat);
 
+            HashSet<Group> touchedGroups = new HashSet<Group>();
             // mark the cells as refs
             foreach (Cell c in pbr.Cells)
             {
@@ -465,18 +476,26 @@ namespace Pronome.Editor
                     Canvas.SetLeft(c.ReferenceRectangle, l + (position * EditorWindow.Scale * EditorWindow.BaseFactor));
                 }
                 // reposition groups
-                foreach (RepeatGroup rg in c.RepeatGroups)
-                {
-                    rg.Position += position;
-                }
+                //foreach (RepeatGroup rg in c.RepeatGroups)
+                //{
+                //    // only reposition each group once
+                //    if (touchedGroups.Contains(rg)) continue;
+                //    touchedGroups.Add(rg);
+                //    rg.Position += position;
+                //}
                 foreach (MultGroup mg in c.MultGroups)
                 {
+                    if (touchedGroups.Contains(mg)) continue;
+                    touchedGroups.Add(mg);
                     mg.Position += position;
                 }
             }
 
             // no longer block this refIndex
-            touchedRefs.Remove(refIndex);
+            if (refIndex != Index)
+            {
+                touchedRefs.Remove(refIndex);
+            }
 
             ReferencedLayers.Add(refIndex);
             // map referenced layer to this one
@@ -656,14 +675,23 @@ namespace Pronome.Editor
                 rg.HostCanvas = Canvas;
             }
 
-            rg.Canvas.Children.Add(cell.Rectangle);
+            // add cell rect if not a reference
+            if (string.IsNullOrEmpty(cell.Reference))
+            {
+                rg.Canvas.Children.Add(cell.Rectangle);
+            }
+            // get size of the host rects
+            double hostWidth = (rg.Duration - (string.IsNullOrEmpty(cell.Reference) ? cell.Duration : 0)) * EditorWindow.Scale * EditorWindow.BaseFactor;
+            if (string.IsNullOrEmpty(cell.Reference))
+            {
+                hostWidth += (double)EditorWindow.Instance.Resources["cellWidth"];
+            }
             // append duplicates of sub-canvas
             for (int i = 0; i < rg.Times - 1; i++)
             {
                 VisualBrush duplicate = new VisualBrush(rg.Canvas);
                 var dupHost = EditorWindow.Instance.Resources["repeatRectangle"] as Rectangle;
-                // size the rect
-                dupHost.Width = (rg.Duration - cell.Duration) * EditorWindow.Scale * EditorWindow.BaseFactor + (double)EditorWindow.Instance.Resources["cellWidth"];
+                dupHost.Width = hostWidth;
                 // fill with dupe content
                 dupHost.Fill = duplicate;
                 // do offsets

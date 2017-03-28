@@ -27,7 +27,7 @@ namespace Pronome
         {
             if (_stopwatch == null)
             {
-                _stopwatch = Stopwatch.StartNew();
+                _stopwatch = new Stopwatch();
             }
 
             if (_stopwatch.IsRunning)

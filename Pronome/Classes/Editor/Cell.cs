@@ -135,12 +135,15 @@ namespace Pronome.Editor
         {
             Row = row;
             Rectangle = EditorWindow.Instance.Resources["cellRectangle"] as Rectangle;
-            Rectangle.Height = (double)EditorWindow.Instance.Resources["cellHeight"];
+            //Rectangle.Height = (double)EditorWindow.Instance.Resources["cellHeight"];
+
             // the ref rect
             ReferenceRectangle = EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle;
             // set Canvas.Top
-            Canvas.SetTop(Rectangle,
-                (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2);
+            double top = (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2;
+            Canvas.SetTop(Rectangle, top);
+            Canvas.SetTop(ReferenceRectangle, top);
+
             Panel.SetZIndex(Rectangle, 10);
             Rectangle.MouseDown += Rectangle_MouseDown;
             ReferenceRectangle.MouseDown += Rectangle_MouseDown;

@@ -42,8 +42,20 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// True if the player has been primed. Occurs only at application startup.
+        /// </summary>
+        public bool IsInitialized = false;
+
         public int Read(float[] buffer, int offset, int count)
         {
+            if (!IsInitialized)
+            {
+                Metronome.GetInstance().Player.Stop();
+                IsInitialized = true;
+                return 0;
+            }
+
             int result = 0;
             try
             {
@@ -61,6 +73,7 @@ namespace Pronome
             {
                 Dispose();
             }
+
 
             return result;
         }

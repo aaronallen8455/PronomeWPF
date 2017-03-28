@@ -40,7 +40,8 @@
 
         <!--Cell-->
         <Rectangle 
-            Width="{StaticResource cellWidth}" 
+            Width="{StaticResource cellWidth}"
+            Height="{StaticResource cellHeight}"
             x:Key="cellRectangle" 
             x:Shared="False" 
             Fill="Black"/>
@@ -132,7 +133,7 @@
         <Rectangle
             x:Key="referenceRectangle"
             x:Shared="False"
-            Height="{StaticResource rowHeight}"
+            Height="{StaticResource cellHeight}"
             Fill="MediumPurple"
             Opacity=".4"/>
 
