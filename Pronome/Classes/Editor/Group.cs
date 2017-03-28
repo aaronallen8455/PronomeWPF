@@ -139,6 +139,7 @@ namespace Pronome.Editor
         public MultGroup()
         {
             Rectangle.Style = EditorWindow.Instance.Resources["multRectStyle"] as System.Windows.Style;
+            Canvas.SetTop(Rectangle, (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - ((double)EditorWindow.Instance.Resources["cellHeight"] / 2));
             Panel.SetZIndex(Rectangle, 5);
         }
 

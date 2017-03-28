@@ -451,6 +451,8 @@ namespace Pronome.Editor
                         beat = Regex.Replace(beat, $@"\${ind},?", "");
                     }
 
+                    // get rid of empty single cell repeats.
+                    beat = Regex.Replace(beat, @"(?<!\]|\d)\(\d+\)[\d.+\-/*]*", "");
                     // clean out empty cells
                     beat = Regex.Replace(beat, @",,", ",");
                     //refBeat = Regex.Replace(refBeat, @",$", "");
@@ -476,13 +478,15 @@ namespace Pronome.Editor
                     Canvas.SetLeft(c.ReferenceRectangle, l + (position * EditorWindow.Scale * EditorWindow.BaseFactor));
                 }
                 // reposition groups
-                //foreach (RepeatGroup rg in c.RepeatGroups)
-                //{
-                //    // only reposition each group once
-                //    if (touchedGroups.Contains(rg)) continue;
-                //    touchedGroups.Add(rg);
-                //    rg.Position += position;
-                //}
+                foreach (RepeatGroup rg in c.RepeatGroups)
+                {
+                    // only reposition groups that were created within the reference
+                    if (OpenRepeatGroups.Count > 0 && OpenRepeatGroups.Peek() == rg) break;
+                    // only reposition each group once
+                    if (touchedGroups.Contains(rg)) continue;
+                    touchedGroups.Add(rg);
+                    rg.Position += position;
+                }
                 foreach (MultGroup mg in c.MultGroups)
                 {
                     if (touchedGroups.Contains(mg)) continue;
