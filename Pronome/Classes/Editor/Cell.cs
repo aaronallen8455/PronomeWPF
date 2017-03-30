@@ -278,7 +278,7 @@ namespace Pronome.Editor
             {
                 foreach (Cell c in Cells.ToArray())
                 {
-                    c.ToggleSelect();
+                    c.ToggleSelect(false);
                 }
 
                 EditorWindow.Instance.UpdateUiForSelectedCell();

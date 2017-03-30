@@ -29,7 +29,7 @@ namespace Pronome.Editor
 
         protected double _offset;
         /// <summary>
-        /// Amount of offset in BPM
+        /// Amount of offset in BPM. Setting will effect change in UI
         /// </summary>
         public double Offset
         {
@@ -572,7 +572,7 @@ namespace Pronome.Editor
                 // check for open repeat group
                 foreach (RepeatGroup rg in cell.RepeatGroups)
                 {
-                    if (rg.Cells.First.Value == cell && rg.Cells.Count > 1)
+                    if (rg.Cells.First.Value == cell && rg.Cells.Where(x => !x.IsReference).Count() > 1)
                     {
                         //OpenRepeatGroups.Push(cell.RepeatGroup);
                         result.Append('[');
@@ -605,13 +605,14 @@ namespace Pronome.Editor
                 // check for close repeat group
                 foreach (RepeatGroup rg in cell.RepeatGroups)
                 {
-                    if (rg.Cells.Last.Value == cell)
+                    Cell[] cells = rg.Cells.Where(x => !x.IsReference).ToArray();
+                    if (cells.Last() == cell)
                     {
                         // is single cell rep?
-                        if (rg.Cells.Count == 1)
+                        if (cells.Length == 1)
                         {
                             result.Append($"({rg.Times})");
-                            if (string.IsNullOrEmpty(rg.LastTermModifier))
+                            if (!string.IsNullOrEmpty(rg.LastTermModifier))
                             {
                                 result.Append(rg.LastTermModifier);
                             }
@@ -619,7 +620,7 @@ namespace Pronome.Editor
                         else
                         {
                             // multi cell
-                            if (string.IsNullOrEmpty(rg.LastTermModifier))
+                            if (!string.IsNullOrEmpty(rg.LastTermModifier))
                             {
                                 result.Append($"]({rg.Times}){rg.LastTermModifier}");
                             }

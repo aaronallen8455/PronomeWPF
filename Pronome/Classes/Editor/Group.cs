@@ -12,6 +12,10 @@ namespace Pronome.Editor
     public abstract class Group
     {
         public Row Row;
+
+        /// <summary>
+        /// The cells belonging to this group. Does not include cells from nested groups, only the direct members.
+        /// </summary>
         public LinkedList<Cell> Cells = new LinkedList<Cell>();
         protected double _position;
         /// <summary>

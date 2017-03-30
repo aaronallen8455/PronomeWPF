@@ -402,6 +402,11 @@ namespace Pronome
             //}
             right = Invert(right);
 
+            return Add(left, right);
+        }
+
+        static public string Add(string left, string right)
+        {
             return SimplifyValue($"{left}+0{right}");
         }
 
