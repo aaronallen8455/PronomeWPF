@@ -184,19 +184,33 @@ namespace Pronome.Editor
                     // multiSelect
                     if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
                     {
-                        foreach (Cell c in Row.Cells
-                            .SkipWhile(x => !x.IsSelected)
-                            .SkipWhile(x => x.IsSelected && x != this)
-                            .TakeWhile(x => !x.IsSelected))
+                        bool started = false;
+                        bool hitSelect = false;
+                        bool hitThis = false;
+                        foreach (Cell c in Row.Cells.SkipWhile(x => !x.IsSelected))
                         {
+                            if (!started && !c.IsSelected) started = true;
+
+                            if (c.IsSelected)
+                            {
+                                if (c == this) hitThis = true;
+                                if (started || (hitSelect && hitThis)) break;
+                                hitSelect = true;
+                                continue;
+                            }
+
                             c.ToggleSelect(false);
                         }
                     }
                     else
                     { // single select : deselect others
-                        while (SelectedCells.Cells.Any())
+                        //while (SelectedCells.Cells.Any())
+                        //{
+                        //    SelectedCells.Cells.First().ToggleSelect(false);
+                        //}
+                        foreach (Cell c in SelectedCells.Cells.ToArray())
                         {
-                            SelectedCells.Cells.First().ToggleSelect();
+                            c.ToggleSelect(false);
                         }
                     }
                 }
