@@ -235,13 +235,16 @@ namespace Pronome
             double duration;
             if (BeatCell.TryParse(value, out duration))
             {
-                //double duration = BeatCell.Parse(value);
+                // the action to the undo stack
+                CellDuration action = new CellDuration(Cell.SelectedCells.Cells.ToArray(), value, duration);
+                UndoStack.Push(action);
 
-                foreach(Cell cell in Cell.SelectedCells.Cells)
-                {
-                    cell.Duration = duration;
-                    cell.Value = value;
-                }
+                action.Redo();
+                //foreach(Cell cell in Cell.SelectedCells.Cells)
+                //{
+                //    cell.Duration = duration;
+                //    cell.Value = value;
+                //}
 
                 SetChangesApplied(false);
             }
@@ -377,6 +380,8 @@ namespace Pronome
                 removeAction.Redo();
                 // add to undo stack
                 UndoStack.Push(removeAction);
+
+                SetChangesApplied(false);
             }
         }
     }

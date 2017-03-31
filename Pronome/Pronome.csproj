@@ -92,8 +92,11 @@
     <Compile Include="Classes\Bounce\Tick.cs" />
     <Compile Include="Classes\ColorHelper.cs" />
     <Compile Include="Classes\Editor\Action.cs" />
+    <Compile Include="Classes\Editor\Action\AddRemoveCell.cs" />
     <Compile Include="Classes\Editor\Cell.cs" />
+    <Compile Include="Classes\Editor\Action\CellDuration.cs" />
     <Compile Include="Classes\Editor\Group.cs" />
+    <Compile Include="Classes\Editor\Action\RemoveCells.cs" />
     <Compile Include="Classes\Editor\Row.cs" />
     <Compile Include="Classes\StereoPanStrategy.cs" />
     <Compile Include="Classes\TextMarkerService.cs" />

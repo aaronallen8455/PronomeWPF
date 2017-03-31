@@ -7,12 +7,7 @@
         xmlns:self="clr-namespace:Pronome"
         mc:Ignorable="d"
         Title="Editor" Height="300" Width="600">
-    <Window.CommandBindings>
-        <CommandBinding Command="Undo" CanExecute="Undo_CanExecute" Executed="Undo_Executed"/>
-        <CommandBinding Command="Redo" CanExecute="Redo_CanExecute" Executed="Redo_Executed"/>
-        <CommandBinding Command="self:Commands.DeleteSelection" CanExecute="DeleteSelection_CanExecute" Executed="DeleteSelection_Executed" />
-        <CommandBinding Command="self:Commands.CreateRepeatGroup" CanExecute="CreateRepeatGroup_CanExecute" Executed="CreateRepeatGroup_Executed"/>
-    </Window.CommandBindings>
+    
     <Window.Resources>
         <sys:Double x:Key="rowHeight">40</sys:Double>
         <sys:Double x:Key="cellHeight">25</sys:Double>
@@ -142,8 +137,16 @@
             <Setter Property="FontSize" Value="9"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
+
     </Window.Resources>
-    
+
+    <Window.CommandBindings>
+        <CommandBinding Command="Undo" CanExecute="Undo_CanExecute" Executed="Undo_Executed"/>
+        <CommandBinding Command="Redo" CanExecute="Redo_CanExecute" Executed="Redo_Executed"/>
+        <CommandBinding Command="self:Commands.DeleteSelection" CanExecute="DeleteSelection_CanExecute" Executed="DeleteSelection_Executed" />
+        <CommandBinding Command="self:Commands.CreateRepeatGroup" CanExecute="CreateRepeatGroup_CanExecute" Executed="CreateRepeatGroup_Executed"/>
+    </Window.CommandBindings>
+
     <DockPanel>
         <!--Main menu-->
         <Menu DockPanel.Dock="Top">
@@ -182,8 +185,9 @@
             <StackPanel>
                 <Label Target="{Binding ElementName=durationInput}">Duration</Label>
                 <TextBox Name="durationInput" 
-                         LostFocus="durationInput_LostFocus" 
+                         LostFocus="durationInput_LostFocus"
                          Width="50"
+                         UndoLimit="0"
                          IsEnabled="{DynamicResource cellSelected}"/>
             </StackPanel>
             <StackPanel>
