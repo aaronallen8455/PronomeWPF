@@ -105,6 +105,8 @@ namespace Pronome.Editor
             Row.BeatCodeIsCurrent = false;
 
             RedrawReferencers();
+
+            EditorWindow.Instance.SetChangesApplied(false);
         }
 
         public void Remove()
@@ -186,6 +188,8 @@ namespace Pronome.Editor
             Row.BeatCodeIsCurrent = false;
 
             RedrawReferencers();
+
+            EditorWindow.Instance.SetChangesApplied(false);
         }
     }
 

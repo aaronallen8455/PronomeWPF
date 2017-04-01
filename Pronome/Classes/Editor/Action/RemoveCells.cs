@@ -46,7 +46,11 @@ namespace Pronome.Editor
             //PreviousCellValue = previousCellValue;
             Index = cells[0].Row.Cells.IndexOf(cells[0]);
 
-            BeatCodeBefore = cells[0].Row.Stringify();
+            if (!Row.BeatCodeIsCurrent)
+            {
+                Row.UpdateBeatCode();
+            }
+            BeatCodeBefore = Row.BeatCode;
 
             StringBuilder duration = new StringBuilder();
             // find all groups that are encompassed by the selection
@@ -164,7 +168,6 @@ namespace Pronome.Editor
             Row.Reset();
 
             Row.FillFromBeatCode(BeatCodeBefore);
-            Row.BeatCode = BeatCodeBefore;
             Row.BeatCodeIsCurrent = true;
 
             if (ChangeOffset)
@@ -174,6 +177,8 @@ namespace Pronome.Editor
             }
 
             RedrawReferencers();
+
+            EditorWindow.Instance.SetChangesApplied(false);
         }
 
         public void Redo()
@@ -252,7 +257,6 @@ namespace Pronome.Editor
             Row.Reset();
 
             Row.FillFromBeatCode(BeatCodeAfter);
-            Row.BeatCode = BeatCodeAfter;
             Row.BeatCodeIsCurrent = true;
 
             if (ChangeOffset)
@@ -262,6 +266,8 @@ namespace Pronome.Editor
             }
 
             RedrawReferencers();
+
+            EditorWindow.Instance.SetChangesApplied(false);
 
             // TODO: removing cells from the middle of a row shouldn't shrink the row.
 

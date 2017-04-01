@@ -218,6 +218,10 @@ namespace Pronome
             Resources["cellSelected"] = selected;
         }
 
+        /// <summary>
+        /// Set the boolean that controls whether changes have been applied to Row's Layer.
+        /// </summary>
+        /// <param name="applied"></param>
         public void SetChangesApplied(bool applied)
         {
             Resources["changesApplied"] = !applied;
@@ -330,12 +334,65 @@ namespace Pronome
 
         private void CreateRepeatGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = Cell.SelectedCells.Cells.Any();
+            if (Cell.SelectedCells.Cells.Count == 1)
+            {
+                // if a single cell selected, no further validation
+                e.CanExecute = true;
+                return;
+            }
+
+            // Ensure that the selected cells share grouping scope
+            bool canExecute = false;
+            LinkedListNode<RepeatGroup> first = Cell.SelectedCells.FirstCell.RepeatGroups.First;
+            LinkedListNode<RepeatGroup> last = Cell.SelectedCells.LastCell.RepeatGroups.First;
+            while (true)
+            {
+                // both cells share this group, go to nested group
+                if (first != null && last != null && first.Value == last.Value)
+                {
+                    first = first.Next;
+                    last = last.Next;
+                }
+
+                // is last cell in nested repeat group where it is the last cell?
+                else if (first == null && last != null)
+                {
+                    if (last.Value.Cells.Last.Value == Cell.SelectedCells.LastCell)
+                    {
+                        canExecute = true;
+                    }
+                }
+                // is first cell in nested rep group and is the first cell of that group?
+                else if (first != null && last == null)
+                {
+                    if (first.Value.Cells.First.Value == Cell.SelectedCells.FirstCell)
+                    {
+                        canExecute = true;
+                    }
+                }
+
+                // reached the end
+                if (first == null && last == null)
+                {
+                    canExecute = true;
+                }
+
+                if (canExecute)
+                {
+                    break;
+                }
+                else if (first.Value != last.Value)
+                {
+                    break;
+                }
+            }
+
+            e.CanExecute = canExecute;
         }
 
         private void CreateRepeatGroup_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-
+            // TODO: open up dialog to get the rep times and LTM
         }
 
         private void RemoveRepeatGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)

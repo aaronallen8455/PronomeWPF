@@ -43,7 +43,10 @@ namespace Pronome.Editor
             //UpdateUI();
             EditorWindow.Instance.UpdateUiForSelectedCell();
 
+            // update referencers
+            Row.BeatCodeIsCurrent = false;
             RedrawReferencers();
+            EditorWindow.Instance.SetChangesApplied(false);
         }
 
         public void Redo()
@@ -57,7 +60,10 @@ namespace Pronome.Editor
             //UpdateUI();
             EditorWindow.Instance.UpdateUiForSelectedCell();
 
+            // update referencers
+            Row.BeatCodeIsCurrent = false;
             RedrawReferencers();
+            EditorWindow.Instance.SetChangesApplied(false);
         }
 
         protected void UpdateUI()

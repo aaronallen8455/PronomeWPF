@@ -18,9 +18,23 @@ namespace Pronome.Editor
         public Layer Layer;
 
         /// <summary>
+        /// True if the BeatCode field represents the current state of the row.
+        /// </summary>
+        public bool BeatCodeIsCurrent = true;
+
+        protected string _beatCode;
+        /// <summary>
         /// A beat code representation of the row. Must be manually updated.
         /// </summary>
-        public string BeatCode;
+        public string BeatCode
+        {
+            get => _beatCode;
+            set
+            {
+                BeatCodeIsCurrent = true;
+                _beatCode = value;
+            }
+        }
 
         /// <summary>
         /// All the cells in this row, including referenced cells
@@ -117,7 +131,6 @@ namespace Pronome.Editor
             Layer = layer;
             Index = Metronome.GetInstance().Layers.IndexOf(Layer);
             touchedRefs.Add(Index); // current layer ref should recurse only once
-            BeatCode = Layer.ParsedString;
 
             Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
             Offset = layer.Offset;
@@ -144,7 +157,7 @@ namespace Pronome.Editor
         }
 
         /// <summary>
-        /// Generate the UI from a beat code string.
+        /// Generate the UI from a beat code string. Sets the BeatCode to the input string.
         /// </summary>
         /// <param name="beatCode"></param>
         public void FillFromBeatCode(string beatCode)
@@ -152,6 +165,8 @@ namespace Pronome.Editor
             ParsedBeatResult result = ParseBeat(beatCode);
             Cells = result.Cells;
             SetBackground(result.Duration);
+            // set the new beatcode string
+            BeatCode = beatCode;
         }
 
         /// <summary>
@@ -536,18 +551,11 @@ namespace Pronome.Editor
         }
 
         /// <summary>
-        /// True if the BeatCode field represents the current state of the row.
-        /// </summary>
-        public bool BeatCodeIsCurrent = true;
-
-        /// <summary>
         /// Update the beat code for this row
         /// </summary>
         public void UpdateBeatCode()
         {
             BeatCode = Stringify();
-
-            BeatCodeIsCurrent = true;
         }
 
         /// <summary>

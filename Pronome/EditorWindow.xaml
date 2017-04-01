@@ -138,6 +138,11 @@
             <Setter Property="HorizontalAlignment" Value="Center"/>
         </Style>
 
+        <!--Don't add text box changes to the undo stack-->
+        <Style TargetType="TextBox">
+            <Setter Property="UndoLimit" Value="0"/>
+        </Style>
+
     </Window.Resources>
 
     <Window.CommandBindings>
@@ -187,7 +192,6 @@
                 <TextBox Name="durationInput" 
                          LostFocus="durationInput_LostFocus"
                          Width="50"
-                         UndoLimit="0"
                          IsEnabled="{DynamicResource cellSelected}"/>
             </StackPanel>
             <StackPanel>
