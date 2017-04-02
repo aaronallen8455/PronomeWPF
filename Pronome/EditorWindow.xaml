@@ -150,6 +150,8 @@
         <CommandBinding Command="Redo" CanExecute="Redo_CanExecute" Executed="Redo_Executed"/>
         <CommandBinding Command="self:Commands.DeleteSelection" CanExecute="DeleteSelection_CanExecute" Executed="DeleteSelection_Executed" />
         <CommandBinding Command="self:Commands.CreateRepeatGroup" CanExecute="CreateRepeatGroup_CanExecute" Executed="CreateRepeatGroup_Executed"/>
+        <CommandBinding Command="self:Commands.RemoveRepeatGroup" CanExecute="RemoveRepeatGroup_CanExecute" Executed="RemoveRepeatGroup_Executed"/>
+        <CommandBinding Command="self:Commands.EditRepeatGroup" CanExecute="EditRepeatGroup_CanExecute" Executed="EditRepeatGroup_Executed"/>
     </Window.CommandBindings>
 
     <DockPanel>
@@ -161,14 +163,17 @@
             </MenuItem>
             <MenuItem Header="Selection">
                 <MenuItem Header="Deselect All"/>
-                <MenuItem Header="Create Group...">
-                    <MenuItem Header="Repeat Group" Command="self:Commands.CreateRepeatGroup"/>
-                    <MenuItem Header="Multiply Group"/>
+                <MenuItem Header="Repeat Group...">
+                    <MenuItem Header="Create" Command="self:Commands.CreateRepeatGroup"/>
+                    <MenuItem Header="Remove" Command="self:Commands.RemoveRepeatGroup"/>
+                    <MenuItem Header="Edit" Command="self:Commands.EditRepeatGroup"/>
                 </MenuItem>
-                <MenuItem Header="Remove Group...">
-                    <MenuItem Header="Repeat Group"/>
-                    <MenuItem Header="Multiply Group"/>
+                <MenuItem Header="Multiply Group...">
+                    <MenuItem Header="Create" Command="self:Commands.CreateMultGroup"/>
+                    <MenuItem Header="Remove" Command="self:Commands.RemoveMultGroup"/>
+                    <MenuItem Header="Edit" Command="self:Commands.EditMultGroup"/>
                 </MenuItem>
+                
                 <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del" Command="self:Commands.DeleteSelection"/>
                 <MenuItem Header="Reference...">
                     <MenuItem Header="Insert Reference"/>

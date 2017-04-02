@@ -240,6 +240,16 @@ namespace Pronome
         }
 
         /// <summary>
+        /// Validate a beat code expression.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        static public bool ValidateExpression(string str)
+        {
+            return Regex.IsMatch(str, @"(\d+\.?\d*[\-+*/xX]?)*\d+\.?\d*$");
+        }
+
+        /// <summary>
         /// Parse a math expression after testing validity
         /// </summary>
         /// <param name="str">String to parse</param>
@@ -247,7 +257,7 @@ namespace Pronome
         /// <returns></returns>
         static public bool TryParse(string str, out double val)
         {
-            if (Regex.IsMatch(str, @"(\d+\.?\d*[\-+*/xX]?)*\d+\.?\d*$"))
+            if (ValidateExpression(str))
             {
                 val = Parse(str);
 

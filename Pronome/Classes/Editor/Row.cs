@@ -167,6 +167,7 @@ namespace Pronome.Editor
             SetBackground(result.Duration);
             // set the new beatcode string
             BeatCode = beatCode;
+            BeatCodeIsCurrent = true;
         }
 
         /// <summary>

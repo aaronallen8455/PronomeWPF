@@ -168,6 +168,8 @@ namespace Pronome.Editor
 
         public void ToggleSelect(bool Clicked = true)
         {
+            // TODO: allow selection to grow or shrink with shift click
+
             IsSelected = !IsSelected;
             // set selection color
             Rectangle.Stroke = IsSelected ? System.Windows.Media.Brushes.DeepPink : System.Windows.Media.Brushes.Black;
@@ -293,6 +295,26 @@ namespace Pronome.Editor
                 foreach (Cell c in Cells.ToArray())
                 {
                     c.ToggleSelect(false);
+                }
+
+                Clear();
+
+                EditorWindow.Instance.UpdateUiForSelectedCell();
+            }
+
+            /// <summary>
+            /// Select all cells from start to end inclusive
+            /// </summary>
+            /// <param name="start"></param>
+            /// <param name="end"></param>
+            /// <param name="row"></param>
+            public void SelectRange(int start, int end, Row row)
+            {
+                DeselectAll();
+
+                for (int i = start; i <= end; i++)
+                {
+                    row.Cells[i].ToggleSelect(false);
                 }
 
                 EditorWindow.Instance.UpdateUiForSelectedCell();
