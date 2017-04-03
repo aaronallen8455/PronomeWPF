@@ -108,6 +108,7 @@ namespace Pronome.Editor
                         if (count == rg.Cells.Count)
                         {
                             // need to resize the host rects because the cell we're adding is the last in the rep group
+                            // because the size of the host rects does not include the duration of a cell, just the rectangle elements.
                             foreach (Rectangle rect in rg.HostRects)
                             {
                                 rect.Width = rect.Width + (rg.Cells.Last.Value.Duration * EditorWindow.Scale * EditorWindow.BaseFactor);

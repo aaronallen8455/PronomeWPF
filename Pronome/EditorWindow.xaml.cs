@@ -442,16 +442,15 @@ namespace Pronome
         {
             string input = ((TextBox)sender).Text;
 
-            if (BeatCell.TryParse(input, out double incr))
+            if (BeatCell.ValidateExpression(input))
             {
                 if (Cell.SelectedCells.Cells.Any())
                 {
                     RemoveGridLines();
                     // draw new grid
                     Cell.SelectedCells.Cells.First().Row.DrawGridLines(input);
-
-                    CurrentIncrement = input;
                 }
+                CurrentIncrement = input;
             }
         }
 
@@ -672,9 +671,9 @@ namespace Pronome
 
                 //AddRepeatGroup action = new AddRepeatGroup(Cell.SelectedCells.Cells.ToArray(), times, lastTermModifier);
 
-                action.Redo();
-
-                UndoStack.Push(action);
+                //action.Redo();
+                //
+                //UndoStack.Push(action);
             }
         }
     }

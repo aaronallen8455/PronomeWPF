@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Windows.Controls;
+using System.Windows.Shapes;
 
 namespace Pronome.Editor
 {
@@ -14,15 +15,15 @@ namespace Pronome.Editor
 
         protected Cell PreviousCell;
 
-        protected string PreviousCellBeforeValue;
-        protected string PreviousCellAfterValue;
+        protected string PreviousCellBeforeValue; // or LTM of a rep group
+        protected string PreviousCellAfterValue; // or LTM of a rep group
 
         /// <summary>
         /// The add cell action. Should be initialized after the new cell has been added into the row.
         /// </summary>
         /// <param name="cell"></param>
         /// <param name="previousCell"></param>
-        public AddRemoveCell(Cell cell, Cell previousCell = null, string prevBeforeVal = null)
+        public AddRemoveCell(Cell cell, Cell previousCell = null, string prevBeforeVal = null, string prevAfterValue = null)
         {
             Cell = cell;
             Row = cell.Row;
@@ -32,7 +33,7 @@ namespace Pronome.Editor
 
             if (previousCell != null)
             {
-                PreviousCellAfterValue = previousCell.Value;
+                PreviousCellAfterValue = prevAfterValue;
                 PreviousCellBeforeValue = prevBeforeVal;
             }
         }
@@ -64,19 +65,32 @@ namespace Pronome.Editor
             else
             {
                 below = Row.Cells[Index - 1];
+                // check if need to adjust the LCM of the last repeat group if this is the last cell in row
+                RepeatGroup ltmToMod = null;
+                foreach (RepeatGroup rg in below.RepeatGroups.Where(x => x.Cells.Last.Value == below))
+                {
+                    ltmToMod = rg;
+                }
 
-                below.Value = PreviousCellAfterValue;
-                below.SetDurationDirectly(BeatCell.Parse(below.Value));
+                if (ltmToMod == null)
+                {
+                    below.Value = PreviousCellAfterValue;
+                    below.SetDurationDirectly(BeatCell.Parse(below.Value));
+                }
+                else
+                {
+                    ltmToMod.LastTermModifier = PreviousCellAfterValue;
+                }
 
-                if (Index == Row.Cells.Count - 1)
+                if (Index == Row.Cells.Count - 1 && !Cell.RepeatGroups.Any())
                 {
                     // it's the last cell, resize sizer
+                    // but not if it's in a group - size will stay the same.
                     double oldDur = Row.Duration;
                     Row.Duration = Cell.Position + Cell.Duration;
                     Row.ChangeSizerWidthByAmount(Row.Duration - oldDur);
                 }
             }
-            //TODO: check if need to adjust the LCM of the last repeat group if this is the last cell in row
 
             // add to groups
             foreach (RepeatGroup rg in Cell.RepeatGroups)
@@ -88,6 +102,15 @@ namespace Pronome.Editor
                 else
                 {
                     rg.Cells.AddFirst(Cell);
+                }
+
+                // resize host rects if this is last cell in row
+                if (rg.Cells.Last.Value == Cell)
+                {
+                    foreach (Rectangle rect in rg.HostRects)
+                    {
+                        rect.Width += below.Duration * EditorWindow.Scale * EditorWindow.BaseFactor;
+                    }
                 }
             }
             foreach (MultGroup mg in Cell.MultGroups)
@@ -143,22 +166,40 @@ namespace Pronome.Editor
             {
                 Cell below = Row.Cells[Index - 1];
 
-                below.Value = PreviousCellBeforeValue;
+                // check if a LTM is being changed instead of cell value
+                RepeatGroup ltmToMod = null;
+                foreach (RepeatGroup rg in below.RepeatGroups.Where(x => x.Cells.Last.Value == below))
+                {
+                    ltmToMod = rg;
+                }
+
+                if (ltmToMod == null)
+                {
+                    below.Value = PreviousCellBeforeValue;
+                }
+                else
+                {
+                    ltmToMod.LastTermModifier = PreviousCellBeforeValue;
+                }
+
                 // if cell is the last cell, resize the below cell. Otherwise set duration directly
-                if (Row.Cells.Last() == Cell)
+                if (Row.Cells.Last() == Cell && !Cell.RepeatGroups.Any())
                 {
                     // preserve cell's position
                     double oldPos = Cell.Position;
                     double oldOffset = Canvas.GetLeft(Cell.Rectangle);
-                    below.Duration = BeatCell.Parse(below.Value);
-                    // reset position
-                    Cell.Position = oldPos;
-                    Canvas.SetLeft(Cell.Rectangle, oldOffset);
+                    if (ltmToMod == null)
+                    {
+                        below.Duration = BeatCell.Parse(below.Value);
+                        // reset position
+                        Cell.Position = oldPos;
+                    }
+                    //Canvas.SetLeft(Cell.Rectangle, oldOffset);
                     // resize row
                     Row.Duration = below.Position + below.Duration;
                     Row.ChangeSizerWidthByAmount(-Cell.Duration);
                 }
-                else
+                else if (ltmToMod == null)
                 {
                     below.SetDurationDirectly(BeatCell.Parse(below.Value));
                 }
@@ -166,21 +207,21 @@ namespace Pronome.Editor
             // remove from groups
             foreach (RepeatGroup rg in Cell.RepeatGroups)
             {
+                // if this was the last cell in group, need to resize the host rects
+                if (rg.Cells.Last.Value == Cell)
+                {
+                    foreach (Rectangle rect in rg.HostRects)
+                    {
+                        rect.Width -= (rg.Cells.Last.Previous.Value.Duration - Cell.Duration) * EditorWindow.Scale * EditorWindow.BaseFactor;
+                    }
+                }
+
                 rg.Cells.Remove(Cell);
                 rg.Canvas.Children.Remove(Cell.Rectangle);
-                //// remove the group if no cells left
-                //if (!rg.Cells.Any())
-                //{
-                //    rg.RemoveGroupFromRow();
-                //}
             }
             foreach (MultGroup mg in Cell.MultGroups)
             {
                 mg.Cells.Remove(Cell);
-                //if (!mg.Cells.Any())
-                //{
-                //    mg.RemoveGroupFromRow();
-                //}
             }
 
             Row.Cells.Remove(Cell);

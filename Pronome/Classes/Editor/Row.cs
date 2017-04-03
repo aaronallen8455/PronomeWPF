@@ -843,7 +843,7 @@ namespace Pronome.Editor
                     bool outsideRepeat = true;
                     foreach (RepeatGroup rg in RepeatGroups)
                     {
-                        if (position > rg.Position + rg.Duration && position < rg.Position + rg.Duration * rg.Times)
+                        if (position > rg.Position + rg.Duration - increment * GridProx && position < rg.Position + rg.Duration * rg.Times)
                         {
                             outsideRepeat = false;
                             break;
@@ -879,7 +879,7 @@ namespace Pronome.Editor
                         bool outsideRepeat = true;
                         foreach (RepeatGroup rg in RepeatGroups)
                         {
-                            if (position > rg.Position + rg.Duration && position < rg.Position + rg.Duration * rg.Times)
+                            if (position > rg.Position + rg.Duration - increment * GridProx && position < rg.Position + rg.Duration * rg.Times)
                             {
                                 outsideRepeat = false;
                                 break;
@@ -1001,6 +1001,7 @@ namespace Pronome.Editor
                 // if last cell is in a rep group, we need to increase the LTM for that group
                 if (below.RepeatGroups.Any())
                 {
+                    oldPrevCellValue = below.RepeatGroups.First.Value.LastTermModifier;
                     // add to the bottom repeat group's LTM
                     below.RepeatGroups.First.Value.LastTermModifier = BeatCell.SimplifyValue(val.ToString());
                 }
@@ -1059,6 +1060,33 @@ namespace Pronome.Editor
                 if (index > -1)
                 {
                     Cell below = Cells[index - 1];
+
+                    // is new cell placed in the LTM zone of a rep group?
+                    RepeatGroup repWithLtmToMod = null;
+                    foreach (RepeatGroup rg in below.RepeatGroups.Where(
+                        x => x.Cells.Last.Value == below && position + increment * GridProx > below.Position + below.Duration))
+                    {
+                        repWithLtmToMod = rg;
+                    }
+
+                    double duration;
+
+                    if (repWithLtmToMod == null)
+                    {
+                        duration = below.Position + below.Duration - cell.Position;
+                        // set duration of preceding cell.
+                        below.SetDurationDirectly(below.Duration - duration);
+                    }
+                    else
+                    {
+                        // get duration as a slice of the LTM of preceding group
+                        duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
+                            * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
+                            - cell.Position;
+                    }
+                    
+                    cell.SetDurationDirectly(duration);
+
                     // add to groups and add it's rectangle to appropriate canvas
                     if (Group.AddToGroups(cell, below))
                     {
@@ -1068,11 +1096,6 @@ namespace Pronome.Editor
                     {
                         Canvas.Children.Add(cell.Rectangle);
                     }
-
-                    double duration = below.Position + below.Duration - cell.Position;
-                    below.SetDurationDirectly(below.Duration - duration);
-                    //Canvas.Children.Add(cell.Rectangle);
-                    cell.SetDurationDirectly(duration);
 
                     // determine new value for the below cell
                     StringBuilder val = new StringBuilder();
@@ -1122,7 +1145,17 @@ namespace Pronome.Editor
                     string newVal = BeatCell.SimplifyValue(val.ToString());
                     cell.Value = BeatCell.Subtract(below.Value, newVal);
                     string oldValue = below.Value;
-                    below.Value = newVal;
+
+                    if (repWithLtmToMod == null)
+                    {
+                        // changing a cell value
+                        below.Value = newVal;
+                    }
+                    else
+                    {
+                        // changing a LTM value
+                        repWithLtmToMod.LastTermModifier = BeatCell.Subtract(repWithLtmToMod.LastTermModifier, newVal);
+                    }
 
                     // create the action
                     AddCell action = new AddCell(cell, below, oldValue);
@@ -1240,6 +1273,40 @@ namespace Pronome.Editor
                 {
                     Cell below = Cells[index - 1];
 
+                    // find new duration of below cell
+                    //double newDur = Cells.SkipWhile(x => x != below)
+                    //    .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
+                    //    .Select(x => x.Position)
+                    //    .Sum() - div * increment;
+
+                    // see if the cell is being added to a rep group's LTM zone
+                    RepeatGroup repWithLtmToMod = null;
+                    foreach (RepeatGroup rg in below.RepeatGroups.Where(
+                        x => x.Cells.Last.Value == below && position + increment * GridProx > below.Position + below.Duration))
+                    {
+                        repWithLtmToMod = rg;
+                    }
+
+                    double duration;
+
+                    if (repWithLtmToMod == null)
+                    {
+                        duration = below.Position + below.Duration - cell.Position;
+                        below.SetDurationDirectly(below.Duration - duration);
+                        //newDur = cell.Position - below.Position;
+                    }
+                    else
+                    {
+                        // find slice of the LTM to use as duration
+                        duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
+                            * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
+                            - cell.Position;
+                    }
+
+                    //cell.SetDurationDirectly(below.Duration - newDur);
+                    //below.SetDurationDirectly(newDur);
+                    cell.SetDurationDirectly(duration);
+
                     // add to groups and add rectangle to correct canvas
                     if (Group.AddToGroups(cell, below))
                     {
@@ -1250,13 +1317,6 @@ namespace Pronome.Editor
                         Canvas.Children.Add(cell.Rectangle);
                     }
 
-                    // find new duration of below cell
-                    double newDur = Cells.SkipWhile(x => x != below)
-                        .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
-                        .Select(x => x.Position)
-                        .Sum() - div * increment;
-                    cell.SetDurationDirectly(below.Duration - newDur);
-                    below.SetDurationDirectly(newDur);
                     // get new value string for below
                     StringBuilder val = new StringBuilder();
 
@@ -1307,8 +1367,20 @@ namespace Pronome.Editor
                     val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(EditorWindow.CurrentIncrement), div));
                     cell.Value = BeatCell.Subtract(below.Value, val.ToString());
                     //cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
-                    string oldValue = below.Value;
-                    below.Value = BeatCell.SimplifyValue(val.ToString());
+                    string oldValue;
+
+                    if (repWithLtmToMod == null)
+                    {
+                        oldValue = below.Value;
+                        below.Value = BeatCell.SimplifyValue(val.ToString());
+                    }
+                    else
+                    {
+                        oldValue = repWithLtmToMod.LastTermModifier;
+                        repWithLtmToMod.LastTermModifier = BeatCell.Subtract(
+                            repWithLtmToMod.LastTermModifier, 
+                            BeatCell.SimplifyValue(val.ToString()));
+                    }
 
                     // add undo action
                     return new AddCell(cell, below, oldValue);
