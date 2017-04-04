@@ -199,9 +199,9 @@ namespace Pronome
         /// <summary>
         /// Facilitates getting the CanExecute data for the repeat group UICommands
         /// </summary>
-        private class RepeatGroupCanExecute
+        private class RepeatGroupCommandHelper
         {
-            static protected RepeatGroupCanExecute Result;
+            static protected RepeatGroupCommandHelper Result;
 
             static protected int TimesAccessed = 0;
 
@@ -226,19 +226,19 @@ namespace Pronome
                 return null;
             }
 
-            static public RepeatGroupCanExecute GetResult()
+            static public RepeatGroupCommandHelper GetResult()
             {
                 if (Result != null && TimesAccessed++ < MaxAccessTimes)
                 {
                     return Result;
                 }
 
-                Result = new RepeatGroupCanExecute();
+                Result = new RepeatGroupCommandHelper();
                 TimesAccessed = 1;
                 return Result;
             }
 
-            public RepeatGroupCanExecute()
+            public RepeatGroupCommandHelper()
             {
                 if (Cell.SelectedCells.Cells.Count == 1)
                 {
@@ -349,18 +349,7 @@ namespace Pronome
                         GroupToRemoveOrEdit = null;
                         break;
                     }
-
-                    //if (canExecute)
-                    //{
-                    //    break;
-                    //}
-                    //else if (first.Value != last.Value)
-                    //{
-                    //    break;
-                    //}
                 }
-
-                //e.CanExecute = canExecute;
             }
         }
 
@@ -501,89 +490,7 @@ namespace Pronome
 
         private void CreateRepeatGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = RepeatGroupCanExecute.GetResult().CanAdd;
-            //if (Cell.SelectedCells.Cells.Count == 1)
-            //{
-            //    // if a single cell selected, no further validation
-            //    if (Cell.SelectedCells.FirstCell.RepeatGroups.Any() &&
-            //        Cell.SelectedCells.Cells[0].RepeatGroups.Last.Value.Cells.First == Cell.SelectedCells.Cells[0].RepeatGroups.Last.Value.Cells.Last)
-            //    {
-            //        // not if a single cell repeat already exists over this cell.
-            //        e.CanExecute = false;
-            //        return;
-            //    }
-            //    else
-            //    {
-            //        e.CanExecute = true;
-            //        return;
-            //    }
-            //}
-            //
-            //// Ensure that the selected cells share grouping scope
-            //bool canExecute = false;
-            //LinkedListNode<RepeatGroup> first = Cell.SelectedCells.FirstCell.RepeatGroups.First;
-            //LinkedListNode<RepeatGroup> last = Cell.SelectedCells.LastCell.RepeatGroups.First;
-            //while (true)
-            //{
-            //    // both cells share this group, go to nested group
-            //    if (first != null && last != null && first.Value == last.Value)
-            //    {
-            //        if (first.Value == last.Value)
-            //        {
-            //            // don't allow a repeat group to be made right on top of another RG
-            //            if (first.Value.Cells.First.Value != Cell.SelectedCells.FirstCell
-            //                && first.Value.Cells.Last.Value != Cell.SelectedCells.LastCell)
-            //            {
-            //                first = first.Next;
-            //                last = last.Next;
-            //            }
-            //            else break;
-            //        }
-            //        else if (first.Value.Cells.First.Value == Cell.SelectedCells.FirstCell &&
-            //                last.Value.Cells.Last.Value == Cell.SelectedCells.LastCell)
-            //        {
-            //            // both ends of select are in different groups but those groups are not being cut
-            //            canExecute = true;
-            //        }
-            //        else
-            //        {
-            //            break;
-            //        }
-            //    }
-            //    // is last cell in nested repeat group where it is the last cell?
-            //    else if (first == null && last != null)
-            //    {
-            //        if (last.Value.Cells.Last.Value == Cell.SelectedCells.LastCell)
-            //        {
-            //            canExecute = true;
-            //        }
-            //    }
-            //    // is first cell in nested rep group and is the first cell of that group?
-            //    else if (first != null && last == null)
-            //    {
-            //        if (first.Value.Cells.First.Value == Cell.SelectedCells.FirstCell)
-            //        {
-            //            canExecute = true;
-            //        }
-            //    }
-            //
-            //    // reached the end
-            //    if (first == null && last == null)
-            //    {
-            //        canExecute = true;
-            //    }
-            //
-            //    if (canExecute)
-            //    {
-            //        break;
-            //    }
-            //    else if (first.Value != last.Value)
-            //    {
-            //        break;
-            //    }
-            //}
-            //
-            //e.CanExecute = canExecute;
+            e.CanExecute = RepeatGroupCommandHelper.GetResult().CanAdd;
         }
 
         private void CreateRepeatGroup_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -599,36 +506,24 @@ namespace Pronome
 
                 action.Redo();
 
-                UndoStack.Push(action);
+                AddUndoAction(action);
             }
         }
 
         private void RemoveRepeatGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = RepeatGroupCanExecute.GetResult().CanRemoveOrEdit;
-            //Cell.Selection selection = Cell.SelectedCells;
-            //
-            //if (selection.Cells.Any())
-            //{
-            //    
-            //
-            //    // check if any repeat group is represented by the selection
-            //    foreach (RepeatGroup rg in selection.FirstCell.RepeatGroups)
-            //    {
-            //        if (rg.Cells.First.Value == selection.FirstCell && rg.Cells.Last.Value == selection.LastCell)
-            //        {
-            //            e.CanExecute = true;
-            //            return;
-            //        }
-            //    }
-            //}
-            //
-            //e.CanExecute = false;
+            e.CanExecute = RepeatGroupCommandHelper.GetResult().CanRemoveOrEdit;
         }
 
         private void RemoveRepeatGroup_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            RepeatGroup group = RepeatGroupCommandHelper.GetGroupToRemoveOrEdit();
 
+            RemoveRepeatGroup action = new RemoveRepeatGroup(group);
+
+            action.Redo();
+
+            AddUndoAction(action);
         }
 
         private void DeleteSelection_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -647,7 +542,7 @@ namespace Pronome
                 // execute the action
                 removeAction.Redo();
                 // add to undo stack
-                UndoStack.Push(removeAction);
+                AddUndoAction(removeAction);
 
                 SetChangesApplied(false);
             }
@@ -655,26 +550,47 @@ namespace Pronome
 
         private void EditRepeatGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = RepeatGroupCanExecute.GetResult().CanRemoveOrEdit;
+            e.CanExecute = RepeatGroupCommandHelper.GetResult().CanRemoveOrEdit;
         }
 
         private void EditRepeatGroup_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             var dialog = new Classes.Editor.RepeatGroupDialog();
-            dialog.Times = RepeatGroupCanExecute.GetGroupToRemoveOrEdit().Times;
-            dialog.LastTermModifier = RepeatGroupCanExecute.GetGroupToRemoveOrEdit().LastTermModifier;
+            RepeatGroup group = RepeatGroupCommandHelper.GetGroupToRemoveOrEdit();
+            dialog.Times = group.Times;
+            dialog.LastTermModifier = group.LastTermModifier;
 
             if (dialog.ShowDialog() == true)
             {
                 int times = dialog.Times;
                 string lastTermModifier = dialog.LastTermModifier;
 
-                //AddRepeatGroup action = new AddRepeatGroup(Cell.SelectedCells.Cells.ToArray(), times, lastTermModifier);
+                EditRepeatGroup action = new EditRepeatGroup(group, times, lastTermModifier);
 
-                //action.Redo();
-                //
-                //UndoStack.Push(action);
+                action.Redo();
+                
+                AddUndoAction(action);
             }
+        }
+
+        private void Deselect_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Cell.SelectedCells.Cells.Any();
+        }
+
+        private void Deselect_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            Cell.SelectedCells.DeselectAll();
+        }
+
+        private void CreateMultGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+
+        }
+
+        private void CreateMultGroup_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
         }
     }
 

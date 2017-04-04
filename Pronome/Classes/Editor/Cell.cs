@@ -186,23 +186,44 @@ namespace Pronome.Editor
                     // multiSelect
                     if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
                     {
-                        bool started = false;
-                        bool hitSelect = false;
-                        bool hitThis = false;
-                        foreach (Cell c in Row.Cells.SkipWhile(x => !x.IsSelected))
+                        //bool started = false;
+                        //bool hitSelect = false;
+                        //bool hitThis = false;
+                        //
+                        //foreach (Cell c in Row.Cells.SkipWhile(x => !x.IsSelected))
+                        //{
+                        //    if (!started && !c.IsSelected) started = true;
+                        //    
+                        //    if (c.IsSelected)
+                        //    {
+                        //        if (c == this) hitThis = true;
+                        //        if (started || (hitSelect && hitThis)) break;
+                        //        hitSelect = true;
+                        //        continue;
+                        //    }
+                        //    
+                        //    c.ToggleSelect(false);
+                        //}
+                        int start = -1;
+                        int end = -1;
+                        for (int i = 0; i < Row.Cells.Count; i++)
                         {
-                            if (!started && !c.IsSelected) started = true;
-
-                            if (c.IsSelected)
+                            if (start == -1 && Row.Cells[i].IsSelected)
                             {
-                                if (c == this) hitThis = true;
-                                if (started || (hitSelect && hitThis)) break;
-                                hitSelect = true;
-                                continue;
+                                start = i;
+                                end = i;
                             }
-
-                            c.ToggleSelect(false);
+                            else if (Row.Cells[i].IsSelected || Row.Cells[i] == this)
+                            {
+                                end = i;
+                            }
                         }
+                        // have to set this otherwise it will get flipped by SelectRange.
+                        IsSelected = false;
+
+                        SelectedCells.SelectRange(start, end, Row);
+
+                        return;
                     }
                     else
                     { // single select : deselect others
@@ -275,16 +296,18 @@ namespace Pronome.Editor
             public List<Cell> Cells = new List<Cell>();
             public Cell FirstCell;
             public Cell LastCell;
-            public double Duration;
-            public double Position;
+            //public int EndIndex;
+            //public int StartIndex;
+            //public double Position;
+            //public double Duration;
 
             public void Clear()
             {
                 Cells.Clear();
                 FirstCell = null;
                 LastCell = null;
-                Duration = 0;
-                Position = 0;
+                //StartIndex = 0;
+                //EndIndex = 0;
             }
 
             /// <summary>
@@ -312,9 +335,12 @@ namespace Pronome.Editor
             {
                 DeselectAll();
 
-                for (int i = start; i <= end; i++)
+                if (row.Cells.Count > start && row.Cells.Count > end && start <= end)
                 {
-                    row.Cells[i].ToggleSelect(false);
+                    for (int i = start; i <= end; i++)
+                    {
+                        row.Cells[i].ToggleSelect(false);
+                    }
                 }
 
                 EditorWindow.Instance.UpdateUiForSelectedCell();

@@ -554,9 +554,11 @@ namespace Pronome.Editor
         /// <summary>
         /// Update the beat code for this row
         /// </summary>
-        public void UpdateBeatCode()
+        public string UpdateBeatCode()
         {
             BeatCode = Stringify();
+            BeatCodeIsCurrent = true;
+            return BeatCode;
         }
 
         /// <summary>
@@ -792,8 +794,8 @@ namespace Pronome.Editor
                 duration -= Cell.SelectedCells.Cells.Last().Duration;
 
                 // set postion and duration on Selection
-                Cell.SelectedCells.Duration = duration;
-                Cell.SelectedCells.Position = positionBpm;
+                //Cell.SelectedCells.Duration = duration;
+                //Cell.SelectedCells.Position = positionBpm;
 
                 Rectangle sizer = EditorWindow.Instance.GridSizer;
                 // set grid cell size

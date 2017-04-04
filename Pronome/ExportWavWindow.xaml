@@ -40,11 +40,12 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
+                <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Button Name="cancelButton" Click="cancelButton_Click" Grid.Column="0" Padding="8, 4"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">Cancel</Button>
             <Button Name="okButton" Click="okButton_Click" Grid.Column="1" IsDefault="True" Padding="8, 4"
                     HorizontalAlignment="Center" VerticalAlignment="Center">OK</Button>
+            <Button Name="cancelButton" Click="cancelButton_Click" Grid.Column="2" Padding="8, 4"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">Cancel</Button>
         </Grid>
     </Grid>
 </Window>

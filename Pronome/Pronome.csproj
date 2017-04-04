@@ -96,8 +96,11 @@
     <Compile Include="Classes\Editor\Action\AddRepeatGroup.cs" />
     <Compile Include="Classes\Editor\Cell.cs" />
     <Compile Include="Classes\Editor\Action\CellDuration.cs" />
+    <Compile Include="Classes\Editor\Action\EditRepeatGroup.cs" />
     <Compile Include="Classes\Editor\Group.cs" />
     <Compile Include="Classes\Editor\Action\RemoveCells.cs" />
+    <Compile Include="Classes\Editor\Action\RemoveRepeatGroup.cs" />
+    <Compile Include="Classes\Editor\GroupCommandHelper.cs" />
     <Compile Include="Classes\Editor\RepeatGroupDialog.xaml.cs">
       <DependentUpon>RepeatGroupDialog.xaml</DependentUpon>
     </Compile>

@@ -143,6 +143,7 @@
             <Setter Property="UndoLimit" Value="0"/>
         </Style>
 
+        <RoutedCommand x:Key="deselectAll"/>
     </Window.Resources>
 
     <Window.CommandBindings>
@@ -152,6 +153,8 @@
         <CommandBinding Command="self:Commands.CreateRepeatGroup" CanExecute="CreateRepeatGroup_CanExecute" Executed="CreateRepeatGroup_Executed"/>
         <CommandBinding Command="self:Commands.RemoveRepeatGroup" CanExecute="RemoveRepeatGroup_CanExecute" Executed="RemoveRepeatGroup_Executed"/>
         <CommandBinding Command="self:Commands.EditRepeatGroup" CanExecute="EditRepeatGroup_CanExecute" Executed="EditRepeatGroup_Executed"/>
+        <CommandBinding Command="{StaticResource deselectAll}" CanExecute="Deselect_CanExecute" Executed="Deselect_Executed"/>
+        <CommandBinding Command="self:Commands.CreateMultGroup" CanExecute="CreateMultGroup_CanExecute" Executed="CreateMultGroup_Executed"/>
     </Window.CommandBindings>
 
     <DockPanel>
@@ -162,7 +165,7 @@
                 <MenuItem Header="Redo" InputGestureText="Ctrl+Y" Command="Redo" x:Name="redoMenuItem"/>
             </MenuItem>
             <MenuItem Header="Selection">
-                <MenuItem Header="Deselect All"/>
+                <MenuItem Header="Deselect All" Command="{StaticResource deselectAll}"/>
                 <MenuItem Header="Repeat Group...">
                     <MenuItem Header="Create" Command="self:Commands.CreateRepeatGroup"/>
                     <MenuItem Header="Remove" Command="self:Commands.RemoveRepeatGroup"/>
