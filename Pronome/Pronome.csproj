@@ -94,6 +94,7 @@
     <Compile Include="Classes\Editor\Action.cs" />
     <Compile Include="Classes\Editor\Action\AddRemoveCell.cs" />
     <Compile Include="Classes\Editor\Action\AddRepeatGroup.cs" />
+    <Compile Include="Classes\Editor\Action\AddMultGroup.cs" />
     <Compile Include="Classes\Editor\Cell.cs" />
     <Compile Include="Classes\Editor\Action\CellDuration.cs" />
     <Compile Include="Classes\Editor\Action\EditRepeatGroup.cs" />
@@ -101,6 +102,9 @@
     <Compile Include="Classes\Editor\Action\RemoveCells.cs" />
     <Compile Include="Classes\Editor\Action\RemoveRepeatGroup.cs" />
     <Compile Include="Classes\Editor\GroupCommandHelper.cs" />
+    <Compile Include="Classes\Editor\MultGroupDialog.xaml.cs">
+      <DependentUpon>MultGroupDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Classes\Editor\RepeatGroupDialog.xaml.cs">
       <DependentUpon>RepeatGroupDialog.xaml</DependentUpon>
     </Compile>
@@ -112,6 +116,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="BounceWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Classes\Editor\MultGroupDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

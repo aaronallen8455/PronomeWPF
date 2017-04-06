@@ -11,8 +11,14 @@
 
         protected override void Transformation()
         {
-            Group.Cells.First.Value.RepeatGroups.Remove(Group);
-            Group.Cells.Last.Value.RepeatGroups.Remove(Group);
+            foreach (Cell c in Group.Cells)
+            {
+                c.RepeatGroups.Remove(Group);
+            }
+            //Group.Cells.First.Value.RepeatGroups.Remove(Group);
+            //Group.Cells.Last.Value.RepeatGroups.Remove(Group);
+
+            Group = null;
         }
     }
 }

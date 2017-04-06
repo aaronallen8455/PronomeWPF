@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Shapes;
-using System.Linq;
 
 namespace Pronome.Editor
 {
@@ -54,76 +53,64 @@ namespace Pronome.Editor
         }
     }
 
-    public class AddMultGroup : AbstractAction, IEditorAction
+    public class AddMultGroup : AbstractBeatCodeAction
     {
         protected MultGroup Group;
 
-        public string HeaderText { get => "Create Multiply Group"; }
-
-        public AddMultGroup(Cell[] cells, string factor)
+        public AddMultGroup(Cell[] cells, string factor) : base(cells[0].Row, "Create Multiply Group")
         {
-            Row = cells[0].Row;
-
             Group = new MultGroup();
-            Group.Factor = factor;
+            Group.Row = cells[0].Row;
             Group.Cells = new LinkedList<Cell>(cells);
-            Group.Position = cells[0].Position;
-            Group.Duration = cells.Select(x => x.Duration).Sum();
+            Group.Factor = factor;
         }
 
-        public void Redo()
+        protected override void Transformation()
         {
-            Row.MultGroups.AddLast(Group);
-            // add to main canvas or a rep canvas
-            if (Group.Cells.First.Value.RepeatGroups.Count > 0)
-            {
-                Group.Cells.First.Value.RepeatGroups.Last.Value.Canvas.Children.Add(Group.Rectangle);
-                Group.HostCanvas = Group.Cells.First.Value.RepeatGroups.Last.Value.Canvas;
-            }
-            else
-            {
-                Row.Canvas.Children.Add(Group.Rectangle);
-                Group.HostCanvas = Row.Canvas;
-            }
+            Group.Cells.First.Value.MultGroups.AddLast(Group);
+            Group.Cells.Last.Value.MultGroups.AddLast(Group);
 
-            // add the group to all cell's lists in the correct order
-            Cell cell = Group.Cells.First.Value;
-            LinkedListNode<MultGroup> before = null;
-            if (cell.MultGroups.Any())
-            {
-                before = cell.MultGroups.Find(cell.MultGroups.Where(x => x.Position < Group.Position).Last());
+            Group = null;
+        }
+    }
 
-            }
-            // add cells
-            foreach (Cell c in Group.Cells)
-            {
-                if (before != null)
-                {
-                    c.MultGroups.AddAfter(before, Group);
-                }
-                else
-                {
-                    c.MultGroups.AddLast(Group);
-                }
-            }
+    public class EditMultGroup : AbstractBeatCodeAction
+    {
+        protected MultGroup Group;
 
-            EditorWindow.Instance.SetChangesApplied(false);
-            RedrawReferencers();
+        protected string Factor;
+
+        public EditMultGroup(MultGroup group, string factor) : base(group.Row, "Edit Multiply Group")
+        {
+            Group = group;
+            Factor = factor;
         }
 
-        public void Undo()
+        protected override void Transformation()
         {
-            Row.MultGroups.Remove(Group);
+            Group.Factor = Factor;
 
-            Group.HostCanvas.Children.Remove(Group.Rectangle);
+            Group = null;
+        }
+    }
 
+    public class RemoveMultGroup : AbstractBeatCodeAction
+    {
+        protected MultGroup Group;
+
+        public RemoveMultGroup(MultGroup group) : base(group.Row, "Remove Multiply Group")
+        {
+            Group = group;
+        }
+
+        protected override void Transformation()
+        {
             foreach (Cell c in Group.Cells)
             {
                 c.MultGroups.Remove(Group);
             }
 
-            EditorWindow.Instance.SetChangesApplied(false);
-            RedrawReferencers();
+            Group = null;
         }
     }
 

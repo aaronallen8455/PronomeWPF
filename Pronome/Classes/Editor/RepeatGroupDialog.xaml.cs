@@ -38,11 +38,15 @@ namespace Pronome.Classes.Editor
                 Times = input;
                 // Hijack this property for validation
                 ele.IsInactiveSelectionHighlightEnabled = false;
+                // enable OK
+                okButton.IsEnabled = true;
             }
             else
             {
                 ele.IsInactiveSelectionHighlightEnabled = true;
                 //ele.BorderBrush = Brushes.Red;
+                // disable OK
+                okButton.IsEnabled = false;
             }
         }
 
@@ -60,10 +64,14 @@ namespace Pronome.Classes.Editor
             {
                 LastTermModifier = input;
                 ele.IsInactiveSelectionHighlightEnabled = false;
+                // enable ok button
+                okButton.IsEnabled = true;
             }
             else
             {
                 ele.IsInactiveSelectionHighlightEnabled = true;
+                // disable Ok button
+                okButton.IsEnabled = false;
             }
         }
 

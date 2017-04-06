@@ -953,6 +953,10 @@ namespace Pronome.Editor
 
             if (cell != null)
             {
+                AddCell action = new AddCell(cell);
+
+                action.Index = Cells.Count;
+
                 cell.Value = BeatCell.SimplifyValue(EditorWindow.CurrentIncrement);
                 cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
                 // set new duration of previous cell
@@ -966,11 +970,11 @@ namespace Pronome.Editor
                 {
                     Canvas.Children.Add(cell.Rectangle);
                 }
-
+                
                 // find the value string
                 StringBuilder val = new StringBuilder();
                 val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
-
+                
                 HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
                 foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell))
                 {
@@ -980,7 +984,7 @@ namespace Pronome.Editor
                     foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
                     {
                         if (repGroups.Contains(rg)) continue;
-
+                
                         foreach (Cell ce in rg.Cells)
                         {
                             val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
@@ -989,7 +993,7 @@ namespace Pronome.Editor
                         {
                             ltmTimes[kv.Key] = kv.Value * rg.Times;
                         }
-
+                
                         repGroups.Add(rg);
                         ltmTimes.Add(rg, 1);
                     }
@@ -998,7 +1002,7 @@ namespace Pronome.Editor
                         val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
                     }
                 }
-
+                
                 string oldPrevCellValue = below.Value;
                 // if last cell is in a rep group, we need to increase the LTM for that group
                 if (below.RepeatGroups.Any())
@@ -1014,16 +1018,16 @@ namespace Pronome.Editor
                     val.Append("+0").Append(below.Value);
                     below.Value = BeatCell.SimplifyValue(val.ToString());
                 }
-
+                
                 Cells.Add(cell);
                 cell.Duration = increment;
                 // set new duration of this row
                 Duration = cell.Position + cell.Duration;
                 SetBackground(Duration);
-
+                
                 // create the action
-                AddCell action = new AddCell(cell, below, oldPrevCellValue);
-
+                //AddCell action = new AddCell(cell, below, oldPrevCellValue);
+                
                 return action;
             }
 
@@ -1058,111 +1062,117 @@ namespace Pronome.Editor
 
             if (cell != null)
             {
+                AddCell action = new AddCell(cell);
+
                 int index = Cells.InsertSorted(cell);
                 if (index > -1)
                 {
-                    Cell below = Cells[index - 1];
-
-                    // is new cell placed in the LTM zone of a rep group?
-                    RepeatGroup repWithLtmToMod = null;
-                    foreach (RepeatGroup rg in below.RepeatGroups.Where(
-                        x => x.Cells.Last.Value == below && position + increment * GridProx > below.Position + below.Duration))
-                    {
-                        repWithLtmToMod = rg;
-                    }
-
-                    double duration;
-
-                    if (repWithLtmToMod == null)
-                    {
-                        duration = below.Position + below.Duration - cell.Position;
-                        // set duration of preceding cell.
-                        below.SetDurationDirectly(below.Duration - duration);
-                    }
-                    else
-                    {
-                        // get duration as a slice of the LTM of preceding group
-                        duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
-                            * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
-                            - cell.Position;
-                    }
-                    
-                    cell.SetDurationDirectly(duration);
-
-                    // add to groups and add it's rectangle to appropriate canvas
-                    if (Group.AddToGroups(cell, below))
-                    {
-                        cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
-                    }
-                    else
-                    {
-                        Canvas.Children.Add(cell.Rectangle);
-                    }
-
-                    // determine new value for the below cell
-                    StringBuilder val = new StringBuilder();
-                    // take and the distance from the end of the selection
-                    val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
-                    // subtract the values up to the previous cell
-                    HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
-                    foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != below))
-                    {
-                        // subtract each value from the total
-                        val.Append("+0").Append(BeatCell.Invert(c.Value));
-                        // account for rep group repititions.
-                        Dictionary<RepeatGroup, int> ltmTimes = new Dictionary<RepeatGroup, int>();
-                        foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
-                        {
-                            if (repGroups.Contains(rg)) continue;
-                            // don't include a rep group if the end point is included in it.
-                            if (cell.RepeatGroups.Contains(rg))
-                            {
-                                repGroups.Add(rg);
-                                continue;
-                            }
-
-                            foreach (Cell ce in rg.Cells)
-                            {
-                                val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
-                            }
-                            // get times to count LTMs for each rg
-                            foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
-                            {
-                                ltmTimes[kv.Key] = kv.Value * rg.Times;
-                            }
-
-                            ltmTimes.Add(rg, 1);
-                            repGroups.Add(rg);
-                        }
-                        // subtract the LTMs
-                        foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
-                        {
-                            val.Append("+0").Append(
-                                BeatCell.MultiplyTerms(
-                                    BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
-                        }
-                    }
-
-                    // get new cells value by subtracting old value of below cell by new value.
-                    string newVal = BeatCell.SimplifyValue(val.ToString());
-                    cell.Value = BeatCell.Subtract(below.Value, newVal);
-                    string oldValue = below.Value;
-
-                    if (repWithLtmToMod == null)
-                    {
-                        // changing a cell value
-                        below.Value = newVal;
-                    }
-                    else
-                    {
-                        // changing a LTM value
-                        repWithLtmToMod.LastTermModifier = BeatCell.Subtract(repWithLtmToMod.LastTermModifier, newVal);
-                    }
-
-                    // create the action
-                    AddCell action = new AddCell(cell, below, oldValue);
-
+                    action.Index = index;
+                    action.Redo();
                     return action;
+                    //Cell below = Cells[index - 1];
+                    //
+                    //// is new cell placed in the LTM zone of a rep group?
+                    //RepeatGroup repWithLtmToMod = null;
+                    //foreach (RepeatGroup rg in below.RepeatGroups.Where(
+                    //    x => x.Cells.Last.Value == below && position + increment * GridProx > below.Position + below.Duration))
+                    //{
+                    //    repWithLtmToMod = rg;
+                    //}
+                    //
+                    //double duration;
+                    //
+                    //if (repWithLtmToMod == null)
+                    //{
+                    //    duration = below.Position + below.Duration - cell.Position;
+                    //    // set duration of preceding cell.
+                    //    below.SetDurationDirectly(below.Duration - duration);
+                    //}
+                    //else
+                    //{
+                    //    // get duration as a slice of the LTM of preceding group
+                    //    duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
+                    //        * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
+                    //        - cell.Position;
+                    //}
+                    //
+                    //cell.SetDurationDirectly(duration);
+                    //
+                    //// add to groups and add it's rectangle to appropriate canvas
+                    //if (Group.AddToGroups(cell, below))
+                    //{
+                    //    cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
+                    //}
+                    //else
+                    //{
+                    //    Canvas.Children.Add(cell.Rectangle);
+                    //}
+                    //
+                    //// determine new value for the below cell
+                    //StringBuilder val = new StringBuilder();
+                    //// take and the distance from the end of the selection
+                    //val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
+                    //// subtract the values up to the previous cell
+                    //HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
+                    //foreach (Cell c in Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != below))
+                    //{
+                    //    // subtract each value from the total
+                    //    val.Append("+0").Append(BeatCell.Invert(c.Value));
+                    //    // account for rep group repititions.
+                    //    Dictionary<RepeatGroup, int> ltmTimes = new Dictionary<RepeatGroup, int>();
+                    //    foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
+                    //    {
+                    //        if (repGroups.Contains(rg)) continue;
+                    //        // don't include a rep group if the end point is included in it.
+                    //        if (cell.RepeatGroups.Contains(rg))
+                    //        {
+                    //            repGroups.Add(rg);
+                    //            continue;
+                    //        }
+                    //
+                    //        foreach (Cell ce in rg.Cells)
+                    //        {
+                    //            val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
+                    //        }
+                    //        // get times to count LTMs for each rg
+                    //        foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
+                    //        {
+                    //            ltmTimes[kv.Key] = kv.Value * rg.Times;
+                    //        }
+                    //
+                    //        ltmTimes.Add(rg, 1);
+                    //        repGroups.Add(rg);
+                    //    }
+                    //    // subtract the LTMs
+                    //    foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
+                    //    {
+                    //        val.Append("+0").Append(
+                    //            BeatCell.MultiplyTerms(
+                    //                BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
+                    //    }
+                    //}
+                    //
+                    //// get new cells value by subtracting old value of below cell by new value.
+                    //string newVal = BeatCell.SimplifyValue(val.ToString());
+                    //cell.Value = BeatCell.Subtract(below.Value, newVal);
+                    //string oldValue = below.Value;
+                    //
+                    //if (repWithLtmToMod == null)
+                    //{
+                    //    // changing a cell value
+                    //    below.Value = newVal;
+                    //}
+                    //else
+                    //{
+                    //    // changing a LTM value
+                    //    repWithLtmToMod.LastTermModifier = BeatCell.Subtract(repWithLtmToMod.LastTermModifier, newVal);
+                    //}
+                    //
+                    //// create the action
+                    ////AddCell action = new AddCell(cell, below, oldValue);
+                    //
+                    //
+                    //return action;
                 }
             }
 
@@ -1190,60 +1200,64 @@ namespace Pronome.Editor
             }
             if (cell != null)
             {
+                AddCell action = new AddCell(cell);
+                action.Index = 0;
+                action.Redo();
+                return action;
                 // get the value string
-                StringBuilder val = new StringBuilder();
-                // value of grid lines, the 
-                val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
-
-                HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
-                foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
-                {
-                    val.Append("+0").Append(BeatCell.Invert(c.Value));
-                    // deal with repeat groups
-                    Dictionary<RepeatGroup, int> lcmTimes = new Dictionary<RepeatGroup, int>();
-                    foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
-                    {
-                        if (repGroups.Contains(rg)) continue;
-                        // if the selected cell is in this rep group, we don't want to include repetitions
-                        if (Cell.SelectedCells.FirstCell.RepeatGroups.Contains(rg))
-                        {
-                            repGroups.Add(rg);
-                            continue;
-                        }
-                        foreach (Cell ce in rg.Cells)
-                        {
-                            val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
-                        }
-
-                        foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
-                        {
-                            lcmTimes[kv.Key] = kv.Value * rg.Times;
-                        }
-                        repGroups.Add(rg);
-                        lcmTimes.Add(rg, 1);
-                    }
-                    // subtract the LCMs
-                    foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
-                    {
-                        val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
-                    }
-                }
-                cell.Value = BeatCell.SimplifyValue(val.ToString());
-
-                Cells.Insert(0, cell);
-                //Cells.AddFirst(cell);
-                cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
-                cell.Position = 0;
-
-                // set new duration of this row
-                Duration += cell.Duration;
-
-                Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
-                OffsetValue = BeatCell.Subtract(OffsetValue, cell.Value);
-                Canvas.Children.Add(cell.Rectangle);
-
-                // add undo action
-                return new AddCell(cell);
+                //StringBuilder val = new StringBuilder();
+                //// value of grid lines, the 
+                //val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
+                //
+                //HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
+                //foreach (Cell c in Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                //{
+                //    val.Append("+0").Append(BeatCell.Invert(c.Value));
+                //    // deal with repeat groups
+                //    Dictionary<RepeatGroup, int> lcmTimes = new Dictionary<RepeatGroup, int>();
+                //    foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
+                //    {
+                //        if (repGroups.Contains(rg)) continue;
+                //        // if the selected cell is in this rep group, we don't want to include repetitions
+                //        if (Cell.SelectedCells.FirstCell.RepeatGroups.Contains(rg))
+                //        {
+                //            repGroups.Add(rg);
+                //            continue;
+                //        }
+                //        foreach (Cell ce in rg.Cells)
+                //        {
+                //            val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
+                //        }
+                //
+                //        foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
+                //        {
+                //            lcmTimes[kv.Key] = kv.Value * rg.Times;
+                //        }
+                //        repGroups.Add(rg);
+                //        lcmTimes.Add(rg, 1);
+                //    }
+                //    // subtract the LCMs
+                //    foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
+                //    {
+                //        val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
+                //    }
+                //}
+                //cell.Value = BeatCell.SimplifyValue(val.ToString());
+                //
+                //Cells.Insert(0, cell);
+                ////Cells.AddFirst(cell);
+                //cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
+                //cell.Position = 0;
+                //
+                //// set new duration of this row
+                //Duration += cell.Duration;
+                //
+                //Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
+                //OffsetValue = BeatCell.Subtract(OffsetValue, cell.Value);
+                //Canvas.Children.Add(cell.Rectangle);
+                //
+                //// add undo action
+                //return action;
             }
 
             return null;
@@ -1269,123 +1283,129 @@ namespace Pronome.Editor
 
             if (cell != null)
             {
+                AddCell action = new AddCell(cell);
+
                 cell.Position = Cell.SelectedCells.FirstCell.Position - div * increment;
                 int index = Cells.InsertSorted(cell);
                 if (index > -1)
                 {
-                    Cell below = Cells[index - 1];
-
-                    // find new duration of below cell
-                    //double newDur = Cells.SkipWhile(x => x != below)
-                    //    .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
-                    //    .Select(x => x.Position)
-                    //    .Sum() - div * increment;
-
-                    // see if the cell is being added to a rep group's LTM zone
-                    RepeatGroup repWithLtmToMod = null;
-                    foreach (RepeatGroup rg in below.RepeatGroups.Where(
-                        x => x.Cells.Last.Value == below && position + increment * GridProx > below.Position + below.Duration))
-                    {
-                        repWithLtmToMod = rg;
-                    }
-
-                    double duration;
-
-                    if (repWithLtmToMod == null)
-                    {
-                        duration = below.Position + below.Duration - cell.Position;
-                        below.SetDurationDirectly(below.Duration - duration);
-                        //newDur = cell.Position - below.Position;
-                    }
-                    else
-                    {
-                        // find slice of the LTM to use as duration
-                        duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
-                            * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
-                            - cell.Position;
-                    }
-
-                    //cell.SetDurationDirectly(below.Duration - newDur);
-                    //below.SetDurationDirectly(newDur);
-                    cell.SetDurationDirectly(duration);
-
-                    // add to groups and add rectangle to correct canvas
-                    if (Group.AddToGroups(cell, below))
-                    {
-                        cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
-                    }
-                    else
-                    {
-                        Canvas.Children.Add(cell.Rectangle);
-                    }
-
-                    // get new value string for below
-                    StringBuilder val = new StringBuilder();
-
-                    HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
-                    foreach (Cell c in Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
-                    {
-                        if (c == cell) continue; // don't include the new cell
-                        // add the cells value
-                        val.Append(c.Value).Append('+');
-                        // we need to track how many times to multiply each rep group's LTM
-                        Dictionary<RepeatGroup, int> ltmFactors = new Dictionary<RepeatGroup, int>();
-                        // if there's a rep group, add the repeated sections
-                        // what order are rg's in? reverse
-                        foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
-                        {
-                            if (repGroups.Contains(rg)) continue;
-                            // don't count reps for groups that contain the selection
-                            if (Cell.SelectedCells.FirstCell.RepeatGroups.Contains(rg))
-                            {
-                                repGroups.Add(rg);
-                                continue;
-                            }
-                            foreach (Cell ce in rg.Cells)
-                            {
-                                val.Append('0').Append(
-                                    BeatCell.MultiplyTerms(ce.Value, rg.Times - 1))
-                                    .Append('+');
-                            }
-                            // increase multiplier of LTMs
-                            foreach (KeyValuePair<RepeatGroup, int> kv in ltmFactors)
-                            {
-                                ltmFactors[kv.Key] = kv.Value * rg.Times;
-                            }
-                            ltmFactors.Add(rg, 1);
-                            // don't add ghost reps more than once
-                            repGroups.Add(rg);
-                        }
-                        // add in all the LTMs from rep groups
-                        foreach (KeyValuePair<RepeatGroup, int> kv in ltmFactors)
-                        {
-                            val.Append('0')
-                                .Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value))
-                                .Append('+');
-                        }
-                    }
-
-                    val.Append('0');
-                    val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(EditorWindow.CurrentIncrement), div));
-                    cell.Value = BeatCell.Subtract(below.Value, val.ToString());
-                    //cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
-                    string oldValue;
-
-                    if (repWithLtmToMod == null)
-                    {
-                        oldValue = below.Value;
-                        below.Value = BeatCell.SimplifyValue(val.ToString());
-                    }
-                    else
-                    {
-                        oldValue = repWithLtmToMod.LastTermModifier;
-                        repWithLtmToMod.LastTermModifier = BeatCell.Subtract(
-                            repWithLtmToMod.LastTermModifier, 
-                            BeatCell.SimplifyValue(val.ToString()));
-                    }
-
-                    // add undo action
-                    return new AddCell(cell, below, oldValue);
+                    action.Index = index;
+                    action.Redo();
+                    return action;
+                    //Cell below = Cells[index - 1];
+                    //
+                    //// find new duration of below cell
+                    ////double newDur = Cells.SkipWhile(x => x != below)
+                    ////    .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
+                    ////    .Select(x => x.Position)
+                    ////    .Sum() - div * increment;
+                    //
+                    //// see if the cell is being added to a rep group's LTM zone
+                    //RepeatGroup repWithLtmToMod = null;
+                    //foreach (RepeatGroup rg in below.RepeatGroups.Where(
+                    //    x => x.Cells.Last.Value == below && position + increment * GridProx > below.Position + below.Duration))
+                    //{
+                    //    repWithLtmToMod = rg;
+                    //}
+                    //
+                    //double duration;
+                    //
+                    //if (repWithLtmToMod == null)
+                    //{
+                    //    duration = below.Position + below.Duration - cell.Position;
+                    //    below.SetDurationDirectly(below.Duration - duration);
+                    //    //newDur = cell.Position - below.Position;
+                    //}
+                    //else
+                    //{
+                    //    // find slice of the LTM to use as duration
+                    //    duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
+                    //        * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
+                    //        - cell.Position;
+                    //}
+                    //
+                    ////cell.SetDurationDirectly(below.Duration - newDur);
+                    ////below.SetDurationDirectly(newDur);
+                    //cell.SetDurationDirectly(duration);
+                    //
+                    //// add to groups and add rectangle to correct canvas
+                    //if (Group.AddToGroups(cell, below))
+                    //{
+                    //    cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
+                    //}
+                    //else
+                    //{
+                    //    Canvas.Children.Add(cell.Rectangle);
+                    //}
+                    //
+                    //// get new value string for below
+                    //StringBuilder val = new StringBuilder();
+                    //
+                    //HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
+                    //foreach (Cell c in Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                    //{
+                    //    if (c == cell) continue; // don't include the new cell
+                    //    // add the cells value
+                    //    val.Append(c.Value).Append('+');
+                    //    // we need to track how many times to multiply each rep group's LTM
+                    //    Dictionary<RepeatGroup, int> ltmFactors = new Dictionary<RepeatGroup, int>();
+                    //    // if there's a rep group, add the repeated sections
+                    //    // what order are rg's in? reverse
+                    //    foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
+                    //    {
+                    //        if (repGroups.Contains(rg)) continue;
+                    //        // don't count reps for groups that contain the selection
+                    //        if (Cell.SelectedCells.FirstCell.RepeatGroups.Contains(rg))
+                    //        {
+                    //            repGroups.Add(rg);
+                    //            continue;
+                    //        }
+                    //        foreach (Cell ce in rg.Cells)
+                    //        {
+                    //            val.Append('0').Append(
+                    //                BeatCell.MultiplyTerms(ce.Value, rg.Times - 1))
+                    //                .Append('+');
+                    //        }
+                    //        // increase multiplier of LTMs
+                    //        foreach (KeyValuePair<RepeatGroup, int> kv in ltmFactors)
+                    //        {
+                    //            ltmFactors[kv.Key] = kv.Value * rg.Times;
+                    //        }
+                    //        ltmFactors.Add(rg, 1);
+                    //        // don't add ghost reps more than once
+                    //        repGroups.Add(rg);
+                    //    }
+                    //    // add in all the LTMs from rep groups
+                    //    foreach (KeyValuePair<RepeatGroup, int> kv in ltmFactors)
+                    //    {
+                    //        val.Append('0')
+                    //            .Append(BeatCell.MultiplyTerms(kv.Key.LastTermModifier, kv.Value))
+                    //            .Append('+');
+                    //    }
+                    //}
+                    //
+                    //val.Append('0');
+                    //val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(EditorWindow.CurrentIncrement), div));
+                    //cell.Value = BeatCell.Subtract(below.Value, val.ToString());
+                    ////cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
+                    //string oldValue;
+                    //
+                    //if (repWithLtmToMod == null)
+                    //{
+                    //    oldValue = below.Value;
+                    //    below.Value = BeatCell.SimplifyValue(val.ToString());
+                    //}
+                    //else
+                    //{
+                    //    oldValue = repWithLtmToMod.LastTermModifier;
+                    //    repWithLtmToMod.LastTermModifier = BeatCell.Subtract(
+                    //        repWithLtmToMod.LastTermModifier, 
+                    //        BeatCell.SimplifyValue(val.ToString()));
+                    //}
+                    //
+                    //// add undo action
+                    ////return new AddCell(cell, below, oldValue);
+                    //return action;
                 }
             }
 

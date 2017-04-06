@@ -152,9 +152,11 @@
         <CommandBinding Command="self:Commands.DeleteSelection" CanExecute="DeleteSelection_CanExecute" Executed="DeleteSelection_Executed" />
         <CommandBinding Command="self:Commands.CreateRepeatGroup" CanExecute="CreateRepeatGroup_CanExecute" Executed="CreateRepeatGroup_Executed"/>
         <CommandBinding Command="self:Commands.RemoveRepeatGroup" CanExecute="RemoveRepeatGroup_CanExecute" Executed="RemoveRepeatGroup_Executed"/>
-        <CommandBinding Command="self:Commands.EditRepeatGroup" CanExecute="EditRepeatGroup_CanExecute" Executed="EditRepeatGroup_Executed"/>
+        <CommandBinding Command="self:Commands.EditRepeatGroup" CanExecute="RemoveRepeatGroup_CanExecute" Executed="EditRepeatGroup_Executed"/>
         <CommandBinding Command="{StaticResource deselectAll}" CanExecute="Deselect_CanExecute" Executed="Deselect_Executed"/>
         <CommandBinding Command="self:Commands.CreateMultGroup" CanExecute="CreateMultGroup_CanExecute" Executed="CreateMultGroup_Executed"/>
+        <CommandBinding Command="self:Commands.RemoveMultGroup" CanExecute="RemoveMultGroup_CanExecute" Executed="RemoveMultGroup_Executed"/>
+        <CommandBinding Command="self:Commands.EditMultGroup" CanExecute="RemoveMultGroup_CanExecute" Executed="EditMultGroup_Executed"/>
     </Window.CommandBindings>
 
     <DockPanel>
