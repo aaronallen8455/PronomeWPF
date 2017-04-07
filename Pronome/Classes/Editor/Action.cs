@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Shapes;
+using System.Linq;
 
 namespace Pronome.Editor
 {
@@ -53,74 +54,154 @@ namespace Pronome.Editor
         }
     }
 
-    public class AddMultGroup : AbstractBeatCodeAction
+    public class MoveCells : AbstractBeatCodeAction
     {
-        protected MultGroup Group;
+        protected Cell[] Cells;
 
-        public AddMultGroup(Cell[] cells, string factor) : base(cells[0].Row, "Create Multiply Group")
+        /// <summary>
+        /// True if cells are being shifted to the right, otherwise shift left.
+        /// </summary>
+        protected bool ShiftingRight;
+
+        protected string Increment;
+
+        protected int Times;
+
+        public MoveCells(Cell[] cells, string increment, int times) : base(cells[0].Row, cells.Length > 1 ? "Move Cells" : "Move Cell")
         {
-            Group = new MultGroup();
-            Group.Row = cells[0].Row;
-            Group.Cells = new LinkedList<Cell>(cells);
-            Group.Factor = factor;
+            Cells = cells;
+            ShiftingRight = times > 0;
+            Increment = increment;
+            Times = times;
         }
 
         protected override void Transformation()
         {
-            Group.Cells.First.Value.MultGroups.AddLast(Group);
-            Group.Cells.Last.Value.MultGroups.AddLast(Group);
+            string value = BeatCell.MultiplyTerms(Increment, Times);
 
-            Group = null;
-        }
-    }
+            Cell last = Cells[Cells.Length - 1];
 
-    public class EditMultGroup : AbstractBeatCodeAction
-    {
-        protected MultGroup Group;
-
-        protected string Factor;
-
-        public EditMultGroup(MultGroup group, string factor) : base(group.Row, "Edit Multiply Group")
-        {
-            Group = group;
-            Factor = factor;
-        }
-
-        protected override void Transformation()
-        {
-            Group.Factor = Factor;
-
-            Group = null;
-        }
-    }
-
-    public class RemoveMultGroup : AbstractBeatCodeAction
-    {
-        protected MultGroup Group;
-
-        public RemoveMultGroup(MultGroup group) : base(group.Row, "Remove Multiply Group")
-        {
-            Group = group;
-        }
-
-        protected override void Transformation()
-        {
-            foreach (Cell c in Group.Cells)
+            if (Row.Cells[0] == Cells[0])
             {
-                c.MultGroups.Remove(Group);
+                // selection is at start of row, offset will be changed
+                if (ShiftingRight)
+                {
+                    // add to offset
+                    if (string.IsNullOrEmpty(Row.OffsetValue))
+                    {
+                        Row.OffsetValue = "0";
+                    }
+                    Row.OffsetValue = BeatCell.Add(Row.OffsetValue, value);
+                    // subtract from last cell's value if not last cell of row
+                    if (last != Row.Cells[Row.Cells.Count - 1])
+                    {
+                        last.Value = BeatCell.Subtract(last.Value, value);
+                    }
+                }
+                else
+                {
+                    // subtract from offset
+                    Row.OffsetValue = BeatCell.Subtract(Row.OffsetValue, value);
+                    // add to last cell's value if not last cell of row
+                    if (last != Row.Cells[Row.Cells.Count - 1])
+                    {
+                        last.Value = BeatCell.Add(last.Value, value);
+                    }
+                }
+            }
+            else
+            {
+                Cell below = Row.Cells[Row.Cells.IndexOf(Cells[0])];
+                // if below is last cell of a repeat group, we instead operate on that group's LTM
+                RepeatGroup leftGroup = below.RepeatGroups.Where(x => x.Cells.Last.Value == below).FirstOrDefault();
+                bool useLeftGroup = leftGroup != default(RepeatGroup);
+                // if last cell in selection is last of a repeat group, operate on it's LTM
+                RepeatGroup rightGroup = last.RepeatGroups.Where(x => x.Cells.Last.Value == last).FirstOrDefault();
+                bool useRightGroup = rightGroup != default(RepeatGroup);
+
+                if (ShiftingRight)
+                {
+                    if (useLeftGroup)
+                    {
+                        // add to LTM
+                        leftGroup.LastTermModifier = BeatCell.Add(leftGroup.LastTermModifier, value);
+                    }
+                    else
+                    {
+                        // add to below cell's value
+                        below.Value = BeatCell.Add(below.Value, value);
+                    }
+                    // subtract from last cell's value if not last of row
+                    if (last != Row.Cells[Row.Cells.Count - 1])
+                    {
+                        if (useRightGroup)
+                        {
+                            // subtract from LTM
+                            rightGroup.LastTermModifier = BeatCell.Subtract(rightGroup.LastTermModifier, value);
+                        }
+                        else
+                        {
+                            last.Value = BeatCell.Subtract(last.Value, value);
+                        }
+                    }
+                }
+                else
+                {
+                    if (useLeftGroup)
+                    {
+                        // subtract from LTM
+                        leftGroup.LastTermModifier = BeatCell.Subtract(leftGroup.LastTermModifier, value);
+                    }
+                    else
+                    {
+                        // subtract from below cell's value
+                        below.Value = BeatCell.Subtract(below.Value, value);
+                    }
+                    // add to last cell's value if not last in row
+                    if (last != Row.Cells[Row.Cells.Count - 1])
+                    {
+                        if (useRightGroup)
+                        {
+                            rightGroup.LastTermModifier = BeatCell.Add(rightGroup.LastTermModifier, value);
+                        }
+                        else
+                        {
+                            last.Value = BeatCell.Add(last.Value, value);
+                        }
+                    }
+                }
             }
 
-            Group = null;
+            Cells = null;
         }
     }
 
     public abstract class AbstractBeatCodeAction : AbstractAction, IEditorAction
     {
+        /// <summary>
+        /// The row's beat code before transformation
+        /// </summary>
         protected string BeforeBeatCode;
 
+        /// <summary>
+        /// The row's beat code after transformation
+        /// </summary>
         protected string AfterBeatCode;
 
+        /// <summary>
+        /// The row's offset before transformation, in beat code
+        /// </summary>
+        protected string BeforeOffset;
+
+        /// <summary>
+        /// The row's offset after transformation, in beat code
+        /// </summary>
+        protected string AfterOffset;
+
         protected string _headerText;
+        /// <summary>
+        /// Used to display action name in undo menu
+        /// </summary>
         public string HeaderText { get => _headerText; }
 
         /// <summary>
@@ -137,6 +218,7 @@ namespace Pronome.Editor
                 row.UpdateBeatCode();
             }
             BeforeBeatCode = row.BeatCode;
+            BeforeOffset = row.OffsetValue;
             _headerText = headerText;
         }
 
@@ -157,10 +239,16 @@ namespace Pronome.Editor
                 Transformation();
 
                 AfterBeatCode = Row.Stringify();
+                AfterOffset = Row.OffsetValue;
             }
 
             Row.Reset();
             Row.FillFromBeatCode(AfterBeatCode);
+            if (BeforeOffset != AfterOffset)
+            {
+                Row.OffsetValue = AfterOffset;
+                Row.Offset = BeatCell.Parse(AfterOffset);
+            }
             EditorWindow.Instance.SetChangesApplied(false);
             RedrawReferencers();
 
@@ -183,6 +271,11 @@ namespace Pronome.Editor
 
             Row.Reset();
             Row.FillFromBeatCode(BeforeBeatCode);
+            if (BeforeOffset != AfterOffset)
+            {
+                Row.OffsetValue = BeforeOffset;
+                Row.Offset = BeatCell.Parse(BeforeOffset);
+            }
             EditorWindow.Instance.SetChangesApplied(false);
             RedrawReferencers();
 
@@ -223,6 +316,10 @@ namespace Pronome.Editor
             if (Count == 0)
             {
                 MenuItem.Header = Prefix;
+            }
+            else
+            {
+                MenuItem.Header = Prefix + " " + Peek().HeaderText;
             }
             return action;
         }

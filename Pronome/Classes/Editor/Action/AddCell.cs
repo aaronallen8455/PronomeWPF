@@ -9,7 +9,6 @@ namespace Pronome.Editor
 {
     public class AddCell : AbstractBeatCodeAction
     {
-        // TODO: Row stringify needs to account for the offset. Some add cell actions will change offset
         //protected Cell Cell;
         protected double ClickPosition;
 
@@ -179,7 +178,10 @@ namespace Pronome.Editor
                     }
                     foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
                     {
-                        val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
+                        if (!string.IsNullOrEmpty(kv.Key.LastTermModifier))
+                        {
+                            val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
+                        }
                     }
                 }
 
@@ -253,23 +255,23 @@ namespace Pronome.Editor
                         repWithLtmToMod = rg;
                     }
                     
-                    double duration;
+                    //double duration;
                     
-                    if (repWithLtmToMod == null)
-                    {
-                        duration = below.Position + below.Duration - cell.Position;
-                        // set duration of preceding cell.
-                        below.SetDurationDirectly(below.Duration - duration);
-                    }
-                    else
-                    {
-                        // get duration as a slice of the LTM of preceding group
-                        duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
-                            * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
-                            - cell.Position;
-                    }
+                    //if (repWithLtmToMod == null)
+                    //{
+                    //    duration = below.Position + below.Duration - cell.Position;
+                    //    // set duration of preceding cell.
+                    //    //below.SetDurationDirectly(below.Duration - duration);
+                    //}
+                    //else
+                    //{
+                    //    // get duration as a slice of the LTM of preceding group
+                    //    duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
+                    //        * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
+                    //        - cell.Position;
+                    //}
                     
-                    cell.SetDurationDirectly(duration);
+                    //cell.SetDurationDirectly(duration);
                     
                     //// add to groups and add it's rectangle to appropriate canvas
                     //if (Group.AddToGroups(cell, below))
@@ -419,9 +421,9 @@ namespace Pronome.Editor
                 // set new duration of this row
                 //Duration += cell.Duration;
                 
-                Row.Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
+                //Row.Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
                 Row.OffsetValue = BeatCell.Subtract(Row.OffsetValue, cell.Value);
-                Row.Canvas.Children.Add(cell.Rectangle);
+                //Row.Canvas.Children.Add(cell.Rectangle);
                 
                 // add undo action
             }
@@ -468,25 +470,25 @@ namespace Pronome.Editor
                         repWithLtmToMod = rg;
                     }
                     
-                    double duration;
-                    
-                    if (repWithLtmToMod == null)
-                    {
-                        duration = below.Position + below.Duration - cell.Position;
-                        below.SetDurationDirectly(below.Duration - duration);
-                        //newDur = cell.Position - below.Position;
-                    }
-                    else
-                    {
-                        // find slice of the LTM to use as duration
-                        duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
-                            * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
-                            - cell.Position;
-                    }
-                    
-                    //cell.SetDurationDirectly(below.Duration - newDur);
-                    //below.SetDurationDirectly(newDur);
-                    cell.SetDurationDirectly(duration);
+                    //double duration;
+                    //
+                    //if (repWithLtmToMod == null)
+                    //{
+                    //    duration = below.Position + below.Duration - cell.Position;
+                    //    below.SetDurationDirectly(below.Duration - duration);
+                    //    //newDur = cell.Position - below.Position;
+                    //}
+                    //else
+                    //{
+                    //    // find slice of the LTM to use as duration
+                    //    duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
+                    //        * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
+                    //        - cell.Position;
+                    //}
+                    //
+                    ////cell.SetDurationDirectly(below.Duration - newDur);
+                    ////below.SetDurationDirectly(newDur);
+                    //cell.SetDurationDirectly(duration);
                     
                     //// add to groups and add rectangle to correct canvas
                     //if (Group.AddToGroups(cell, below))

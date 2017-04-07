@@ -32,21 +32,24 @@ namespace Pronome.Classes.Editor
 
         private void timesInput_TextChanged(object sender, TextChangedEventArgs e)
         {
-            TextBox ele = sender as TextBox;
-            if (int.TryParse(ele.Text, out int input))
+            if (IsInitialized)
             {
-                Times = input;
-                // Hijack this property for validation
-                ele.IsInactiveSelectionHighlightEnabled = false;
-                // enable OK
-                okButton.IsEnabled = true;
-            }
-            else
-            {
-                ele.IsInactiveSelectionHighlightEnabled = true;
-                //ele.BorderBrush = Brushes.Red;
-                // disable OK
-                okButton.IsEnabled = false;
+                TextBox ele = sender as TextBox;
+                if (int.TryParse(ele.Text, out int input))
+                {
+                    Times = input;
+                    // Hijack this property for validation
+                    ele.IsInactiveSelectionHighlightEnabled = false;
+                    // enable OK
+                    okButton.IsEnabled = true;
+                }
+                else
+                {
+                    ele.IsInactiveSelectionHighlightEnabled = true;
+                    //ele.BorderBrush = Brushes.Red;
+                    // disable OK
+                    okButton.IsEnabled = false;
+                }
             }
         }
 

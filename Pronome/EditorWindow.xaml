@@ -157,6 +157,9 @@
         <CommandBinding Command="self:Commands.CreateMultGroup" CanExecute="CreateMultGroup_CanExecute" Executed="CreateMultGroup_Executed"/>
         <CommandBinding Command="self:Commands.RemoveMultGroup" CanExecute="RemoveMultGroup_CanExecute" Executed="RemoveMultGroup_Executed"/>
         <CommandBinding Command="self:Commands.EditMultGroup" CanExecute="RemoveMultGroup_CanExecute" Executed="EditMultGroup_Executed"/>
+        <CommandBinding Command="self:Commands.MoveCellsLeft" CanExecute="MoveCellsLeft_CanExecute" Executed="MoveCellsLeft_Executed"/>
+        <CommandBinding Command="self:Commands.MoveCellsRight" CanExecute="MoveCellsRight_CanExecute" Executed="MoveCellsRight_Executed"/>
+
     </Window.CommandBindings>
 
     <DockPanel>
@@ -178,7 +181,8 @@
                     <MenuItem Header="Remove" Command="self:Commands.RemoveMultGroup"/>
                     <MenuItem Header="Edit" Command="self:Commands.EditMultGroup"/>
                 </MenuItem>
-                
+                <MenuItem Header="Move Cell(s) Left" InputGestureText="←" Command="self:Commands.MoveCellsLeft"/>
+                <MenuItem Header="Move Cell(s) Right" InputGestureText="→" Command="self:Commands.MoveCellsRight"/>
                 <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del" Command="self:Commands.DeleteSelection"/>
                 <MenuItem Header="Reference...">
                     <MenuItem Header="Insert Reference"/>

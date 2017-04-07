@@ -397,7 +397,7 @@ namespace Pronome
             if (BeatCell.TryParse(value, out duration))
             {
                 // the action to the undo stack
-                CellDuration action = new CellDuration(Cell.SelectedCells.Cells.ToArray(), value, duration);
+                CellDuration action = new CellDuration(Cell.SelectedCells.Cells.ToArray(), value);
                 UndoStack.Push(action);
 
                 action.Redo();
@@ -407,7 +407,7 @@ namespace Pronome
                 //    cell.Value = value;
                 //}
 
-                SetChangesApplied(false);
+                //SetChangesApplied(false);
             }
         }
 
@@ -628,6 +628,26 @@ namespace Pronome
                 AddUndoAction(action);
             }
         }
+
+        private void MoveCellsLeft_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            
+        }
+
+        private void MoveCellsLeft_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
+
+        private void MoveCellsRight_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+
+        }
+
+        private void MoveCellsRight_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
     }
 
     public static class Commands
@@ -669,5 +689,20 @@ namespace Pronome
             "Delete Selection",
             typeof(Commands), 
             new InputGestureCollection(new InputGesture[] { deleteKey }));
+
+        static InputGesture leftArrow = new KeyGesture(Key.Left);
+        static InputGesture rightArrow = new KeyGesture(Key.Right);
+
+        public static readonly RoutedUICommand MoveCellsLeft = new RoutedUICommand(
+            "Move Cells Left",
+            "Move Cells Left",
+            typeof(Commands),
+            new InputGestureCollection(new InputGesture[] { leftArrow }));
+
+        public static readonly RoutedUICommand MoveCellsRight = new RoutedUICommand(
+            "Move Cells Right",
+            "Move Cells Right",
+            typeof(Commands),
+            new InputGestureCollection(new InputGesture[] { rightArrow }));
     }
 }
