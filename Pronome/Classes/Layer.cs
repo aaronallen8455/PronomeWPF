@@ -389,21 +389,24 @@ namespace Pronome
                         double accumulator = 0;
                         int indexOfFirst = Beat.FindIndex(x => x.AudioSource.IsPitch || x.SourceName == "");
                         
-                        for (int i=0; i<Beat.Count; i++)
+                        if (indexOfFirst > -1)
                         {
-                            int index = indexOfFirst + i;
-                            if (index >= Beat.Count) index -= Beat.Count;
-                            if (Beat[index].AudioSource.IsPitch || Beat[index].SourceName == "")
+                            for (int i=0; i<Beat.Count; i++)
                             {
-                                Beat[index].AudioSource = newSource;
-                                newSource.AddFrequency(Beat[index].SourceName == "" ? baseSourceName : Beat[index].SourceName, Beat[index]);
-                                if (i > 0)
+                                int index = indexOfFirst + i;
+                                if (index >= Beat.Count) index -= Beat.Count;
+                                if (Beat[index].AudioSource.IsPitch || Beat[index].SourceName == "")
                                 {
-                                    beats.Add(accumulator);
-                                    accumulator = 0;
+                                    Beat[index].AudioSource = newSource;
+                                    newSource.AddFrequency(Beat[index].SourceName == "" ? baseSourceName : Beat[index].SourceName, Beat[index]);
+                                    if (i > 0)
+                                    {
+                                        beats.Add(accumulator);
+                                        accumulator = 0;
+                                    }
                                 }
+                                accumulator += Beat[index].Bpm;
                             }
-                            accumulator += Beat[index].Bpm;
                         }
                         beats.Add(accumulator);
                         var sbc = new SourceBeatCollection(this, beats.ToArray(), newSource);
@@ -431,7 +434,7 @@ namespace Pronome
                     }
                     // if this was formerly a pitch layer, we'll need to rebuild the pitch source, freq enumerator and beatCollection
                     // this is because of cells that have a pitch modifier - not using base pitch
-                    if (IsPitch && !Beat.All(x => x.SourceName == ""))
+                    if (IsPitch && Beat.Where(x => x.SourceName != "").Any(x => !char.IsNumber(x.SourceName[0])))
                     {
                         // see if we need to make a new pitch source
                         int indexOfFirstPitch = Beat.FindIndex(x => x.AudioSource.IsPitch);
@@ -480,16 +483,19 @@ namespace Pronome
                         beats.Clear();
                         accumulator = 0;
                         int indexOfFirst = Beat.FindIndex(x => x.SourceName == "");
-                        for (int i=0; i<Beat.Count; i++)
+                        if (indexOfFirst > -1)
                         {
-                            int index = indexOfFirst + i;
-                            if (index >= Beat.Count) index -= Beat.Count;
-                            if (Beat[index].SourceName == "" && i > 0)
+                            for (int i=0; i<Beat.Count; i++)
                             {
-                                beats.Add(accumulator);
-                                accumulator = 0;
+                                int index = indexOfFirst + i;
+                                if (index >= Beat.Count) index -= Beat.Count;
+                                if (Beat[index].SourceName == "" && i > 0)
+                                {
+                                    beats.Add(accumulator);
+                                    accumulator = 0;
+                                }
+                                accumulator += Beat[index].Bpm;
                             }
-                            accumulator += Beat[index].Bpm;
                         }
                         beats.Add(accumulator);
                         var baseSbc = new SourceBeatCollection(this, beats.ToArray(), newSource);
@@ -533,7 +539,10 @@ namespace Pronome
                 BaseAudioSource.SetOffset(offset);
 
                 // add new base to mixer
-                Metronome.GetInstance().AddAudioSource(BaseAudioSource);
+                if (BaseAudioSource.BeatCollection.Enumerator != null)
+                {
+                    Metronome.GetInstance().AddAudioSource(BaseAudioSource);
+                }
             }
         }
 
@@ -752,7 +761,7 @@ namespace Pronome
          */
         public void SetBeatCollectionOnSources()
         {
-            List<IStreamProvider> completed = new List<IStreamProvider>();
+            HashSet<IStreamProvider> completed = new HashSet<IStreamProvider>();
 
             // for each beat, iterate over all beats and build a beat list of values from beats of same source.
             for (int i = 0; i < Beat.Count; i++)
@@ -803,8 +812,18 @@ namespace Pronome
                 Beat[i].AudioSource.BeatCollection = new SourceBeatCollection(this, cells.ToArray(), Beat[i].AudioSource);
             }
 
-            // do any initial muting, includes hihat timings
-            AudioSources.Values.ToList().ForEach(x => x.SetInitialMuting());
+            foreach (IStreamProvider source in AudioSources.Values)
+            {
+                if (!completed.Contains(source))
+                {
+                    // remove empty sources (if base source was being used but now it isn't - 1@34,1@34,1 to 1@34,1@34)
+                    source.BeatCollection.Enumerator = null;
+                    Metronome.GetInstance().RemoveAudioSource(source);
+                    continue;
+                }
+                // do any initial muting, includes hihat timings
+                source.SetInitialMuting();
+            }
 
             Metronome.GetInstance().AddSourcesFromLayer(this);
         }

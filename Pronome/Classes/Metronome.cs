@@ -81,6 +81,8 @@ namespace Pronome
             // add sources to mixer
             foreach (IStreamProvider src in layer.AudioSources.Values)
             {
+                if (src.BeatCollection.Enumerator == null) continue; // don't add sources with no beat value.
+
                 if (!SampleDictionary.Keys.Contains(src))
                 {
                     SampleDictionary.Add(src,
@@ -137,8 +139,11 @@ namespace Pronome
          */
         public void RemoveAudioSource(IStreamProvider src)
         {
-            Mixer.RemoveMixerInput(SampleDictionary[src]);
-            SampleDictionary.Remove(src);
+            if (SampleDictionary.ContainsKey(src))
+            {
+                Mixer.RemoveMixerInput(SampleDictionary[src]);
+                SampleDictionary.Remove(src);
+            }
         }
 
         /**<summary>Add an audiosource to the mixer</summary>

@@ -631,22 +631,22 @@ namespace Pronome
 
         private void MoveCellsLeft_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            
+            e.CanExecute = Cell.SelectedCells.Cells.Any();
         }
 
         private void MoveCellsLeft_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-
+            var action = new MoveCells(Cell.SelectedCells.Cells.ToArray(), CurrentIncrement, -1);
         }
 
         private void MoveCellsRight_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-
+            e.CanExecute = Cell.SelectedCells.Cells.Any();
         }
 
         private void MoveCellsRight_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-
+            var action = new MoveCells(Cell.SelectedCells.Cells.ToArray(), CurrentIncrement, 1);
         }
     }
 

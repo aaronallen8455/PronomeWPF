@@ -19,7 +19,7 @@ namespace Pronome
             Source = src;
             Bpm = beats;
             Beats = beats.Select((x) => BeatCell.ConvertFromBpm(x, src)).ToArray();
-            Enumerator = GetEnumerator();
+            Enumerator = Beats.Length == 1 && Beats[0] == 0 ? null : GetEnumerator();
             isWav = src.WaveFormat.AverageBytesPerSecond == 32000;
         }
 

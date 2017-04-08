@@ -123,7 +123,11 @@ namespace Pronome
         /**<summary>Reset state to default values.</summary>*/
         public void Reset()
         {
-            freqEnum.Reset(); //= Frequencies.Values.GetEnumerator();
+            if (Frequencies.Any())
+            {
+                // possibility that there's no frequencies, just wav modifiers
+                freqEnum.Reset(); //= Frequencies.Values.GetEnumerator();
+            }
             BeatCollection.Enumerator = BeatCollection.GetEnumerator();
             ByteInterval = 0;
             previousSample = 0;
@@ -144,6 +148,7 @@ namespace Pronome
         /**<summary>Get the next frequency in the sequence.</summary>*/
         public double GetNextFrequency()
         {
+            if (!Frequencies.Any()) return 0;
             if (freqEnum.MoveNext()) return freqEnum.Current;
             else
             {
