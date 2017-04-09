@@ -72,12 +72,12 @@ namespace Pronome.Editor
             Cells = cells;
             ShiftingRight = times > 0;
             Increment = increment;
-            Times = times;
+            Times = Math.Abs(times);
         }
 
         protected override void Transformation()
         {
-            string value = BeatCell.MultiplyTerms(Increment, Times);
+            string value = BeatCell.MultiplyTerms(Increment, Math.Abs(Times));
 
             Cell last = Cells[Cells.Length - 1];
 
@@ -111,7 +111,7 @@ namespace Pronome.Editor
             }
             else
             {
-                Cell below = Row.Cells[Row.Cells.IndexOf(Cells[0])];
+                Cell below = Row.Cells[Row.Cells.IndexOf(Cells[0]) - 1];
                 // if below is last cell of a repeat group, we instead operate on that group's LTM
                 RepeatGroup leftGroup = below.RepeatGroups.Where(x => x.Cells.Last.Value == below).FirstOrDefault();
                 bool useLeftGroup = leftGroup != default(RepeatGroup);

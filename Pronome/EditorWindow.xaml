@@ -157,12 +157,18 @@
         <CommandBinding Command="self:Commands.CreateMultGroup" CanExecute="CreateMultGroup_CanExecute" Executed="CreateMultGroup_Executed"/>
         <CommandBinding Command="self:Commands.RemoveMultGroup" CanExecute="RemoveMultGroup_CanExecute" Executed="RemoveMultGroup_Executed"/>
         <CommandBinding Command="self:Commands.EditMultGroup" CanExecute="RemoveMultGroup_CanExecute" Executed="EditMultGroup_Executed"/>
-        <CommandBinding Command="self:Commands.MoveCellsLeft" CanExecute="MoveCellsLeft_CanExecute" Executed="MoveCellsLeft_Executed"/>
-        <CommandBinding Command="self:Commands.MoveCellsRight" CanExecute="MoveCellsRight_CanExecute" Executed="MoveCellsRight_Executed"/>
-
+        <CommandBinding Command="self:Commands.MoveCellsLeft" CanExecute="MoveCellsLeft_CanExecute" Executed="MoveCells_Executed"/>
+        <CommandBinding Command="self:Commands.MoveCellsRight" CanExecute="MoveCellsRight_CanExecute" Executed="MoveCells_Executed"/>
     </Window.CommandBindings>
 
+    <Window.InputBindings>
+        <KeyBinding Key="Delete" Command="self:Commands.DeleteSelection"/>
+        <KeyBinding Key="A" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
+        <KeyBinding Key="S" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
+    </Window.InputBindings>
+
     <DockPanel>
+
         <!--Main menu-->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_Edit">
@@ -181,8 +187,8 @@
                     <MenuItem Header="Remove" Command="self:Commands.RemoveMultGroup"/>
                     <MenuItem Header="Edit" Command="self:Commands.EditMultGroup"/>
                 </MenuItem>
-                <MenuItem Header="Move Cell(s) Left" InputGestureText="←" Command="self:Commands.MoveCellsLeft"/>
-                <MenuItem Header="Move Cell(s) Right" InputGestureText="→" Command="self:Commands.MoveCellsRight"/>
+                <MenuItem Header="Move Cell(s) Left" InputGestureText="A" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
+                <MenuItem Header="Move Cell(s) Right" InputGestureText="S" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
                 <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del" Command="self:Commands.DeleteSelection"/>
                 <MenuItem Header="Reference...">
                     <MenuItem Header="Insert Reference"/>

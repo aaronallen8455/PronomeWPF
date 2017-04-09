@@ -63,11 +63,11 @@ namespace Pronome.Editor
                     // New cell is below selection
                     // is new cell in the offset area, or is inside the row?
                     // check by seeing if the position is less than the least posible grid line position within the row from the selected cell.
-                    if (position < Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * Row.GridProx))
+                    if (position < -increment * Row.GridProx)//Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * Row.GridProx))
                     {
                         AddCellBelowRow(position, increment);
                     }
-                    else
+                    else if (position >= Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment) - increment * Row.GridProx)
                     {
                         // insert withinin row, below selection
                         // check if it's within a repeat's ghosted zone

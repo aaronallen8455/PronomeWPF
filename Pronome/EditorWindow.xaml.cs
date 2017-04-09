@@ -386,6 +386,26 @@ namespace Pronome
 
         private void applyChangesButton_Click(object sender, RoutedEventArgs e)
         {
+            bool changesMade = false;
+            foreach (Row row in Rows)
+            {
+                // TODO: what if a layer was removed / created while editor is open?
+                if (!row.BeatCodeIsCurrent) row.UpdateBeatCode();
+                string beatCode = row.BeatCode;
+
+                if (beatCode != row.Layer.ParsedString)
+                {
+                    changesMade = true;
+                    row.Layer.UI.textEditor.Text = beatCode;
+                    row.Layer.Parse(beatCode);
+                    // redraw beat graph / bounce if necessary
+                }
+            }
+            if (changesMade)
+            {
+                Metronome.GetInstance().TriggerAfterBeatParsed();
+            }
+
             SetChangesApplied(true);
         }
 
@@ -631,22 +651,82 @@ namespace Pronome
 
         private void MoveCellsLeft_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = Cell.SelectedCells.Cells.Any();
+            if (Cell.SelectedCells.Cells.Any())
+            {
+                double move = BeatCell.Parse(CurrentIncrement) + .0001;
+                Cell first = Cell.SelectedCells.FirstCell;
+                // if selection at start of row, check against the offset
+                if (first == first.Row.Cells[0])
+                {
+                    if (first.Row.Offset > move)
+                    {
+                        e.CanExecute = true;
+                    }
+                }
+                else
+                {
+                    // check if selection is in front of a rep group or a cell
+                    // if below cell is a reference, cancel
+                    Cell below = first.Row.Cells[first.Row.Cells.IndexOf(first) - 1];
+                    if (string.IsNullOrEmpty(below.Reference))
+                    {
+                        RepeatGroup belowGroup = null;
+                        if (below.RepeatGroups.Any())
+                        {
+                            belowGroup = below.RepeatGroups.Where(x => x.Cells.Last.Value == below).Last();
+                        }
+
+                        // if above rep group, check against the LTM
+                        if (belowGroup != null)
+                        {
+                            if (BeatCell.Parse(belowGroup.LastTermModifier) > move)
+                            {
+                                e.CanExecute = true;
+                            }
+                        }
+                        else
+                        {
+                            // check against below cell's value
+                            if (below.Duration > move)
+                            {
+                                e.CanExecute = true;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        private void MoveCellsLeft_Executed(object sender, ExecutedRoutedEventArgs e)
+        private void MoveCells_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            var action = new MoveCells(Cell.SelectedCells.Cells.ToArray(), CurrentIncrement, -1);
+            int times = int.Parse(e.Parameter.ToString());
+            var action = new MoveCells(Cell.SelectedCells.Cells.ToArray(), CurrentIncrement, times);
+
+            action.Redo();
+
+            AddUndoAction(action);
         }
 
         private void MoveCellsRight_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = Cell.SelectedCells.Cells.Any();
-        }
-
-        private void MoveCellsRight_Executed(object sender, ExecutedRoutedEventArgs e)
-        {
-            var action = new MoveCells(Cell.SelectedCells.Cells.ToArray(), CurrentIncrement, 1);
+            if (Cell.SelectedCells.Cells.Any())
+            {
+                Cell last = Cell.SelectedCells.LastCell;
+                // if last is last of row, then we can execute
+                if (last == last.Row.Cells.Last())
+                {
+                    e.CanExecute = true;
+                }
+                else
+                {
+                    // check that last's value is greater than the move amount.
+                    double move = BeatCell.Parse(CurrentIncrement);
+                    if (last.Duration > move + .0001)
+                    {
+                        e.CanExecute = true;
+                    }
+                }
+            }
         }
     }
 
@@ -682,27 +762,18 @@ namespace Pronome
             "Edit Multiply Group",
             typeof(Commands));
 
-        static InputGesture deleteKey = new KeyGesture(Key.Delete);
-
         public static readonly RoutedUICommand DeleteSelection = new RoutedUICommand(
             "Delete Selection",
             "Delete Selection",
-            typeof(Commands), 
-            new InputGestureCollection(new InputGesture[] { deleteKey }));
+            typeof(Commands));
 
-        static InputGesture leftArrow = new KeyGesture(Key.Left);
-        static InputGesture rightArrow = new KeyGesture(Key.Right);
-
-        public static readonly RoutedUICommand MoveCellsLeft = new RoutedUICommand(
+        public static readonly RoutedCommand MoveCellsLeft = new RoutedCommand(
             "Move Cells Left",
-            "Move Cells Left",
-            typeof(Commands),
-            new InputGestureCollection(new InputGesture[] { leftArrow }));
+            typeof(Commands));
 
         public static readonly RoutedUICommand MoveCellsRight = new RoutedUICommand(
             "Move Cells Right",
             "Move Cells Right",
-            typeof(Commands),
-            new InputGestureCollection(new InputGesture[] { rightArrow }));
+            typeof(Commands));
     }
 }
