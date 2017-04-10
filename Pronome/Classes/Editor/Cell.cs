@@ -174,7 +174,7 @@ namespace Pronome.Editor
             // set selection color
             Rectangle.Stroke = IsSelected ? System.Windows.Media.Brushes.DeepPink : System.Windows.Media.Brushes.Black;
             // select the reference rect if this cell is a ref
-            if (ReferenceRectangle != null)
+            if (!string.IsNullOrEmpty(Reference))
             {
                 ReferenceRectangle.Opacity += .4 * (IsSelected ? 1 : -1);
             }
@@ -221,7 +221,7 @@ namespace Pronome.Editor
                         // have to set this otherwise it will get flipped by SelectRange.
                         IsSelected = false;
 
-                        SelectedCells.SelectRange(start, end, Row);
+                        SelectedCells.SelectRange(start, end, Row, false);
 
                         return;
                     }
@@ -259,18 +259,6 @@ namespace Pronome.Editor
                     EditorWindow.Instance.SetCellSelected(false);
                 }
             }
-        }
-
-        public void AddValue(string val)
-        {
-            Value += $"+{val}";
-            Duration = BeatCell.Parse(Value);
-        }
-
-        public void SubtractValue(string val)
-        {
-            Value += $"-{val}";
-            Duration = BeatCell.Parse(Value);
         }
 
         /// <summary>
@@ -313,7 +301,7 @@ namespace Pronome.Editor
             /// <summary>
             /// Deselect all curently selected cells
             /// </summary>
-            public void DeselectAll()
+            public void DeselectAll(bool updateUi = true)
             {
                 foreach (Cell c in Cells.ToArray())
                 {
@@ -322,7 +310,10 @@ namespace Pronome.Editor
 
                 Clear();
 
-                EditorWindow.Instance.UpdateUiForSelectedCell();
+                if (updateUi)
+                {
+                    EditorWindow.Instance.UpdateUiForSelectedCell();
+                }
             }
 
             /// <summary>
@@ -331,9 +322,9 @@ namespace Pronome.Editor
             /// <param name="start"></param>
             /// <param name="end"></param>
             /// <param name="row"></param>
-            public void SelectRange(int start, int end, Row row)
+            public void SelectRange(int start, int end, Row row, bool updateUi = true)
             {
-                DeselectAll();
+                DeselectAll(false);
 
                 if (row.Cells.Count > start && row.Cells.Count > end && start <= end)
                 {
@@ -343,7 +334,10 @@ namespace Pronome.Editor
                     }
                 }
 
-                EditorWindow.Instance.UpdateUiForSelectedCell();
+                if (updateUi)
+                {
+                    EditorWindow.Instance.UpdateUiForSelectedCell();
+                }
             }
         }
     }

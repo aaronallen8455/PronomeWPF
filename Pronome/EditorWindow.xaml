@@ -159,6 +159,10 @@
         <CommandBinding Command="self:Commands.EditMultGroup" CanExecute="RemoveMultGroup_CanExecute" Executed="EditMultGroup_Executed"/>
         <CommandBinding Command="self:Commands.MoveCellsLeft" CanExecute="MoveCellsLeft_CanExecute" Executed="MoveCells_Executed"/>
         <CommandBinding Command="self:Commands.MoveCellsRight" CanExecute="MoveCellsRight_CanExecute" Executed="MoveCells_Executed"/>
+        <CommandBinding Command="self:Commands.CreateReference" CanExecute="CreateReference_CanExecute" Executed="CreateReference_Executed"/>
+        <CommandBinding Command="self:Commands.EditReference" CanExecute="EditReference_CanExecute" Executed="CreateReference_Executed"/>
+        <CommandBinding Command="self:Commands.RemoveReference" CanExecute="EditReference_CanExecute" Executed="RemoveReference_Executed"/>
+
     </Window.CommandBindings>
 
     <Window.InputBindings>
@@ -179,21 +183,22 @@
                 <MenuItem Header="Deselect All" Command="{StaticResource deselectAll}"/>
                 <MenuItem Header="Repeat Group...">
                     <MenuItem Header="Create" Command="self:Commands.CreateRepeatGroup"/>
-                    <MenuItem Header="Remove" Command="self:Commands.RemoveRepeatGroup"/>
                     <MenuItem Header="Edit" Command="self:Commands.EditRepeatGroup"/>
+                    <MenuItem Header="Remove" Command="self:Commands.RemoveRepeatGroup"/>
                 </MenuItem>
                 <MenuItem Header="Multiply Group...">
                     <MenuItem Header="Create" Command="self:Commands.CreateMultGroup"/>
-                    <MenuItem Header="Remove" Command="self:Commands.RemoveMultGroup"/>
                     <MenuItem Header="Edit" Command="self:Commands.EditMultGroup"/>
+                    <MenuItem Header="Remove" Command="self:Commands.RemoveMultGroup"/>
+                </MenuItem>
+                <MenuItem Header="Reference...">
+                    <MenuItem Header="Insert Reference" Command="self:Commands.CreateReference"/>
+                    <MenuItem Header="Edit Reference" Command="self:Commands.EditReference"/>
+                    <MenuItem Header="Remove Reference" Command="self:Commands.RemoveReference"/>
                 </MenuItem>
                 <MenuItem Header="Move Cell(s) Left" InputGestureText="A" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
                 <MenuItem Header="Move Cell(s) Right" InputGestureText="S" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
                 <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del" Command="self:Commands.DeleteSelection"/>
-                <MenuItem Header="Reference...">
-                    <MenuItem Header="Insert Reference"/>
-                    <MenuItem Header="Remove Reference"/>
-                </MenuItem>
             </MenuItem>
         </Menu>
         <!--Inputs at top of window-->

@@ -653,12 +653,12 @@ namespace Pronome
         {
             if (Cell.SelectedCells.Cells.Any())
             {
-                double move = BeatCell.Parse(CurrentIncrement) + .0001;
+                double move = BeatCell.Parse(CurrentIncrement);// + .0001;
                 Cell first = Cell.SelectedCells.FirstCell;
                 // if selection at start of row, check against the offset
                 if (first == first.Row.Cells[0])
                 {
-                    if (first.Row.Offset > move)
+                    if (first.Row.Offset >= move)
                     {
                         e.CanExecute = true;
                     }
@@ -679,7 +679,7 @@ namespace Pronome
                         // if above rep group, check against the LTM
                         if (belowGroup != null)
                         {
-                            if (BeatCell.Parse(belowGroup.LastTermModifier) > move)
+                            if (BeatCell.Parse(belowGroup.LastTermModifier) >= move)
                             {
                                 e.CanExecute = true;
                             }
@@ -721,12 +721,61 @@ namespace Pronome
                 {
                     // check that last's value is greater than the move amount.
                     double move = BeatCell.Parse(CurrentIncrement);
-                    if (last.Duration > move + .0001)
+                    if (last.Duration >= move)// + .0001)
                     {
                         e.CanExecute = true;
                     }
                 }
             }
+        }
+
+        private void CreateReference_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (Cell.SelectedCells.Cells.Count == 1 && string.IsNullOrEmpty(Cell.SelectedCells.FirstCell.Reference))
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        private void CreateReference_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            Cell cell = Cell.SelectedCells.FirstCell;
+            // open dialog to get ref index
+            var dialog = new Classes.Editor.ReferenceDialog();
+            AddReference action;
+            // are we creating or editing?
+            if (!string.IsNullOrEmpty(cell.Reference))
+            {
+                int r = cell.Reference.ToLower() == "s" ? cell.Row.Index + 1 : int.Parse(cell.Reference);
+                dialog.ReferenceIndex = r;
+                if (dialog.ShowDialog() == true)
+                {
+                    action = new EditReference(Cell.SelectedCells.FirstCell, dialog.ReferenceIndex);
+                    action.Redo();
+                    AddUndoAction(action);
+                }
+            }
+            else if (dialog.ShowDialog() == true)
+            {
+                action = new AddReference(Cell.SelectedCells.FirstCell, dialog.ReferenceIndex);
+                action.Redo();
+                AddUndoAction(action);
+            }
+        }
+
+        private void EditReference_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (Cell.SelectedCells.Cells.Count == 1 && !string.IsNullOrEmpty(Cell.SelectedCells.FirstCell.Reference))
+            {
+                e.CanExecute = true;
+            }
+        }          
+                       
+        private void RemoveReference_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            RemoveReference action = new RemoveReference(Cell.SelectedCells.FirstCell);
+            action.Redo();
+            AddUndoAction(action);
         }
     }
 
@@ -767,13 +816,29 @@ namespace Pronome
             "Delete Selection",
             typeof(Commands));
 
-        public static readonly RoutedCommand MoveCellsLeft = new RoutedCommand(
+        public static readonly RoutedUICommand MoveCellsLeft = new RoutedUICommand(
+            "Move Cells Left",
             "Move Cells Left",
             typeof(Commands));
 
         public static readonly RoutedUICommand MoveCellsRight = new RoutedUICommand(
             "Move Cells Right",
             "Move Cells Right",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand CreateReference = new RoutedUICommand(
+            "Create Reference",
+            "Create Reference",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand EditReference = new RoutedUICommand(
+            "Edit Reference",
+            "Edit Reference",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand RemoveReference = new RoutedUICommand(
+            "Remove Reference",
+            "Remove Reference",
             typeof(Commands));
     }
 }

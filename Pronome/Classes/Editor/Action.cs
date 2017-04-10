@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Shapes;
-using System.Linq;
 
 namespace Pronome.Editor
 {
@@ -54,125 +53,49 @@ namespace Pronome.Editor
         }
     }
 
-    public class MoveCells : AbstractBeatCodeAction
+    public class AddReference : AbstractBeatCodeAction
     {
-        protected Cell[] Cells;
+        protected Cell Cell;
 
-        /// <summary>
-        /// True if cells are being shifted to the right, otherwise shift left.
-        /// </summary>
-        protected bool ShiftingRight;
+        protected int ReferenceIndex;
 
-        protected string Increment;
-
-        protected int Times;
-
-        public MoveCells(Cell[] cells, string increment, int times) : base(cells[0].Row, cells.Length > 1 ? "Move Cells" : "Move Cell")
+        public AddReference(Cell cell, int refIndex) : base(cell.Row, "Insert Reference")
         {
-            Cells = cells;
-            ShiftingRight = times > 0;
-            Increment = increment;
-            Times = Math.Abs(times);
+            Cell = cell;
+            ReferenceIndex = refIndex;
         }
 
         protected override void Transformation()
         {
-            string value = BeatCell.MultiplyTerms(Increment, Math.Abs(Times));
+            // is this a self reference?
+            string r = Row.Index.ToString() == ReferenceIndex.ToString() ? "s" : ReferenceIndex.ToString();
+            Cell.Reference = ReferenceIndex.ToString();
 
-            Cell last = Cells[Cells.Length - 1];
+            Cell = null;
+        }
+    }
 
-            if (Row.Cells[0] == Cells[0])
-            {
-                // selection is at start of row, offset will be changed
-                if (ShiftingRight)
-                {
-                    // add to offset
-                    if (string.IsNullOrEmpty(Row.OffsetValue))
-                    {
-                        Row.OffsetValue = "0";
-                    }
-                    Row.OffsetValue = BeatCell.Add(Row.OffsetValue, value);
-                    // subtract from last cell's value if not last cell of row
-                    if (last != Row.Cells[Row.Cells.Count - 1])
-                    {
-                        last.Value = BeatCell.Subtract(last.Value, value);
-                    }
-                }
-                else
-                {
-                    // subtract from offset
-                    Row.OffsetValue = BeatCell.Subtract(Row.OffsetValue, value);
-                    // add to last cell's value if not last cell of row
-                    if (last != Row.Cells[Row.Cells.Count - 1])
-                    {
-                        last.Value = BeatCell.Add(last.Value, value);
-                    }
-                }
-            }
-            else
-            {
-                Cell below = Row.Cells[Row.Cells.IndexOf(Cells[0]) - 1];
-                // if below is last cell of a repeat group, we instead operate on that group's LTM
-                RepeatGroup leftGroup = below.RepeatGroups.Where(x => x.Cells.Last.Value == below).FirstOrDefault();
-                bool useLeftGroup = leftGroup != default(RepeatGroup);
-                // if last cell in selection is last of a repeat group, operate on it's LTM
-                RepeatGroup rightGroup = last.RepeatGroups.Where(x => x.Cells.Last.Value == last).FirstOrDefault();
-                bool useRightGroup = rightGroup != default(RepeatGroup);
+    public class EditReference : AddReference
+    {
+        public override string HeaderText { get => "Edit Reference"; }
 
-                if (ShiftingRight)
-                {
-                    if (useLeftGroup)
-                    {
-                        // add to LTM
-                        leftGroup.LastTermModifier = BeatCell.Add(leftGroup.LastTermModifier, value);
-                    }
-                    else
-                    {
-                        // add to below cell's value
-                        below.Value = BeatCell.Add(below.Value, value);
-                    }
-                    // subtract from last cell's value if not last of row
-                    if (last != Row.Cells[Row.Cells.Count - 1])
-                    {
-                        if (useRightGroup)
-                        {
-                            // subtract from LTM
-                            rightGroup.LastTermModifier = BeatCell.Subtract(rightGroup.LastTermModifier, value);
-                        }
-                        else
-                        {
-                            last.Value = BeatCell.Subtract(last.Value, value);
-                        }
-                    }
-                }
-                else
-                {
-                    if (useLeftGroup)
-                    {
-                        // subtract from LTM
-                        leftGroup.LastTermModifier = BeatCell.Subtract(leftGroup.LastTermModifier, value);
-                    }
-                    else
-                    {
-                        // subtract from below cell's value
-                        below.Value = BeatCell.Subtract(below.Value, value);
-                    }
-                    // add to last cell's value if not last in row
-                    if (last != Row.Cells[Row.Cells.Count - 1])
-                    {
-                        if (useRightGroup)
-                        {
-                            rightGroup.LastTermModifier = BeatCell.Add(rightGroup.LastTermModifier, value);
-                        }
-                        else
-                        {
-                            last.Value = BeatCell.Add(last.Value, value);
-                        }
-                    }
-                }
-            }
+        public EditReference(Cell cell, int refIndex) : base(cell, refIndex) { }
+    }
 
-            Cells = null;
+    public class RemoveReference : AbstractBeatCodeAction
+    {
+        protected Cell Cell;
+
+        public RemoveReference(Cell cell) : base(cell.Row, "Remove Reference")
+        {
+            Cell = cell;
+        }
+
+        protected override void Transformation()
+        {
+            Cell.Reference = null;
+
+            Cell = null;
         }
     }
 
@@ -202,7 +125,7 @@ namespace Pronome.Editor
         /// <summary>
         /// Used to display action name in undo menu
         /// </summary>
-        public string HeaderText { get => _headerText; }
+        public virtual string HeaderText { get => _headerText; }
 
         /// <summary>
         /// Code to execute before generating the AfterBeatCode string. Should also dispose of unneeded resources.

@@ -200,6 +200,7 @@ namespace Pronome.Editor
             foreach (Match match in Regex.Matches(beat, @".+?([,|]|$)"))
             {
                 Cell cell = new Cell(this) { Position = position };
+                cells.Add(cell);
 
                 string chunk = match.Value;
 
@@ -248,6 +249,14 @@ namespace Pronome.Editor
                 {
                     // get reference
                     string r = Regex.Match(chunk, @"((?<=\$)\d+|s)").Value;
+                    // validate the ref index
+                    if (char.IsNumber(r, 0))
+                    {
+                        if (Metronome.GetInstance().Layers.Count < int.Parse(r))
+                        {
+                            r = "1";
+                        }
+                    }
                     cell.Reference = r;
                     // need to parse the reference
                     int refIndex;
@@ -403,8 +412,6 @@ namespace Pronome.Editor
                 {
                     cell.IsBreak = true;
                 }
-
-                cells.Add(cell);
             }
 
             // set the background tiling

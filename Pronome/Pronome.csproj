@@ -103,10 +103,14 @@
     <Compile Include="Classes\Editor\Action\RemoveCells.cs" />
     <Compile Include="Classes\Editor\Action\RemoveRepeatGroup.cs" />
     <Compile Include="Classes\Editor\GroupCommandHelper.cs" />
+    <Compile Include="Classes\Editor\Action\MoveCells.cs" />
     <Compile Include="Classes\Editor\MultGroupDialog.xaml.cs">
       <DependentUpon>MultGroupDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Classes\Editor\Action\RemoveMultGroup.cs" />
+    <Compile Include="Classes\Editor\ReferenceDialog.xaml.cs">
+      <DependentUpon>ReferenceDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Classes\Editor\RepeatGroupDialog.xaml.cs">
       <DependentUpon>RepeatGroupDialog.xaml</DependentUpon>
     </Compile>
@@ -122,6 +126,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Classes\Editor\MultGroupDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Classes\Editor\ReferenceDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
