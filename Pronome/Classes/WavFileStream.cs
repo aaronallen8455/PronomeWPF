@@ -526,6 +526,14 @@ namespace Pronome
             return string.Empty;
         }
 
+        static public int GetIndexByName(string name)
+        {
+            string[] flat = new string[FileNameIndex.Length];
+            flat = FileNameIndex.Cast<string>().ToArray();
+            int index = Array.IndexOf(flat, name);
+            return index >= 0 ? index / 2 : -1;
+        }
+
         public const string SilentSourceName = "Pronome.wav.silence.wav";
 
         static public string[,] FileNameIndex = new string[,]

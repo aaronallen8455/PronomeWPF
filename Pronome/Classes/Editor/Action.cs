@@ -59,7 +59,7 @@ namespace Pronome.Editor
 
         protected int ReferenceIndex;
 
-        public AddReference(Cell cell, int refIndex) : base(cell.Row, "Insert Reference")
+        public AddReference(Cell cell, int refIndex) : base(cell.Row, "Insert Reference", cell.Row.Cells.IndexOf(cell))
         {
             Cell = cell;
             ReferenceIndex = refIndex;
@@ -86,7 +86,7 @@ namespace Pronome.Editor
     {
         protected Cell Cell;
 
-        public RemoveReference(Cell cell) : base(cell.Row, "Remove Reference")
+        public RemoveReference(Cell cell) : base(cell.Row, "Remove Reference", cell.Row.Cells.IndexOf(cell) - 1)
         {
             Cell = cell;
         }
@@ -132,7 +132,9 @@ namespace Pronome.Editor
         /// </summary>
         abstract protected void Transformation();
 
-        public AbstractBeatCodeAction(Row row, string headerText)
+        protected int RightIndexBoundOfTransform;
+
+        public AbstractBeatCodeAction(Row row, string headerText, int rightIndexOfTransform = int.MaxValue)
         {
             Row = row;
 
@@ -143,6 +145,7 @@ namespace Pronome.Editor
             BeforeBeatCode = row.BeatCode;
             BeforeOffset = row.OffsetValue;
             _headerText = headerText;
+            RightIndexBoundOfTransform = rightIndexOfTransform;
         }
 
         public virtual void Redo()
@@ -150,8 +153,10 @@ namespace Pronome.Editor
             // get current selection range if it's in this row
             int selectionStart = -1;
             int selectionEnd = -1;
+            int rowLengthBefore = Row.Cells.Count;
             if (Cell.SelectedCells.Cells.Count > 0 && Cell.SelectedCells.FirstCell.Row == Row)
             {
+
                 selectionStart = Row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
                 selectionEnd = Row.Cells.IndexOf(Cell.SelectedCells.LastCell);
             }
@@ -163,6 +168,21 @@ namespace Pronome.Editor
 
                 AfterBeatCode = Row.Stringify();
                 AfterOffset = Row.OffsetValue;
+            }
+
+            // if no change, don't do anything
+            if (AfterBeatCode == BeforeBeatCode)
+            {
+                return;
+            }
+
+            bool selectFromBack = selectionEnd > RightIndexBoundOfTransform;
+
+            if (selectFromBack)
+            {
+                // get index from back of list
+                selectionStart = rowLengthBefore - selectionStart;
+                selectionEnd = rowLengthBefore - selectionEnd;
             }
 
             Row.Reset();
@@ -177,19 +197,43 @@ namespace Pronome.Editor
 
             if (selectionStart > -1)
             {
+                if (selectFromBack)
+                {
+                    // convert back to forward indexed
+                    selectionStart = Row.Cells.Count - selectionStart;
+                    selectionEnd = Row.Cells.Count - selectionEnd;
+                }
+
                 Cell.SelectedCells.SelectRange(selectionStart, selectionEnd, Row);
             }
         }
 
         public virtual void Undo()
         {
+            // if no change, don't do anything
+            if (AfterBeatCode == BeforeBeatCode)
+            {
+                return;
+            }
+
             // get current selection range if it's in this row
             int selectionStart = -1;
             int selectionEnd = -1;
+
             if (Cell.SelectedCells.Cells.Count > 0 && Cell.SelectedCells.FirstCell.Row == Row)
             {
                 selectionStart = Row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
                 selectionEnd = Row.Cells.IndexOf(Cell.SelectedCells.LastCell);
+
+            }
+
+            bool selectFromBack = selectionEnd > RightIndexBoundOfTransform;
+
+            if (selectFromBack)
+            {
+                // get index from back of list
+                selectionStart = Row.Cells.Count - selectionStart;
+                selectionEnd = Row.Cells.Count - selectionEnd;
             }
 
             Row.Reset();
@@ -204,6 +248,13 @@ namespace Pronome.Editor
 
             if (selectionStart > -1)
             {
+                if (selectFromBack)
+                {
+                    // convert back to forward indexed
+                    selectionStart = Row.Cells.Count - selectionStart;
+                    selectionEnd = Row.Cells.Count - selectionEnd;
+                }
+
                 Cell.SelectedCells.SelectRange(selectionStart, selectionEnd, Row);
             }
         }

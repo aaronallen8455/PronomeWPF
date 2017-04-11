@@ -79,7 +79,9 @@ namespace Pronome
             List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
                 .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
-            sources[0] = "Pitch"; // replace Silentbeat with Pitch
+            sources[0] = "Silent";
+            sources.Insert(0, "Pitch");
+            //sources[0] = "Pitch"; // replace Silentbeat with Pitch
             sourceSelector.ItemsSource = sources;
 
             // init grid UI elements
@@ -196,175 +198,17 @@ namespace Pronome
             UndoStack.Push(action);
         }
 
-        ///// <summary>
-        ///// Facilitates getting the CanExecute data for the repeat group UICommands
-        ///// </summary>
-        //private class RepeatGroupCommandHelper
-        //{
-        //    static protected RepeatGroupCommandHelper Result;
-        //
-        //    static protected int TimesAccessed = 0;
-        //
-        //    /// <summary>
-        //    /// The number of commands that can access the result before clearing the cached result.
-        //    /// </summary>
-        //    const int MaxAccessTimes = 3;
-        //
-        //    public bool CanAdd;
-        //
-        //    public bool CanRemoveOrEdit;
-        //
-        //    public RepeatGroup GroupToRemoveOrEdit;
-        //
-        //    static public RepeatGroup GetGroupToRemoveOrEdit()
-        //    {
-        //        if (Result != null)
-        //        {
-        //            return Result.GroupToRemoveOrEdit;
-        //        }
-        //
-        //        return null;
-        //    }
-        //
-        //    static public RepeatGroupCommandHelper GetResult()
-        //    {
-        //        if (Result != null && TimesAccessed++ < MaxAccessTimes)
-        //        {
-        //            return Result;
-        //        }
-        //
-        //        Result = new RepeatGroupCommandHelper();
-        //        TimesAccessed = 1;
-        //        return Result;
-        //    }
-        //
-        //    public RepeatGroupCommandHelper()
-        //    {
-        //        if (Cell.SelectedCells.Cells.Count == 1)
-        //        {
-        //            // if a single cell selected, no further validation
-        //            if (Cell.SelectedCells.FirstCell.RepeatGroups.Any() &&
-        //                Cell.SelectedCells.Cells[0].RepeatGroups.Last.Value.Cells.First == Cell.SelectedCells.Cells[0].RepeatGroups.Last.Value.Cells.Last)
-        //            {
-        //                // not if a single cell repeat already exists over this cell.
-        //                //e.CanExecute = false;
-        //                CanAdd = false;
-        //                CanRemoveOrEdit = true;
-        //                GroupToRemoveOrEdit = Cell.SelectedCells.FirstCell.RepeatGroups.Last.Value;
-        //                return;
-        //            }
-        //            else
-        //            {
-        //                CanAdd = true;
-        //                CanRemoveOrEdit = false;
-        //                GroupToRemoveOrEdit = null;
-        //                return;
-        //            }
-        //        }
-        //
-        //        // Ensure that the selected cells share grouping scope
-        //        LinkedListNode<RepeatGroup> first = Cell.SelectedCells.FirstCell.RepeatGroups.First;
-        //        LinkedListNode<RepeatGroup> last = Cell.SelectedCells.LastCell.RepeatGroups.First;
-        //        while (true)
-        //        {
-        //            // both cells share this group, go to nested group
-        //            if (first != null && last != null)
-        //            {
-        //                if (first.Value == last.Value)
-        //                {
-        //                    // don't allow a repeat group to be made right on top of another RG
-        //                    if (first.Value.Cells.First.Value != Cell.SelectedCells.FirstCell
-        //                        && first.Value.Cells.Last.Value != Cell.SelectedCells.LastCell)
-        //                    {
-        //                        first = first.Next;
-        //                        last = last.Next;
-        //                    }
-        //                    else
-        //                    {
-        //                        CanAdd = false;
-        //                        CanRemoveOrEdit = true;
-        //                        GroupToRemoveOrEdit = first.Value;
-        //                        break;
-        //                    }
-        //                }
-        //                else if (first.Value.Cells.First.Value == Cell.SelectedCells.FirstCell &&
-        //                        last.Value.Cells.Last.Value == Cell.SelectedCells.LastCell)
-        //                {
-        //                    // both ends of select are in different groups but those groups are not being cut
-        //                    CanAdd = true;
-        //                    CanRemoveOrEdit = false;
-        //                    GroupToRemoveOrEdit = null;
-        //                    break;
-        //                }
-        //                else
-        //                {
-        //                    CanAdd = false;
-        //                    CanRemoveOrEdit = false;
-        //                    GroupToRemoveOrEdit = null;
-        //                    break;
-        //                }
-        //            }
-        //            // is last cell in nested repeat group where it is the last cell?
-        //            else if (first == null && last != null)
-        //            {
-        //                if (last.Value.Cells.Last.Value == Cell.SelectedCells.LastCell)
-        //                {
-        //                    CanAdd = true;
-        //                    CanRemoveOrEdit = false;
-        //                    GroupToRemoveOrEdit = null;
-        //                    break;
-        //                }
-        //                else
-        //                {
-        //                    CanAdd = false;
-        //                    CanRemoveOrEdit = false;
-        //                    GroupToRemoveOrEdit = null;
-        //                    break;
-        //                }
-        //            }
-        //            // is first cell in nested rep group and is the first cell of that group?
-        //            else if (first != null && last == null)
-        //            {
-        //                if (first.Value.Cells.First.Value == Cell.SelectedCells.FirstCell)
-        //                {
-        //                    CanAdd = true;
-        //                    CanRemoveOrEdit = false;
-        //                    GroupToRemoveOrEdit = null;
-        //                    break;
-        //                }
-        //                else
-        //                {
-        //                    CanAdd = false;
-        //                    CanRemoveOrEdit = false;
-        //                    GroupToRemoveOrEdit = null;
-        //                    break;
-        //                }
-        //            }
-        //
-        //            // reached the end
-        //            if (first == null && last == null)
-        //            {
-        //                CanAdd = true;
-        //                CanRemoveOrEdit = false;
-        //                GroupToRemoveOrEdit = null;
-        //                break;
-        //            }
-        //        }
-        //    }
-        //}
-
         public bool KeepOpen = true;
 
         protected override void OnClosing(CancelEventArgs e)
         {
             base.OnClosing(e);
 
-            Cell.SelectedCells.Clear();
-            SetCellSelected(false);
-            UpdateUiForSelectedCell();
-
             if (KeepOpen)
             {
+                Cell.SelectedCells.Clear();
+                SetCellSelected(false);
+                UpdateUiForSelectedCell();
                 Hide();
                 e.Cancel = true;
             }
@@ -421,26 +265,87 @@ namespace Pronome
                 UndoStack.Push(action);
 
                 action.Redo();
-                //foreach(Cell cell in Cell.SelectedCells.Cells)
-                //{
-                //    cell.Duration = duration;
-                //    cell.Value = value;
-                //}
-
-                //SetChangesApplied(false);
             }
         }
 
         private void sourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if ((sender as ComboBox).SelectedValue == null) return;
 
+            string value = (sender as ComboBox).SelectedValue.ToString();
+            string source = "";
+
+            if (value == "Pitch")
+            {
+                string pitchValue = pitchInput.Text;
+
+                // validate pitch input
+                if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d+$|^\d+\.?\d*"))
+                {
+                    source = pitchValue;
+                    // add 'p' if it's a numeric pitch
+                    if (char.IsNumber(pitchValue[0]))
+                    {
+                        source = 'p' + source;
+                    }
+                }
+            }
+            else if (value == "Silent")
+            {
+                source = "0";
+            }
+            else
+            {
+                value = Regex.Replace(value, @"^\d+\.\s*", "");
+                // get wav source index
+                source = WavFileStream.GetFileByName(value);
+            }
+
+            // set new source on selected cells
+            foreach (Cell c in Cell.SelectedCells.Cells)
+            {
+                c.Source = source;
+            }
+
+            if (Cell.SelectedCells.Cells.Any())
+            {
+                Cell.SelectedCells.Cells[0].Row.BeatCodeIsCurrent = false;
+                SetChangesApplied(false);
+                UpdateUiForSelectedCell();
+            }
         }
 
         private void pitchInput_LostFocus(object sender, RoutedEventArgs e)
         {
+            string pitchValue = pitchInput.Text;
 
+            // validate pitch input
+            if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d+$|^\d+\.?\d*"))
+            {
+                // add 'p' if it's a numeric pitch
+                if (char.IsNumber(pitchValue[0]))
+                {
+                    pitchValue = 'p' + pitchValue;
+                }
+
+                // assign to cells
+                foreach (Cell c in Cell.SelectedCells.Cells)
+                {
+                    c.Source = pitchValue;
+                }
+
+                if (Cell.SelectedCells.Cells.Any())
+                {
+                    Cell.SelectedCells.Cells[0].Row.BeatCodeIsCurrent = false;
+                    SetChangesApplied(false);
+                    UpdateUiForSelectedCell();
+                }
+            }
         }
 
+        /// <summary>
+        /// The spacing between grid lines in BPM
+        /// </summary>
         public static string CurrentIncrement = "1";
         /// <summary>
         /// Set a new increment amount
@@ -776,6 +681,37 @@ namespace Pronome
             RemoveReference action = new RemoveReference(Cell.SelectedCells.FirstCell);
             action.Redo();
             AddUndoAction(action);
+        }
+
+        private void scaleInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            string input = (sender as TextBox).Text;
+
+            // validate percent input
+            if (double.TryParse(input, out double percent) && percent > 0)
+            {
+                Scale = percent / 100;
+
+                // redraw the UI for all Rows
+                foreach (Row row in Rows)
+                {
+                    // preserve selection
+                    int selectionStart = -1;
+                    int selectionEnd = -1;
+                    if (Cell.SelectedCells.Cells.Any() && Cell.SelectedCells.FirstCell.Row == row)
+                    {
+                        selectionStart = row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
+                        selectionEnd = row.Cells.IndexOf(Cell.SelectedCells.LastCell);
+                    }
+
+                    row.Redraw();
+
+                    if (selectionStart > -1)
+                    {
+                        Cell.SelectedCells.SelectRange(selectionStart, selectionEnd, row);
+                    }
+                }
+            }
         }
     }
 

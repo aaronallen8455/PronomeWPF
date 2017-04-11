@@ -239,7 +239,7 @@
                 <!--Scale ratio setting-->
                 <Label>Scale</Label>
                 <StackPanel Orientation="Horizontal" Grid.Column="0">
-                    <TextBox Name="scaleInput" Width="30"/>
+                    <TextBox Name="scaleInput" Width="30" Text="100" LostFocus="scaleInput_LostFocus"/>
                     <TextBlock>%</TextBlock>
                 </StackPanel>
             </StackPanel>

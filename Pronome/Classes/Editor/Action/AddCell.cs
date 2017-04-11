@@ -14,6 +14,11 @@ namespace Pronome.Editor
 
         public int Index;
 
+        /// <summary>
+        /// True if this action does something
+        /// </summary>
+        public bool IsValid = false;
+
         public AddCell(double clickPosition, Row row) : base(row, "Add Cell")
         {
             ClickPosition = clickPosition;
@@ -139,23 +144,23 @@ namespace Pronome.Editor
                 cell.Value = BeatCell.SimplifyValue(EditorWindow.CurrentIncrement);
                 cell.Position = Cell.SelectedCells.LastCell.Position + increment * div;
                 // set new duration of previous cell
+
                 Cell below = Row.Cells.Last();
-                // add to groups and put rectangle in correct canvas
-                //if (Group.AddToGroups(cell, below))
-                //{
-                //    cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
-                //}
-                //else
-                //{
-                //    Row.Canvas.Children.Add(cell.Rectangle);
-                //}
+
+                // if add above a reference, just drop it in and exit.
+                if (below.IsReference)
+                {
+                    Row.Cells.Add(cell);
+
+                    return;
+                }
 
                 // find the value string
                 StringBuilder val = new StringBuilder();
                 val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
 
                 HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
-                foreach (Cell c in Row.Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell))
+                foreach (Cell c in Row.Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).Where(x => string.IsNullOrEmpty(x.Reference)))
                 {
                     val.Append("+0").Append(BeatCell.Invert(c.Value));
                     // account for rep groups and their LTMs
@@ -164,7 +169,7 @@ namespace Pronome.Editor
                     {
                         if (repGroups.Contains(rg)) continue;
 
-                        foreach (Cell ce in rg.Cells)
+                        foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
                         {
                             val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
                         }
@@ -202,16 +207,8 @@ namespace Pronome.Editor
                 }
 
                 Row.Cells.Add(cell);
-                //cell.Duration = increment;
-                // set new duration of this row
-                //Row.Duration = cell.Position + cell.Duration;
-                //SetBackground(Duration);
-
-                // create the action
-                //AddCell action = new AddCell(cell, below, oldPrevCellValue);
-
+                IsValid = true;
             }
-
         }
 
         protected void AddCellToRowAboveSelection(double position, double increment)
@@ -245,6 +242,9 @@ namespace Pronome.Editor
                 int index = Row.Cells.InsertSorted(cell);
                 if (index > -1)
                 {
+                    RightIndexBoundOfTransform = index - 1;
+                    IsValid = true;
+
                     Cell below = Row.Cells[index - 1];
                     
                     // is new cell placed in the LTM zone of a rep group?
@@ -255,41 +255,13 @@ namespace Pronome.Editor
                         repWithLtmToMod = rg;
                     }
                     
-                    //double duration;
-                    
-                    //if (repWithLtmToMod == null)
-                    //{
-                    //    duration = below.Position + below.Duration - cell.Position;
-                    //    // set duration of preceding cell.
-                    //    //below.SetDurationDirectly(below.Duration - duration);
-                    //}
-                    //else
-                    //{
-                    //    // get duration as a slice of the LTM of preceding group
-                    //    duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
-                    //        * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
-                    //        - cell.Position;
-                    //}
-                    
-                    //cell.SetDurationDirectly(duration);
-                    
-                    //// add to groups and add it's rectangle to appropriate canvas
-                    //if (Group.AddToGroups(cell, below))
-                    //{
-                    //    cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
-                    //}
-                    //else
-                    //{
-                    //    Canvas.Children.Add(cell.Rectangle);
-                    //}
-                    
                     // determine new value for the below cell
                     StringBuilder val = new StringBuilder();
                     // take and the distance from the end of the selection
                     val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
                     // subtract the values up to the previous cell
                     HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
-                    foreach (Cell c in Row.Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != below))
+                    foreach (Cell c in Row.Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != below).Where(x => string.IsNullOrEmpty(x.Reference)))
                     {
                         // subtract each value from the total
                         val.Append("+0").Append(BeatCell.Invert(c.Value));
@@ -305,7 +277,7 @@ namespace Pronome.Editor
                                 continue;
                             }
                     
-                            foreach (Cell ce in rg.Cells)
+                            foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
                             {
                                 val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
                             }
@@ -342,11 +314,6 @@ namespace Pronome.Editor
                         // changing a LTM value
                         repWithLtmToMod.LastTermModifier = BeatCell.Subtract(repWithLtmToMod.LastTermModifier, newVal);
                     }
-                    
-                    // create the action
-                    //AddCell action = new AddCell(cell, below, oldValue);
-                    
-                    
                 }
             }
 
@@ -379,7 +346,7 @@ namespace Pronome.Editor
                 val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
                 
                 HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
-                foreach (Cell c in Row.Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                foreach (Cell c in Row.Cells.TakeWhile(x => x != Cell.SelectedCells.FirstCell).Where(x => string.IsNullOrEmpty(x.Reference)))
                 {
                     val.Append("+0").Append(BeatCell.Invert(c.Value));
                     // deal with repeat groups
@@ -393,7 +360,7 @@ namespace Pronome.Editor
                             repGroups.Add(rg);
                             continue;
                         }
-                        foreach (Cell ce in rg.Cells)
+                        foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
                         {
                             val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
                         }
@@ -414,20 +381,11 @@ namespace Pronome.Editor
                 cell.Value = BeatCell.SimplifyValue(val.ToString());
                 
                 Row.Cells.Insert(0, cell);
-                //Cells.AddFirst(cell);
-                //cell.Duration = (Cell.SelectedCells.FirstCell.Position - div * increment) * -1;
+                RightIndexBoundOfTransform = -1;
+                IsValid = true;
                 cell.Position = 0;
-                
-                // set new duration of this row
-                //Duration += cell.Duration;
-                
-                //Row.Offset -= cell.Duration; //Cell.SelectedCells.FirstCell.Position - div * increment;
                 Row.OffsetValue = BeatCell.Subtract(Row.OffsetValue, cell.Value);
-                //Row.Canvas.Children.Add(cell.Rectangle);
-                
-                // add undo action
             }
-
         }
 
         protected void AddCellToRowBelowSelection(double position, double increment)
@@ -454,13 +412,10 @@ namespace Pronome.Editor
                 int index = Row.Cells.InsertSorted(cell);
                 if (index > -1)
                 {
+                    RightIndexBoundOfTransform = index - 1;
+                    IsValid = true;
+
                     Cell below = Row.Cells[index - 1];
-                    
-                    // find new duration of below cell
-                    //double newDur = Cells.SkipWhile(x => x != below)
-                    //    .TakeWhile(x => x != Cell.SelectedCells.FirstCell)
-                    //    .Select(x => x.Position)
-                    //    .Sum() - div * increment;
                     
                     // see if the cell is being added to a rep group's LTM zone
                     RepeatGroup repWithLtmToMod = null;
@@ -470,43 +425,13 @@ namespace Pronome.Editor
                         repWithLtmToMod = rg;
                     }
                     
-                    //double duration;
-                    //
-                    //if (repWithLtmToMod == null)
-                    //{
-                    //    duration = below.Position + below.Duration - cell.Position;
-                    //    below.SetDurationDirectly(below.Duration - duration);
-                    //    //newDur = cell.Position - below.Position;
-                    //}
-                    //else
-                    //{
-                    //    // find slice of the LTM to use as duration
-                    //    duration = repWithLtmToMod.Position + repWithLtmToMod.Duration 
-                    //        * repWithLtmToMod.Times + BeatCell.Parse(repWithLtmToMod.LastTermModifier) 
-                    //        - cell.Position;
-                    //}
-                    //
-                    ////cell.SetDurationDirectly(below.Duration - newDur);
-                    ////below.SetDurationDirectly(newDur);
-                    //cell.SetDurationDirectly(duration);
-                    
-                    //// add to groups and add rectangle to correct canvas
-                    //if (Group.AddToGroups(cell, below))
-                    //{
-                    //    cell.RepeatGroups.Last.Value.Canvas.Children.Add(cell.Rectangle);
-                    //}
-                    //else
-                    //{
-                    //    Canvas.Children.Add(cell.Rectangle);
-                    //}
-                    
                     // get new value string for below
                     StringBuilder val = new StringBuilder();
                     
                     HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
                     foreach (Cell c in Row.Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
                     {
-                        if (c == cell) continue; // don't include the new cell
+                        if (c == cell || !string.IsNullOrEmpty(c.Reference)) continue; // don't include the new cell
                         // add the cells value
                         val.Append(c.Value).Append('+');
                         // we need to track how many times to multiply each rep group's LTM
@@ -522,7 +447,7 @@ namespace Pronome.Editor
                                 repGroups.Add(rg);
                                 continue;
                             }
-                            foreach (Cell ce in rg.Cells)
+                            foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
                             {
                                 val.Append('0').Append(
                                     BeatCell.MultiplyTerms(ce.Value, rg.Times - 1))
@@ -564,284 +489,8 @@ namespace Pronome.Editor
                             repWithLtmToMod.LastTermModifier, 
                             BeatCell.SimplifyValue(val.ToString()));
                     }
-                    
-                    // add undo action
-                    //return new AddCell(cell, below, oldValue);
                 }
             }
-
         }
     }
-
-    ///// <summary>
-    ///// Holds the methods used by the AddCell and RemoveCell actions
-    ///// </summary>
-    //public abstract class AddRemoveCell : AbstractAction
-    //{
-    //    protected Cell Cell;
-    //
-    //    protected int Index;
-    //
-    //    protected Cell PreviousCell;
-    //
-    //    protected string PreviousCellBeforeValue; // or LTM of a rep group
-    //    protected string PreviousCellAfterValue; // or LTM of a rep group
-    //
-    //    /// <summary>
-    //    /// The add cell action. Should be initialized after the new cell has been added into the row.
-    //    /// </summary>
-    //    /// <param name="cell"></param>
-    //    /// <param name="previousCell"></param>
-    //    public AddRemoveCell(Cell cell, Cell previousCell = null, string prevBeforeVal = null, string prevAfterValue = null)
-    //    {
-    //        Cell = cell;
-    //        Row = cell.Row;
-    //        Index = Cell.Row.Cells.IndexOf(cell);
-    //
-    //        PreviousCell = previousCell;
-    //
-    //        if (previousCell != null)
-    //        {
-    //            PreviousCellAfterValue = prevAfterValue;
-    //            PreviousCellBeforeValue = prevBeforeVal;
-    //        }
-    //    }
-    //
-    //    public void Add()
-    //    {
-    //        // Add in the cell
-    //        Row.Cells.Insert(Index, Cell);
-    //        
-    //        // render the rectangle
-    //        if (Cell.RepeatGroups.Any())
-    //        {
-    //            Cell.RepeatGroups.Last.Value.Canvas.Children.Add(Cell.Rectangle);
-    //        }
-    //        else
-    //        {
-    //            Row.Canvas.Children.Add(Cell.Rectangle);
-    //        }
-    //
-    //        // modify the previous cell or the row's offset
-    //        Cell below = null;
-    //
-    //        if (Index == 0)
-    //        {
-    //            Row.Duration += Cell.Duration;
-    //            Row.Offset -= Cell.Duration;
-    //            Row.OffsetValue = BeatCell.Subtract(Row.OffsetValue, Cell.Value);
-    //        }
-    //        else
-    //        {
-    //            below = Row.Cells[Index - 1];
-    //            // check if need to adjust the LCM of the last repeat group if this is the last cell in row
-    //            RepeatGroup ltmToMod = null;
-    //            foreach (RepeatGroup rg in below.RepeatGroups.Where(x => x.Cells.Last.Value == below))
-    //            {
-    //                ltmToMod = rg;
-    //            }
-    //
-    //            if (ltmToMod == null)
-    //            {
-    //                below.Value = PreviousCellAfterValue;
-    //                below.SetDurationDirectly(BeatCell.Parse(below.Value));
-    //            }
-    //            else
-    //            {
-    //                ltmToMod.LastTermModifier = PreviousCellAfterValue;
-    //            }
-    //
-    //            if (Index == Row.Cells.Count - 1 && !Cell.RepeatGroups.Any())
-    //            {
-    //                // it's the last cell, resize sizer
-    //                // but not if it's in a group - size will stay the same.
-    //                double oldDur = Row.Duration;
-    //                Row.Duration = Cell.Position + Cell.Duration;
-    //                Row.ChangeSizerWidthByAmount(Row.Duration - oldDur);
-    //            }
-    //        }
-    //
-    //        // add to groups
-    //        foreach (RepeatGroup rg in Cell.RepeatGroups)
-    //        {
-    //            if (below != null && below.RepeatGroups.Contains(rg))
-    //            {
-    //                rg.Cells.AddAfter(rg.Cells.Find(below), Cell);
-    //            }
-    //            else
-    //            {
-    //                rg.Cells.AddFirst(Cell);
-    //            }
-    //
-    //            // resize host rects if this is last cell in row
-    //            if (rg.Cells.Last.Value == Cell)
-    //            {
-    //                foreach (Rectangle rect in rg.HostRects)
-    //                {
-    //                    rect.Width += below.Duration * EditorWindow.Scale * EditorWindow.BaseFactor;
-    //                }
-    //            }
-    //        }
-    //        foreach (MultGroup mg in Cell.MultGroups)
-    //        {
-    //            if (below != null && below.MultGroups.Contains(mg))
-    //            {
-    //                mg.Cells.AddAfter(mg.Cells.Find(below), Cell);
-    //            }
-    //            else
-    //            {
-    //                mg.Cells.AddFirst(Cell);
-    //            }
-    //        }
-    //
-    //        Row.BeatCodeIsCurrent = false;
-    //
-    //        RedrawReferencers();
-    //
-    //        EditorWindow.Instance.SetChangesApplied(false);
-    //    }
-    //
-    //    public void Remove()
-    //    {
-    //        // deselect cell if selected
-    //        if (Cell.IsSelected)
-    //        {
-    //            Cell.ToggleSelect();
-    //
-    //            EditorWindow.Instance.UpdateUiForSelectedCell();
-    //        }
-    //        // remove the rect
-    //        if (Cell.RepeatGroups.Any())
-    //        {
-    //            Cell.RepeatGroups.Last.Value.Canvas.Children.Remove(Cell.Rectangle);
-    //        }
-    //        else
-    //        {
-    //            Row.Canvas.Children.Remove(Cell.Rectangle);
-    //        }
-    //        // modify previous cell or row's offset
-    //        if (Index == 0)
-    //        {
-    //            Row.Duration -= Cell.Duration;
-    //            // need to set the row's offset
-    //            Row.Offset += Cell.Duration;
-    //            Row.OffsetValue = BeatCell.SimplifyValue(Row.OffsetValue + "+0" + Cell.Value);
-    //            // place above cell at front of sizer and shrink sizer width
-    //            Cell above = Row.Cells[1];
-    //            above.Position = 0;
-    //            //row.ChangeSizerWidthByAmount(-Cell.Duration);
-    //        }
-    //        else
-    //        {
-    //            Cell below = Row.Cells[Index - 1];
-    //
-    //            // check if a LTM is being changed instead of cell value
-    //            RepeatGroup ltmToMod = null;
-    //            foreach (RepeatGroup rg in below.RepeatGroups.Where(x => x.Cells.Last.Value == below))
-    //            {
-    //                ltmToMod = rg;
-    //            }
-    //
-    //            if (ltmToMod == null)
-    //            {
-    //                below.Value = PreviousCellBeforeValue;
-    //            }
-    //            else
-    //            {
-    //                ltmToMod.LastTermModifier = PreviousCellBeforeValue;
-    //            }
-    //
-    //            // if cell is the last cell, resize the below cell. Otherwise set duration directly
-    //            if (Row.Cells.Last() == Cell && !Cell.RepeatGroups.Any())
-    //            {
-    //                // preserve cell's position
-    //                double oldPos = Cell.Position;
-    //                double oldOffset = Canvas.GetLeft(Cell.Rectangle);
-    //                if (ltmToMod == null)
-    //                {
-    //                    below.Duration = BeatCell.Parse(below.Value);
-    //                    // reset position
-    //                    Cell.Position = oldPos;
-    //                }
-    //                //Canvas.SetLeft(Cell.Rectangle, oldOffset);
-    //                // resize row
-    //                Row.Duration = below.Position + below.Duration;
-    //                Row.ChangeSizerWidthByAmount(-Cell.Duration);
-    //            }
-    //            else if (ltmToMod == null)
-    //            {
-    //                below.SetDurationDirectly(BeatCell.Parse(below.Value));
-    //            }
-    //        }
-    //        // remove from groups
-    //        foreach (RepeatGroup rg in Cell.RepeatGroups)
-    //        {
-    //            // if this was the last cell in group, need to resize the host rects
-    //            if (rg.Cells.Last.Value == Cell)
-    //            {
-    //                foreach (Rectangle rect in rg.HostRects)
-    //                {
-    //                    rect.Width -= (rg.Cells.Last.Previous.Value.Duration - Cell.Duration) * EditorWindow.Scale * EditorWindow.BaseFactor;
-    //                }
-    //            }
-    //
-    //            rg.Cells.Remove(Cell);
-    //            rg.Canvas.Children.Remove(Cell.Rectangle);
-    //        }
-    //        foreach (MultGroup mg in Cell.MultGroups)
-    //        {
-    //            mg.Cells.Remove(Cell);
-    //        }
-    //
-    //        Row.Cells.Remove(Cell);
-    //
-    //        Row.BeatCodeIsCurrent = false;
-    //
-    //        RedrawReferencers();
-    //
-    //        EditorWindow.Instance.SetChangesApplied(false);
-    //    }
-    //}
-
-    //public class AddCell : AddRemoveCell, IEditorAction
-    //{
-    //    // TODO: need to use a beatcode action so that group linking stays in place
-    //    private string _headerText = "Add Cell";
-    //    public string HeaderText { get => _headerText; }
-    //
-    //    public AddCell(Cell cell, Cell previousCell = null, string prevBeforeVal = null) : base(cell, previousCell, prevBeforeVal)
-    //    {
-    //
-    //    }
-    //
-    //    public void Redo()
-    //    {
-    //        Add();
-    //    }
-    //    public void Undo()
-    //    {
-    //        Remove();
-    //    }
-    //}
-    //
-    //public class RemoveCell : AddRemoveCell, IEditorAction
-    //{
-    //    private string _headerText = "Remove Cell";
-    //    public string HeaderText { get => _headerText; }
-    //
-    //    public RemoveCell(Cell cell, Cell previousCell = null, string prevBeforeVal = null) : base(cell, previousCell, prevBeforeVal)
-    //    {
-    //
-    //    }
-    //
-    //    public void Redo()
-    //    {
-    //        Remove();
-    //    }
-    //
-    //    public void Undo()
-    //    {
-    //        Add();
-    //    }
-    //}
 }
