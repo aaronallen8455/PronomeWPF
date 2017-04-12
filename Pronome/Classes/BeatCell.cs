@@ -194,49 +194,6 @@ namespace Pronome
             result = connector == '+' ? result + current : result - current;
 
             return result;
-
-            //// do mult and div
-            //while (operators.IndexOfAny(new[] { '*', '/' }) > -1)
-            //{
-            //    int index = operators.IndexOfAny(new[] { '*', '/' });
-            //
-            //    switch (operators[index])
-            //    {
-            //        case '*':
-            //            numbers[index] *= numbers[index + 1];
-            //            numbers.Remove(index + 1);
-            //            //numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
-            //            break;
-            //        case '/':
-            //            numbers[index] /= numbers[index + 1];
-            //            numbers.Remove(index + 1);
-            //            //numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
-            //            break;
-            //    }
-            //    operators = operators.Remove(index, 1);
-            //}
-            //// do addition and subtraction
-            //while (operators.IndexOfAny(new[] { '+', '-' }) > -1)
-            //{
-            //    int index = operators.IndexOfAny(new[] { '+', '-' });
-            //
-            //    switch (operators[index])
-            //    {
-            //        case '+':
-            //            numbers[index] += numbers[index + 1];
-            //            numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
-            //            break;
-            //        case '-':
-            //            numbers[index] -= numbers[index + 1];
-            //            numbers = numbers.Take(index + 1).Concat(numbers.Skip(index + 2)).ToArray();
-            //            break;
-            //    }
-            //    operators = operators.Remove(index, 1);
-            //}
-            //
-            //if (numbers[0] > long.MaxValue) throw new Exception(numbers[0].ToString());
-            //
-            //return numbers[0];
         }
 
         /// <summary>
@@ -289,7 +246,7 @@ namespace Pronome
             };
 
             // simplify all fractions
-            var multDiv = Regex.Matches(value, @"(?<!\.)(\d+[*/](?=\d+))+\d+(?!\.)");
+            var multDiv = Regex.Matches(value, @"(?<!\.\d*)(\d+?[*/](?=\d+))+\d+(?!\d*\.)"); // get just the fractions or whole number multiplication. filter out decimals
             foreach (Match m in multDiv)
             {
                 int n = 1; // numerator
@@ -312,7 +269,7 @@ namespace Pronome
                 value = value.Substring(0, index) + n.ToString() + '/' + d.ToString() + value.Substring(index + m.Length);
             }
 
-            var denoms = Regex.Matches(value, @"(?<=/)\d+(?!\.)");
+            var denoms = Regex.Matches(value, @"(?<=/)\d+(?!\d*\.)");
 
             foreach (Match m in denoms)
             {
@@ -328,7 +285,7 @@ namespace Pronome
             }
 
             // aggregate the fractions
-            var fracs = Regex.Matches(value, @"(?<!\.)(\+|-|^)(\d+/\d+)(?!\.)");
+            var fracs = Regex.Matches(value, @"(?<!\.\d*)(\+|-|^)(\d+/\d+)(?!\d*\.)");
             int numerator = 0;
             foreach (Match m in fracs)
             {
@@ -366,11 +323,19 @@ namespace Pronome
             // append the fractional portion of it's not zero
             if (numerator != 0)
             {
-                if (numbers != 0)
+                // put the positive value first.
+                if (numbers < 0)
                 {
-                    result += fractionPart[0] != '-' ? "+" : "";
+                    result = fractionPart + result; // if both are negative, something went horribly wrong.
                 }
-                result += fractionPart;
+                else
+                {
+                    if (numbers != 0)
+                    {
+                        result += fractionPart[0] != '-' ? "+" : "";
+                    }
+                    result += fractionPart;
+                }
             }
 
             return result;
