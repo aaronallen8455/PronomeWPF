@@ -126,35 +126,56 @@ namespace Pronome
         {
             if (Cell.SelectedCells.Cells.Any())
             {
-                if (Cell.SelectedCells.Cells.Count == 1)
+                // if any references are selected, don't show inputs
+                if (Cell.SelectedCells.Cells.Any(x => !string.IsNullOrEmpty(x.Reference)))
                 {
-                    Cell cell = Cell.SelectedCells.Cells[0];
-
-                    durationInput.Text = cell.Value;
-
-                    string source = string.IsNullOrEmpty(cell.Source) ? cell.Row.Layer.BaseSourceName : cell.Source;
-                    // is a pitch or wav?
-                    if (source.Contains(".wav"))
-                    {
-                        pitchInputPanel.Visibility = Visibility.Collapsed;
-                        //string newSource = WavFileStream.GetFileByName((sourceSelector.SelectedItem as string).Substring(4));
-                        string name = WavFileStream.GetSelectorNameByFile(source);
-                        sourceSelector.SelectedItem = name;
-                    }
-                    else
-                    {
-                        // pitch
-                        pitchInputPanel.Visibility = Visibility.Visible;
-                        pitchInput.Text = source;
-                        sourceSelector.SelectedItem = "Pitch";
-                    }
-                }
-                else
-                {
+                    durationInput.IsEnabled = false;
+                    sourceSelector.IsEnabled = false;
+                    pitchInputPanel.Visibility = Visibility.Collapsed;
                     durationInput.Text = string.Empty;
                     sourceSelector.SelectedItem = null;
                     pitchInput.Text = string.Empty;
-                    pitchInputPanel.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    durationInput.IsEnabled = true;
+                    sourceSelector.IsEnabled = true;
+
+                    if (Cell.SelectedCells.Cells.Count == 1)
+                    {
+                        Cell cell = Cell.SelectedCells.Cells[0];
+
+                        durationInput.Text = cell.Value;
+
+                        string source = string.IsNullOrEmpty(cell.Source) ? cell.Row.Layer.BaseSourceName : cell.Source;
+                        // is a pitch or wav?
+                        if (source.Contains(".wav"))
+                        {
+                            pitchInputPanel.Visibility = Visibility.Collapsed;
+                            string name = WavFileStream.GetSelectorNameByFile(source);
+                            sourceSelector.SelectedItem = name;
+                        }
+                        else if (source == "0")
+                        {
+                            // silent
+                            pitchInputPanel.Visibility = Visibility.Collapsed;
+                            sourceSelector.SelectedItem = "Silent";
+                        }
+                        else
+                        {
+                            // pitch
+                            pitchInputPanel.Visibility = Visibility.Visible;
+                            pitchInput.Text = source;
+                            sourceSelector.SelectedItem = "Pitch";
+                        }
+                    }
+                    else
+                    {
+                        durationInput.Text = string.Empty;
+                        sourceSelector.SelectedItem = null;
+                        pitchInput.Text = string.Empty;
+                        pitchInputPanel.Visibility = Visibility.Collapsed;
+                    }
                 }
 
                 // draw grid based on increment input
@@ -169,6 +190,8 @@ namespace Pronome
             }
             else
             {
+                durationInput.IsEnabled = false;
+                sourceSelector.IsEnabled = false;
                 // empty the fields and remove grid
                 durationInput.Text = string.Empty;
                 sourceSelector.SelectedItem = null;
@@ -301,13 +324,16 @@ namespace Pronome
                 source = WavFileStream.GetFileByName(value);
             }
 
+            bool wasChanged = false;
             // set new source on selected cells
             foreach (Cell c in Cell.SelectedCells.Cells)
             {
+                string old = c.Source == null ? c.Row.Layer.BaseSourceName : c.Source;
+                if (old != source) wasChanged = true;
                 c.Source = source;
             }
 
-            if (Cell.SelectedCells.Cells.Any())
+            if (Cell.SelectedCells.Cells.Any() && wasChanged)
             {
                 Cell.SelectedCells.Cells[0].Row.BeatCodeIsCurrent = false;
                 SetChangesApplied(false);
@@ -636,7 +662,9 @@ namespace Pronome
 
         private void CreateReference_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            if (Cell.SelectedCells.Cells.Count == 1 && string.IsNullOrEmpty(Cell.SelectedCells.FirstCell.Reference))
+            if (Cell.SelectedCells.Cells.Count == 1 && 
+                string.IsNullOrEmpty(Cell.SelectedCells.FirstCell.Reference) &&
+                !(Rows.Count == 1 && Rows[0].Cells.Count == 1))
             {
                 e.CanExecute = true;
             }
@@ -690,7 +718,8 @@ namespace Pronome
             // validate percent input
             if (double.TryParse(input, out double percent) && percent > 0)
             {
-                Scale = percent / 100;
+                // set the scale amount
+                Scale = 1 / (percent / 100);
 
                 // redraw the UI for all Rows
                 foreach (Row row in Rows)

@@ -51,6 +51,17 @@ namespace Pronome.Editor
                     }
                     if (outsideRepeat)
                     {
+                        // if the last selected cell is a reference, make the cell after the ref the selections last cell.
+                        // this corrects the placement of cells being made above the selection.
+                        if (!string.IsNullOrEmpty(Cell.SelectedCells.LastCell.Reference) && Row.Cells.Last() != Cell.SelectedCells.LastCell)
+                        {
+                            Cell.SelectedCells.LastCell = Row.Cells
+                                .SkipWhile(x => x != Cell.SelectedCells.LastCell)
+                                .Skip(1)
+                                .SkipWhile(x => x.IsReference)
+                                .First();
+                        }
+
                         // if the new cell will be above the current row
                         if (position > Row.Cells.Last().Position + Row.Cells.Last().Duration - increment * Row.GridProx) // should a cell placed within duration of prev cell maintain overall duration?
                         {

@@ -6,7 +6,7 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:self="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="Editor" Height="300" Width="600">
+        Title="Editor" Height="450" Width="750">
     
     <Window.Resources>
         <sys:Double x:Key="rowHeight">40</sys:Double>

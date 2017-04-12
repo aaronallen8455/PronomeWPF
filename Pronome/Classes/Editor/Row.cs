@@ -777,6 +777,10 @@ namespace Pronome.Editor
             Background.Margin = new System.Windows.Thickness(Background.Margin.Left + change, 0, 0, 0);
         }
 
+        /// <summary>
+        /// Draw the grid lines for selected cells in this row. Also sets the FirstCell and LastCell of selection object.
+        /// </summary>
+        /// <param name="intervalCode"></param>
         public void DrawGridLines(string intervalCode)
         {
             double gridCellSize;
@@ -787,22 +791,30 @@ namespace Pronome.Editor
                 double duration = 0; // BPM
                 double positionBpm = double.MaxValue;
                 double maxPostion = -1;
-                foreach (Cell cell in Cell.SelectedCells.Cells)
+                foreach (Cell cell in Cell.SelectedCells.Cells.Where(x => !x.IsReference))
                 {
-                    duration += cell.Duration;
+                    //else
+                    //{
+                        duration += cell.Duration;
+                    //}
+                    // find first cell
                     if (cell.Position < positionBpm)
                     {
                         positionBpm = cell.Position;
                         Cell.SelectedCells.FirstCell = cell;
                     }
-
+                    // find last cell
                     if (cell.Position > maxPostion)
                     {
                         maxPostion = cell.Position;
                         Cell.SelectedCells.LastCell = cell;
                     }
                 }
-                duration -= Cell.SelectedCells.Cells.Last().Duration;
+                if (string.IsNullOrEmpty(Cell.SelectedCells.LastCell.Reference))
+                {
+                    // leave the duration in for references, otherwise it's zero width
+                    duration -= Cell.SelectedCells.LastCell.Duration;
+                }
 
                 Rectangle sizer = EditorWindow.Instance.GridSizer;
                 // set grid cell size

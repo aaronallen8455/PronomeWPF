@@ -86,7 +86,7 @@ namespace Pronome.Editor
     {
         protected Cell Cell;
 
-        public RemoveReference(Cell cell) : base(cell.Row, "Remove Reference", cell.Row.Cells.IndexOf(cell) - 1)
+        public RemoveReference(Cell cell) : base(cell.Row, "Remove Reference", cell.Row.Cells.IndexOf(cell))
         {
             Cell = cell;
         }
@@ -94,6 +94,12 @@ namespace Pronome.Editor
         protected override void Transformation()
         {
             Cell.Reference = null;
+
+            // give a value if none
+            if (string.IsNullOrEmpty(Cell.Value))
+            {
+                Cell.Value = "1";
+            }
 
             Cell = null;
         }
