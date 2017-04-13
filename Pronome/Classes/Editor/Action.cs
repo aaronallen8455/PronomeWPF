@@ -177,7 +177,7 @@ namespace Pronome.Editor
             }
 
             // if no change, don't do anything
-            if (AfterBeatCode == BeforeBeatCode)
+            if (AfterBeatCode == BeforeBeatCode && AfterOffset == BeforeOffset)
             {
                 return;
             }

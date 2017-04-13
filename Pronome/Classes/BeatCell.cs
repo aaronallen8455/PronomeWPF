@@ -245,6 +245,49 @@ namespace Pronome
                 return x * y / Gcf(x, y);
             };
 
+            // replace common decimals with fraction if other fractions coexist in the string
+            if (value.IndexOf('/') > -1)
+            {
+                foreach (Match m in Regex.Matches(value, @"(^|\+|-)(\d*)\.(\d+)(?=$|\+|-)"))
+                {
+                    string sign = m.Groups[1].Value;
+                    string bridge = sign == "" ? "+" : sign;
+                    string wholeNum = m.Groups[2].Value;
+                    string fract = m.Groups[3].Value;
+                    // switch out decimal with fraction if matches
+                    bool switched = true;
+                    switch (fract)
+                    {
+                        case "5":
+                            fract = "1/2";
+                            break;
+                        case "25":
+                            fract = "1/4";
+                            break;
+                        case "75":
+                            fract = "3/4";
+                            break;
+                        default:
+                            switched = false;
+                            break;
+                    }
+
+                    if (switched)
+                    {
+                        StringBuilder replace = new StringBuilder();
+                        replace.Append(sign);
+                        if (!string.IsNullOrEmpty(wholeNum))
+                        {
+                            replace.Append(wholeNum).Append(bridge);
+                        }
+                        replace.Append(fract);
+                        // replace
+                        int index = value.IndexOf(m.Value);
+                        value = value.Substring(0, index) + replace.ToString() + value.Substring(index + m.Length);
+                    }
+                }
+            }
+
             // simplify all fractions
             var multDiv = Regex.Matches(value, @"(?<!\.\d*)(\d+?[*/](?=\d+))+\d+(?!\d*\.)"); // get just the fractions or whole number multiplication. filter out decimals
             foreach (Match m in multDiv)
@@ -319,7 +362,7 @@ namespace Pronome
             //    numbers = whole + Parse("0+0" + value);
             //}
 
-            string result = numbers != 0 ? numbers.ToString() : "";
+            string result = numbers != 0 ? numbers.ToString().TrimStart('0') : "";
             // append the fractional portion of it's not zero
             if (numerator != 0)
             {

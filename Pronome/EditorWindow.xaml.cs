@@ -402,7 +402,7 @@ namespace Pronome
         private void ScrollViewer_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             // convert mouse position to BPMs
-            mousePositionText.Text = (e.GetPosition((StackPanel)sender).X / Scale / BaseFactor).ToString("0.00");
+            mousePositionText.Text = (e.GetPosition((StackPanel)sender).X / Scale / BaseFactor + 1).ToString("0.00");
         }
 
         private void layerPanel_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
@@ -464,13 +464,11 @@ namespace Pronome
 
         private void RemoveRepeatGroup_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            //e.CanExecute = RepeatGroupCommandHelper.GetResult().CanRemoveOrEdit;
             e.CanExecute = GroupCommandHelper<RepeatGroupCommandHelper>.GetResult().CanRemoveOrEdit;
         }
 
         private void RemoveRepeatGroup_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            //RepeatGroup group = RepeatGroupCommandHelper.GetGroupToRemoveOrEdit();
             RepeatGroup group = GroupCommandHelper<RepeatGroupCommandHelper>.GetGroupToRemoveOrEdit() as RepeatGroup;
 
             RemoveRepeatGroup action = new RemoveRepeatGroup(group);
@@ -719,7 +717,7 @@ namespace Pronome
             if (double.TryParse(input, out double percent) && percent > 0)
             {
                 // set the scale amount
-                Scale = 1 / (percent / 100);
+                Scale = percent / 100;
 
                 // redraw the UI for all Rows
                 foreach (Row row in Rows)
