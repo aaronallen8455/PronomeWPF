@@ -82,7 +82,10 @@ namespace Pronome
 
             if (saveFileDialog.ShowDialog() == true)
             {
-                Metronome.Save(saveFileDialog.FileName);
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    Metronome.Save(saveFileDialog.FileName);
+                }));
             }
         }
 

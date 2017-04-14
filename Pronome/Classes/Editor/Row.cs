@@ -167,110 +167,6 @@ namespace Pronome.Editor
         }
 
         /// <summary>
-        /// Move mouse handler while selection box is being drawn
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Grid_MouseMoveSelectBox(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (SelectionCanvas.IsMouseCaptured)
-            {
-                double x = e.GetPosition(BaseElement).X;
-                double y = Math.Max(
-                    Math.Min(e.GetPosition(BaseElement).Y, (double)EditorWindow.Instance.Resources["rowHeight"]), 
-                    0);
-
-                Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
-
-                // change the size and/or position of the selector based on new mouse position
-                if (x < selectorOrigin.X)
-                {
-                    Canvas.SetLeft(selector, x);
-                    selector.Width = selectorOrigin.X - x;
-                }
-                else if (x >= selectorOrigin.X)
-                {
-                    Canvas.SetLeft(selector, selectorOrigin.X);
-                    selector.Width = x - selectorOrigin.X;
-                }
-
-                if (y < selectorOrigin.Y)
-                {
-                    Canvas.SetTop(selector, y);
-                    selector.Height = selectorOrigin.Y - y;
-                }
-                else if (y >= selectorOrigin.Y)
-                {
-                    Canvas.SetTop(selector, selectorOrigin.Y);
-                    selector.Height = y - selectorOrigin.Y;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Remove the selection box and select cells within it's range. Deselect all if no cells selected
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Grid_MouseUpSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (SelectionCanvas.IsMouseCaptured)
-            {
-                SelectionCanvas.ReleaseMouseCapture();
-                Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
-
-                // select all cells within the range
-                double start = Math.Min(selectorOrigin.X, Canvas.GetLeft(selector)) / EditorWindow.Scale / EditorWindow.BaseFactor;
-                double end = start + selector.Width / EditorWindow.Scale / EditorWindow.BaseFactor;
-                IEnumerable<Cell> cells = Cells.SkipWhile(x => x.Position < start).TakeWhile(x => x.Position < end);
-
-                SelectionCanvas.Children.Remove(selector);
-
-
-                Cell.SelectedCells.DeselectAll(false);
-
-                if (cells.Any())
-                {
-                    foreach (Cell cell in cells)
-                    {
-                        cell.ToggleSelect(false);
-                    }
-                }
-
-                EditorWindow.Instance.UpdateUiForSelectedCell();
-            }
-        }
-
-        Point selectorOrigin = new Point();
-        /// <summary>
-        /// Start drawing the selection box
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Grid_MouseDownSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            // only draw the selection box if control key is down.
-            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
-            {
-                // get selection origin
-                double x = e.GetPosition(BaseElement).X;
-                double y = e.GetPosition(BaseElement).Y;
-                selectorOrigin.X = x;
-                selectorOrigin.Y = y;
-
-                // attach the selection box to the canvas
-                SelectionCanvas.CaptureMouse();
-                Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
-                selector.Width = 0;
-                selector.Height = 0;
-                Canvas.SetTop(selector, y);
-                Canvas.SetLeft(selector, x);
-                Canvas.SetZIndex(selector, 500);
-                SelectionCanvas.Children.Add(selector);
-            }
-        }
-
-        /// <summary>
         /// Generate the UI from a beat code string. Sets the BeatCode to the input string.
         /// </summary>
         /// <param name="beatCode"></param>
@@ -455,7 +351,6 @@ namespace Pronome.Editor
 
                     chunk = chunk.Remove(m.Index, m.Length);
                 }
-                //}
 
                 // check for closing repeat group, getting times and last term modifier
                 if (chunk.IndexOf(']') > -1)
@@ -486,15 +381,17 @@ namespace Pronome.Editor
                         chunk = chunk.Substring(chunk.IndexOf(']') + 1);
                     }
                 }
-                
-                // add cell rect to canvas or repeat group sub-canvas
-                if (OpenRepeatGroups.Any())
+                else
                 {
-                    OpenRepeatGroups.Peek().Canvas.Children.Add(cell.Rectangle);
-                }
-                else if (string.IsNullOrEmpty(cell.Reference)) // cell's rect is not used if it's a reference
-                {
-                    Canvas.Children.Add(cell.Rectangle);
+                    // add cell rect to canvas or repeat group sub-canvas
+                    if (OpenRepeatGroups.Any())
+                    {
+                        OpenRepeatGroups.Peek().Canvas.Children.Add(cell.Rectangle);
+                    }
+                    else if (string.IsNullOrEmpty(cell.Reference)) // cell's rect is not used if it's a reference
+                    {
+                        Canvas.Children.Add(cell.Rectangle);
+                    }
                 }
 
                 // check if its a break, |
@@ -503,9 +400,6 @@ namespace Pronome.Editor
                     cell.IsBreak = true;
                 }
             }
-
-            // set the background tiling
-            //SetBackground(position);
 
             return new ParsedBeatResult(cells, position);
         }
@@ -928,21 +822,130 @@ namespace Pronome.Editor
         /// <param name="e"></param>
         private void BaseElement_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (Cell.SelectedCells.Cells.Any())
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
             {
-                AddCell action = new AddCell(e.GetPosition((Grid)sender).X, this);
-
-                action.Redo();
-
-                if (action.IsValid)
+                // pass to the select box handler
+                Grid_MouseDownSelectBox(sender, e);
+            }
+            else
+            {
+                if (Cell.SelectedCells.Cells.Any())
                 {
-                    EditorWindow.Instance.AddUndoAction(action);
-                    return;
+                    AddCell action = new AddCell(e.GetPosition((Grid)sender).X, this);
+
+                    action.Redo();
+
+                    if (action.IsValid)
+                    {
+                        EditorWindow.Instance.AddUndoAction(action);
+                        return;
+                    }
                 }
             }
+        }
 
-            // pass to the select box handler
-            Grid_MouseDownSelectBox(sender, e);
+        /// <summary>
+        /// Move mouse handler while selection box is being drawn
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Grid_MouseMoveSelectBox(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (SelectionCanvas.IsMouseCaptured)
+            {
+                double x = e.GetPosition(BaseElement).X;
+                double y = Math.Max(
+                    Math.Min(e.GetPosition(BaseElement).Y, (double)EditorWindow.Instance.Resources["rowHeight"]),
+                    0);
+
+                Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
+
+                // change the size and/or position of the selector based on new mouse position
+                if (x < selectorOrigin.X)
+                {
+                    Canvas.SetLeft(selector, x);
+                    selector.Width = selectorOrigin.X - x;
+                }
+                else if (x >= selectorOrigin.X)
+                {
+                    Canvas.SetLeft(selector, selectorOrigin.X);
+                    selector.Width = x - selectorOrigin.X;
+                }
+
+                if (y < selectorOrigin.Y)
+                {
+                    Canvas.SetTop(selector, y);
+                    selector.Height = selectorOrigin.Y - y;
+                }
+                else if (y >= selectorOrigin.Y)
+                {
+                    Canvas.SetTop(selector, selectorOrigin.Y);
+                    selector.Height = y - selectorOrigin.Y;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Remove the selection box and select cells within it's range. Deselect all if no cells selected
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Grid_MouseUpSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (SelectionCanvas.IsMouseCaptured)
+            {
+                SelectionCanvas.ReleaseMouseCapture();
+                Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
+
+                // select all cells within the range
+                double start = Math.Min(selectorOrigin.X, Canvas.GetLeft(selector)) / EditorWindow.Scale / EditorWindow.BaseFactor;
+                double end = start + selector.Width / EditorWindow.Scale / EditorWindow.BaseFactor;
+                IEnumerable<Cell> cells = Cells.SkipWhile(x => x.Position < start).TakeWhile(x => x.Position < end);
+
+                SelectionCanvas.Children.Remove(selector);
+
+
+                Cell.SelectedCells.DeselectAll(false);
+
+                if (cells.Any())
+                {
+                    foreach (Cell cell in cells)
+                    {
+                        cell.ToggleSelect(false);
+                    }
+                }
+
+                EditorWindow.Instance.UpdateUiForSelectedCell();
+            }
+        }
+
+        Point selectorOrigin = new Point();
+        /// <summary>
+        /// Start drawing the selection box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Grid_MouseDownSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // only draw the selection box if control key is down.
+            //if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            //{
+            // get selection origin
+            double x = e.GetPosition(BaseElement).X;
+            double y = e.GetPosition(BaseElement).Y;
+            selectorOrigin.X = x;
+            selectorOrigin.Y = y;
+
+            // attach the selection box to the canvas
+            SelectionCanvas.CaptureMouse();
+            Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
+            selector.Width = 0;
+            selector.Height = 0;
+            Canvas.SetTop(selector, y);
+            Canvas.SetLeft(selector, x);
+            Canvas.SetZIndex(selector, 500);
+            SelectionCanvas.Children.Add(selector);
+            //}
         }
     }
 }

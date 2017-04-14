@@ -32,7 +32,7 @@ namespace Pronome.Editor
             position -= Row.Offset; // will be negative if inserting before the start
 
             // is it before or after the current selection?
-            if (Cell.SelectedCells.Cells.Any())
+            if (Cell.SelectedCells.Cells.Any() && Row == Cell.SelectedCells.FirstCell.Row)
             {
                 // find the grid line within 10% of increment value of the click
                 double increment = BeatCell.Parse(EditorWindow.CurrentIncrement);

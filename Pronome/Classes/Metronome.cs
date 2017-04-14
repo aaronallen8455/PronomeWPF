@@ -282,17 +282,6 @@ namespace Pronome
             Writer.Dispose();
         }
 
-        ///**<summary>Remove invalid characters from filename.</summary>
-        // * <param name="fileName">Desired file name.</param>
-        // */
-        //public static string ValidateFileName(string fileName)
-        //{
-        //    char[] invalidChars = Path.GetInvalidFileNameChars();
-        //    string invalidString = Regex.Escape(new string(invalidChars));
-        //    fileName = Regex.Replace(fileName, "[" + invalidString + "]", "");
-        //    return fileName;
-        //}
-
         /**<summary>Used to accumulate elapsed quarter notes to start prior animations in sync</summary>*/
         protected AnimationTimer _timer;
 
