@@ -88,6 +88,7 @@ namespace Pronome
             GridSizer = Resources["gridSizer"] as Rectangle;
             GridTick = Resources["gridTick"] as Rectangle;
             GridLeft = Resources["gridLeft"] as Rectangle;
+            GridLeft.Margin = new Thickness(-GridTick.Width, 0, 0, 0);
             Panel.SetZIndex(GridLeft, 5);
             GridRight = Resources["gridRight"] as Rectangle;
             Panel.SetZIndex(GridRight, 5);
@@ -253,25 +254,28 @@ namespace Pronome
 
         private void applyChangesButton_Click(object sender, RoutedEventArgs e)
         {
-            bool changesMade = false;
-            foreach (Row row in Rows)
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                // TODO: what if a layer was removed / created while editor is open?
-                if (!row.BeatCodeIsCurrent) row.UpdateBeatCode();
-                string beatCode = row.BeatCode;
-
-                if (beatCode != row.Layer.ParsedString)
+                bool changesMade = false;
+                foreach (Row row in Rows)
                 {
-                    changesMade = true;
-                    row.Layer.UI.textEditor.Text = beatCode;
-                    row.Layer.Parse(beatCode);
-                    // redraw beat graph / bounce if necessary
+                    // TODO: what if a layer was removed / created while editor is open?
+                    if (!row.BeatCodeIsCurrent) row.UpdateBeatCode();
+                    string beatCode = row.BeatCode;
+
+                    if (beatCode != row.Layer.ParsedString)
+                    {
+                        changesMade = true;
+                        row.Layer.UI.textEditor.Text = beatCode;
+                        row.Layer.Parse(beatCode);
+                        // redraw beat graph / bounce if necessary
+                    }
                 }
-            }
-            if (changesMade)
-            {
-                Metronome.GetInstance().TriggerAfterBeatParsed();
-            }
+                if (changesMade)
+                {
+                    Metronome.GetInstance().TriggerAfterBeatParsed();
+                }
+            }));
 
             SetChangesApplied(true);
         }

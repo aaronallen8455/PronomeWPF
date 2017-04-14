@@ -186,24 +186,6 @@ namespace Pronome.Editor
                     // multiSelect
                     if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
                     {
-                        //bool started = false;
-                        //bool hitSelect = false;
-                        //bool hitThis = false;
-                        //
-                        //foreach (Cell c in Row.Cells.SkipWhile(x => !x.IsSelected))
-                        //{
-                        //    if (!started && !c.IsSelected) started = true;
-                        //    
-                        //    if (c.IsSelected)
-                        //    {
-                        //        if (c == this) hitThis = true;
-                        //        if (started || (hitSelect && hitThis)) break;
-                        //        hitSelect = true;
-                        //        continue;
-                        //    }
-                        //    
-                        //    c.ToggleSelect(false);
-                        //}
                         int start = -1;
                         int end = -1;
                         for (int i = 0; i < Row.Cells.Count; i++)
@@ -227,10 +209,6 @@ namespace Pronome.Editor
                     }
                     else
                     { // single select : deselect others
-                        //while (SelectedCells.Cells.Any())
-                        //{
-                        //    SelectedCells.Cells.First().ToggleSelect(false);
-                        //}
                         foreach (Cell c in SelectedCells.Cells.ToArray())
                         {
                             c.ToggleSelect(false);
@@ -281,21 +259,29 @@ namespace Pronome.Editor
 
         public class Selection
         {
+            /// <summary>
+            /// Cells currently contained by the selection
+            /// </summary>
             public List<Cell> Cells = new List<Cell>();
-            public Cell FirstCell;
-            public Cell LastCell;
-            //public int EndIndex;
-            //public int StartIndex;
-            //public double Position;
-            //public double Duration;
 
+            /// <summary>
+            /// First cell in the selection. Set when grid lines are drawn
+            /// </summary>
+            public Cell FirstCell;
+
+            /// <summary>
+            /// Last cell in the selection. Set when grid lines are drawn
+            /// </summary>
+            public Cell LastCell;
+
+            /// <summary>
+            /// Remove all cells from the selection
+            /// </summary>
             public void Clear()
             {
                 Cells.Clear();
                 FirstCell = null;
                 LastCell = null;
-                //StartIndex = 0;
-                //EndIndex = 0;
             }
 
             /// <summary>

@@ -7,6 +7,8 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Text;
+using System.Windows;
+using System.Windows.Input;
 
 namespace Pronome.Editor
 {
@@ -126,6 +128,8 @@ namespace Pronome.Editor
         /// </summary>
         public int Index;
 
+        public Canvas SelectionCanvas = new Canvas();
+
         public Row(Layer layer)
         {
             Layer = layer;
@@ -154,6 +158,116 @@ namespace Pronome.Editor
             BaseElement.Background = Brushes.Transparent;
             BaseElement.Children.Add(Canvas);
             BaseElement.Children.Add(Background);
+
+            BaseElement.Children.Add(SelectionCanvas);
+            // Add the handlers for the drag select box
+            //BaseElement.MouseDown += Grid_MouseDownSelectBox;
+            BaseElement.MouseUp += Grid_MouseUpSelectBox;
+            BaseElement.MouseMove += Grid_MouseMoveSelectBox;
+        }
+
+        /// <summary>
+        /// Move mouse handler while selection box is being drawn
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Grid_MouseMoveSelectBox(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (SelectionCanvas.IsMouseCaptured)
+            {
+                double x = e.GetPosition(BaseElement).X;
+                double y = Math.Max(
+                    Math.Min(e.GetPosition(BaseElement).Y, (double)EditorWindow.Instance.Resources["rowHeight"]), 
+                    0);
+
+                Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
+
+                // change the size and/or position of the selector based on new mouse position
+                if (x < selectorOrigin.X)
+                {
+                    Canvas.SetLeft(selector, x);
+                    selector.Width = selectorOrigin.X - x;
+                }
+                else if (x >= selectorOrigin.X)
+                {
+                    Canvas.SetLeft(selector, selectorOrigin.X);
+                    selector.Width = x - selectorOrigin.X;
+                }
+
+                if (y < selectorOrigin.Y)
+                {
+                    Canvas.SetTop(selector, y);
+                    selector.Height = selectorOrigin.Y - y;
+                }
+                else if (y >= selectorOrigin.Y)
+                {
+                    Canvas.SetTop(selector, selectorOrigin.Y);
+                    selector.Height = y - selectorOrigin.Y;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Remove the selection box and select cells within it's range. Deselect all if no cells selected
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Grid_MouseUpSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (SelectionCanvas.IsMouseCaptured)
+            {
+                SelectionCanvas.ReleaseMouseCapture();
+                Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
+
+                // select all cells within the range
+                double start = Math.Min(selectorOrigin.X, Canvas.GetLeft(selector)) / EditorWindow.Scale / EditorWindow.BaseFactor;
+                double end = start + selector.Width / EditorWindow.Scale / EditorWindow.BaseFactor;
+                IEnumerable<Cell> cells = Cells.SkipWhile(x => x.Position < start).TakeWhile(x => x.Position < end);
+
+                SelectionCanvas.Children.Remove(selector);
+
+
+                Cell.SelectedCells.DeselectAll(false);
+
+                if (cells.Any())
+                {
+                    foreach (Cell cell in cells)
+                    {
+                        cell.ToggleSelect(false);
+                    }
+                }
+
+                EditorWindow.Instance.UpdateUiForSelectedCell();
+            }
+        }
+
+        Point selectorOrigin = new Point();
+        /// <summary>
+        /// Start drawing the selection box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Grid_MouseDownSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // only draw the selection box if control key is down.
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            {
+                // get selection origin
+                double x = e.GetPosition(BaseElement).X;
+                double y = e.GetPosition(BaseElement).Y;
+                selectorOrigin.X = x;
+                selectorOrigin.Y = y;
+
+                // attach the selection box to the canvas
+                SelectionCanvas.CaptureMouse();
+                Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
+                selector.Width = 0;
+                selector.Height = 0;
+                Canvas.SetTop(selector, y);
+                Canvas.SetLeft(selector, x);
+                Canvas.SetZIndex(selector, 500);
+                SelectionCanvas.Children.Add(selector);
+            }
         }
 
         /// <summary>
@@ -313,40 +427,14 @@ namespace Pronome.Editor
                 // check for source modifier
                 if (chunk.IndexOf('@') > -1)
                 {
-                    string source = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|\d|[a-gA-G][b#]?\d+)").Value;
+                    string source = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|\d+|[a-gA-G][b#]?\d+)").Value;
                     if (char.IsNumber(source[0]) && source != "0")
                     {
                         source = WavFileStream.FileNameIndex[int.Parse(source), 0];
                     }
                     cell.Source = source;
                 }
-
-                // check for cell repeat
-                bool singleCellRepeat = false;
-                //if (Regex.IsMatch(chunk, @"\(\d+\)[\d+\-/*.]*"))
-                //{
-                //    singleCellRepeat = true;
-                //    Match m = Regex.Match(chunk, @"\((\d+)\)([\d+\-/*.]*)");
-                //    //cell.Repeat = new Cell.CellRepeat()
-                //    //{
-                //    //    Times = int.Parse(m.Groups[1].Value),
-                //    //    LastTermModifier = m.Groups[2].Length != 0 ? BeatCell.Parse(m.Groups[2].Value) : 0
-                //    //};
-                //    
-                //    var rg = new RepeatGroup() { Row = this };
-                //    rg.Cells.AddLast(cell);
-                //    rg.Position = cell.Position;
-                //    rg.Duration = cell.Duration;
-                //    rg.Times = int.Parse(m.Groups[1].Value);
-                //    rg.LastTermModifier = m.Groups[2].Value;
-                //    cell.RepeatGroups.AddLast(rg);
-                //
-                //    position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position);
-                //}
-
-                // check for closing mult group
-                //if (chunk.IndexOf('}') > -1)
-                //{
+                
                     // handle multiple groups
                 while (chunk.Contains('}'))
                 {
@@ -398,17 +486,15 @@ namespace Pronome.Editor
                         chunk = chunk.Substring(chunk.IndexOf(']') + 1);
                     }
                 }
-                else if (!singleCellRepeat)
+                
+                // add cell rect to canvas or repeat group sub-canvas
+                if (OpenRepeatGroups.Any())
                 {
-                    // add cell rect to canvas or repeat group sub-canvas
-                    if (OpenRepeatGroups.Any())
-                    {
-                        OpenRepeatGroups.Peek().Canvas.Children.Add(cell.Rectangle);
-                    }
-                    else if (string.IsNullOrEmpty(cell.Reference)) // cell's rect is not used if it's a reference
-                    {
-                        Canvas.Children.Add(cell.Rectangle);
-                    }
+                    OpenRepeatGroups.Peek().Canvas.Children.Add(cell.Rectangle);
+                }
+                else if (string.IsNullOrEmpty(cell.Reference)) // cell's rect is not used if it's a reference
+                {
+                    Canvas.Children.Add(cell.Rectangle);
                 }
 
                 // check if its a break, |
@@ -822,10 +908,10 @@ namespace Pronome.Editor
                 Rectangle tick = EditorWindow.Instance.GridTick;
                 Rectangle leftGrid = EditorWindow.Instance.GridLeft;
                 // set left grid width
-                leftGrid.Width = (positionBpm + Offset) * EditorWindow.Scale * EditorWindow.BaseFactor;
+                leftGrid.Width = (positionBpm + Offset) * EditorWindow.Scale * EditorWindow.BaseFactor + tick.Width;
                 Rectangle rightGrid = EditorWindow.Instance.GridRight;
                 // position right grid
-                rightGrid.Margin = new System.Windows.Thickness(leftGrid.Width + duration * EditorWindow.Scale * EditorWindow.BaseFactor, 0, 0, 0);
+                rightGrid.Margin = new System.Windows.Thickness(leftGrid.Width + duration * EditorWindow.Scale * EditorWindow.BaseFactor - tick.Width, 0, 0, 0);
                 VisualBrush gridBrush = EditorWindow.Instance.GridBrush;
                 // set viewport size
                 gridBrush.Viewport = new System.Windows.Rect(0, sizer.Height, gridCellSize, sizer.Height);
@@ -842,14 +928,21 @@ namespace Pronome.Editor
         /// <param name="e"></param>
         private void BaseElement_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            AddCell action = new AddCell(e.GetPosition((Grid)sender).X, this);
-
-            action.Redo();
-
-            if (action.IsValid)
+            if (Cell.SelectedCells.Cells.Any())
             {
-                EditorWindow.Instance.AddUndoAction(action);
+                AddCell action = new AddCell(e.GetPosition((Grid)sender).X, this);
+
+                action.Redo();
+
+                if (action.IsValid)
+                {
+                    EditorWindow.Instance.AddUndoAction(action);
+                    return;
+                }
             }
+
+            // pass to the select box handler
+            Grid_MouseDownSelectBox(sender, e);
         }
     }
 }

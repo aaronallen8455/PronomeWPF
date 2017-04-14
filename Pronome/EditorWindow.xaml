@@ -40,6 +40,16 @@
             x:Key="cellRectangle" 
             x:Shared="False" 
             Fill="Black"/>
+        
+        <!--Box Select-->
+        <Rectangle
+            Fill="AliceBlue"
+            Stroke="Black"
+            StrokeDashArray="4,2"
+            StrokeThickness="2"
+            Opacity=".6"
+            x:Key="boxSelect"
+            x:Shared="True"/>
 
         <!--Selection grid elements-->
         <Rectangle

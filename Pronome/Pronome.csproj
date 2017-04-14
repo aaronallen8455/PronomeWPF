@@ -95,6 +95,7 @@
     <Compile Include="Classes\Editor\Action\AddCell.cs" />
     <Compile Include="Classes\Editor\Action\AddRepeatGroup.cs" />
     <Compile Include="Classes\Editor\Action\AddMultGroup.cs" />
+    <Compile Include="Classes\Editor\Action\ReferenceActions.cs" />
     <Compile Include="Classes\Editor\Cell.cs" />
     <Compile Include="Classes\Editor\Action\CellDuration.cs" />
     <Compile Include="Classes\Editor\Action\EditRepeatGroup.cs" />
