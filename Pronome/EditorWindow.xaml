@@ -15,12 +15,18 @@
         <sys:Boolean x:Key="changesApplied">False</sys:Boolean>
         <sys:Boolean x:Key="cellSelected">False</sys:Boolean>
 
+        <!--The base element for the rows.-->
+        <Grid x:Key="rowBaseElement" 
+              x:Shared="False"
+              Margin="0, 6, 0, 0"/>
+
         <!--The canvas that the cells are drawn on-->
         <Canvas x:Key="rowCanvas" x:Shared="False"/>
 
         <!--The background for the rows on which cell pattern is repeated-->
         <Rectangle 
             Width="Auto" 
+            MinWidth="700"
             Height="{StaticResource rowHeight}" 
             x:Shared="False" 
             x:Key="rowBackgroundRectangle"

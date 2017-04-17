@@ -100,7 +100,7 @@ namespace Pronome.Editor
         /// <summary>
         /// The element added to the layerPanel stackpanel. Contains everything from this row.
         /// </summary>
-        public Grid BaseElement = new Grid();
+        public Grid BaseElement;
         
         /// <summary>
         /// Sets the size of the row and supplies background color
@@ -151,6 +151,8 @@ namespace Pronome.Editor
             //ParsedBeatResult pbr = ParseBeat(layer.ParsedString);
             //Cells = pbr.Cells;
             //SetBackground(pbr.Duration);
+
+            BaseElement = EditorWindow.Instance.Resources["rowBaseElement"] as Grid;
 
             // handler for creating new cells on the grid
             BaseElement.MouseLeftButtonDown += BaseElement_MouseLeftButtonDown;

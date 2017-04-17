@@ -65,7 +65,7 @@ namespace Pronome
         /// <summary>
         /// Determines overall scale of UI
         /// </summary>
-        public const float BaseFactor = 40f;
+        public const float BaseFactor = 55f;
 
         public EditorWindow()
         {
