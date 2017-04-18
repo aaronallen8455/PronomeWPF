@@ -62,8 +62,12 @@ namespace Pronome.Editor
                                 .First();
                         }
 
-                        // if the new cell will be above the current row
-                        if (position > Row.Cells.Last().Position + Row.Cells.Last().Duration - increment * Row.GridProx) // should a cell placed within duration of prev cell maintain overall duration?
+                        // if the new cell will be above the current row. Above all cells and above all repeat group LTMs
+                        if (position > Row.Cells.Last().Position + Row.Cells.Last().Duration - increment * Row.GridProx
+                            && (!Row.RepeatGroups.Any() ||
+                            position > Row.RepeatGroups.Last.Value.Position 
+                            + Row.RepeatGroups.Last.Value.Duration * Row.RepeatGroups.Last.Value.Times 
+                            + BeatCell.Parse(Row.RepeatGroups.Last.Value.LastTermModifier) - increment * Row.GridProx))
                         {
                             AddCellAboveRow(position, increment);
                         }
@@ -254,9 +258,13 @@ namespace Pronome.Editor
                 if (index > -1)
                 {
                     RightIndexBoundOfTransform = index - 1;
-                    IsValid = true;
 
                     Cell below = Row.Cells[index - 1];
+
+                    //if (below.RepeatGroups.Any())
+                    //{
+                    Group.AddToGroups(cell, below);
+                    //}
                     
                     // is new cell placed in the LTM zone of a rep group?
                     RepeatGroup repWithLtmToMod = null;
@@ -282,6 +290,9 @@ namespace Pronome.Editor
                         {
                             if (repGroups.Contains(rg)) continue;
                             // don't include a rep group if the end point is included in it.
+
+                            repGroups.Add(rg);
+
                             if (cell.RepeatGroups.Contains(rg))
                             {
                                 repGroups.Add(rg);
@@ -299,7 +310,6 @@ namespace Pronome.Editor
                             }
                     
                             ltmTimes.Add(rg, 1);
-                            repGroups.Add(rg);
                         }
                         // subtract the LTMs
                         foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
@@ -309,12 +319,50 @@ namespace Pronome.Editor
                                     BeatCell.Invert(kv.Key.LastTermModifier), kv.Value));
                         }
                     }
+
+                    // if the below cell was a single cell repeat, and we are placing the cell into it's LTM
+                    if (repWithLtmToMod != null)
+                    {
+                        string belowLtm = "";
+                        string belowRepValue = "0";
+                        foreach (RepeatGroup rg in below.RepeatGroups.Where(x => !repGroups.Contains(x)))
+                        {
+                            if (!string.IsNullOrEmpty(belowLtm))
+                            {
+                                val.Append("+0").Append(
+                                    BeatCell.MultiplyTerms(
+                                        BeatCell.Invert(belowLtm), rg.Times));
+                            }
+
+                            belowRepValue = BeatCell.MultiplyTerms(BeatCell.Add(belowRepValue, below.Value), rg.Times);
+                        }
+
+                        val.Append("+0").Append(BeatCell.Invert(belowRepValue));
+                    }
                     
                     // get new cells value by subtracting old value of below cell by new value.
                     string newVal = BeatCell.SimplifyValue(val.ToString());
-                    cell.Value = BeatCell.Subtract(below.Value, newVal);
-                    string oldValue = below.Value;
-                    
+                    cell.Value = BeatCell.Subtract(repWithLtmToMod == null ? below.Value : repWithLtmToMod.LastTermModifier, newVal);
+
+                    // if placing cell on top of another cell, it's not valid.
+                    if (cell.Value == string.Empty || newVal == string.Empty)
+                    {
+                        // remove the cell
+                        Row.Cells.Remove(cell);
+                        foreach (RepeatGroup rg in cell.RepeatGroups)
+                        {
+                            rg.Cells.Remove(cell);
+                        }
+                        foreach (MultGroup mg in cell.MultGroups)
+                        {
+                            mg.Cells.Remove(cell);
+                        }
+                        cell = null;
+                        return;
+                    }
+
+                    IsValid = true;
+
                     if (repWithLtmToMod == null)
                     {
                         // changing a cell value
@@ -427,6 +475,8 @@ namespace Pronome.Editor
                     IsValid = true;
 
                     Cell below = Row.Cells[index - 1];
+
+                    Group.AddToGroups(cell, below);
                     
                     // see if the cell is being added to a rep group's LTM zone
                     RepeatGroup repWithLtmToMod = null;
@@ -438,40 +488,53 @@ namespace Pronome.Editor
                     
                     // get new value string for below
                     StringBuilder val = new StringBuilder();
-                    
+
+                    bool repWithLtmToModFound = false;
                     HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
                     foreach (Cell c in Row.Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
                     {
                         if (c == cell || !string.IsNullOrEmpty(c.Reference)) continue; // don't include the new cell
-                        // add the cells value
-                        val.Append(c.Value).Append('+');
+                        // add the cells value. If modding an LTM, we need to have passed that group first.
+                        if (repWithLtmToMod == null || repWithLtmToModFound)
+                        {
+                            val.Append(c.Value).Append('+');
+                        }
                         // we need to track how many times to multiply each rep group's LTM
                         Dictionary<RepeatGroup, int> ltmFactors = new Dictionary<RepeatGroup, int>();
                         // if there's a rep group, add the repeated sections
                         // what order are rg's in? reverse
                         foreach (RepeatGroup rg in c.RepeatGroups.Reverse())
                         {
+                            // don't add ghost reps more than once
                             if (repGroups.Contains(rg)) continue;
+                            repGroups.Add(rg);
+
                             // don't count reps for groups that contain the selection
                             if (Cell.SelectedCells.FirstCell.RepeatGroups.Contains(rg))
                             {
-                                repGroups.Add(rg);
                                 continue;
                             }
-                            foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
+
+                            // don't add anything until after the group with LTM to mod has been found (if were modding a LTM)
+                            if (repWithLtmToMod == null || repWithLtmToModFound)
                             {
-                                val.Append('0').Append(
-                                    BeatCell.MultiplyTerms(ce.Value, rg.Times - 1))
-                                    .Append('+');
+                                foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
+                                {
+                                    val.Append('0').Append(
+                                        BeatCell.MultiplyTerms(ce.Value, rg.Times - 1))
+                                        .Append('+');
+                                }
+
                             }
+                            // found group with LTM tod mod, add it's LTM but not cell values.
+                            if (rg == repWithLtmToMod) repWithLtmToModFound = true;
+
                             // increase multiplier of LTMs
                             foreach (KeyValuePair<RepeatGroup, int> kv in ltmFactors)
                             {
                                 ltmFactors[kv.Key] = kv.Value * rg.Times;
                             }
                             ltmFactors.Add(rg, 1);
-                            // don't add ghost reps more than once
-                            repGroups.Add(rg);
                         }
                         // add in all the LTMs from rep groups
                         foreach (KeyValuePair<RepeatGroup, int> kv in ltmFactors)
@@ -484,21 +547,38 @@ namespace Pronome.Editor
                     
                     val.Append('0');
                     val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(EditorWindow.CurrentIncrement), div));
-                    cell.Value = BeatCell.Subtract(below.Value, val.ToString());
+                    cell.Value = BeatCell.Subtract(repWithLtmToMod == null ? below.Value : repWithLtmToMod.LastTermModifier, val.ToString());
                     //cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
-                    string oldValue;
+                    string newValue = BeatCell.SimplifyValue(val.ToString());
+
+                    // check for cell being doubled
+                    if (cell.Value == string.Empty || newValue == string.Empty)
+                    {
+                        IsValid = false;
+                        Row.Cells.Remove(cell);
+                        foreach (RepeatGroup rg in cell.RepeatGroups)
+                        {
+                            rg.Cells.Remove(cell);
+                        }
+                        foreach (MultGroup mg in cell.MultGroups)
+                        {
+                            mg.Cells.Remove(cell);
+                        }
+                        cell = null;
+                        return;
+                    }
                     
                     if (repWithLtmToMod == null)
                     {
-                        oldValue = below.Value;
-                        below.Value = BeatCell.SimplifyValue(val.ToString());
+                        //oldValue = below.Value;
+                        below.Value = newValue;
                     }
                     else
                     {
-                        oldValue = repWithLtmToMod.LastTermModifier;
+                        //oldValue = repWithLtmToMod.LastTermModifier;
                         repWithLtmToMod.LastTermModifier = BeatCell.Subtract(
                             repWithLtmToMod.LastTermModifier, 
-                            BeatCell.SimplifyValue(val.ToString()));
+                            newValue);
                     }
                 }
             }

@@ -55,6 +55,24 @@ namespace Pronome
         public Canvas GridCanvas;
         public VisualBrush GridBrush;
 
+        /// <summary>
+        /// The meaure marking element
+        /// </summary>
+        protected Rectangle MeasureTick;
+        /// <summary>
+        /// Spaces the size the of the measures
+        /// </summary>
+        protected Rectangle MeasureSizer;
+        /// <summary>
+        /// The element from the measure brush is created
+        /// </summary>
+        protected Canvas MeasureTickCanvas;
+        /// <summary>
+        /// The background of the LayerPanel element is set to this brush.
+        /// </summary>
+        protected VisualBrush MeasureBrush;
+        protected double MeasureWidth;
+
         public StackPanel LayerPanel;
 
         /// <summary>
@@ -101,6 +119,21 @@ namespace Pronome
             GridCanvas.Children.Add(GridSizer);
             GridCanvas.Children.Add(GridTick);
 
+            // init measure tick elements
+            MeasureWidth = BeatCell.Parse(measureSizeInput.Text);
+            MeasureTick = Resources["measureTick"] as Rectangle;
+            MeasureSizer = Resources["measureSizer"] as Rectangle;
+            MeasureSizer.Width = MeasureWidth * BaseFactor * Scale;
+            MeasureTickCanvas = new Canvas();
+            MeasureTickCanvas.Children.Add(MeasureTick);
+            MeasureTickCanvas.Children.Add(MeasureSizer);
+            MeasureBrush = new VisualBrush(MeasureTickCanvas);
+            MeasureBrush.ViewportUnits = BrushMappingMode.Absolute;
+            MeasureBrush.TileMode = TileMode.Tile;
+            MeasureBrush.Viewport = new Rect(0, 0, MeasureWidth * BaseFactor * Scale, 1);
+            LayerPanel.Background = MeasureBrush;
+
+            // init the undo and redo stacks
             UndoStack = new ActionStack(undoMenuItem, 50);
             RedoStack = new ActionStack(redoMenuItem, 50);
         }
@@ -406,7 +439,13 @@ namespace Pronome
         private void ScrollViewer_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             // convert mouse position to BPMs
-            mousePositionText.Text = (e.GetPosition((StackPanel)sender).X / Scale / BaseFactor + 1).ToString("0.00");
+            double bpmPosition = e.GetPosition((StackPanel)sender).X / Scale / BaseFactor;
+            // start at measure 1
+            int measure = (int)(bpmPosition / MeasureWidth) + 1;
+            // the bpm into the current measure
+            string beat = (bpmPosition - (measure - 1) * MeasureWidth).ToString("0.00");
+
+            mousePositionText.Text = $"{measure.ToString()} : {beat}";
         }
 
         private void layerPanel_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
@@ -742,6 +781,25 @@ namespace Pronome
                         Cell.SelectedCells.SelectRange(selectionStart, selectionEnd, row);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Set the measure size when input changes
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void measureSizeInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            string input = (sender as TextBox).Text;
+            // validate the measure size input
+            if (BeatCell.TryParse(input, out double bpm))
+            {
+                MeasureWidth = bpm;// * BaseFactor * Scale;
+
+                // resize the measure tick
+                MeasureSizer.Width = MeasureWidth;
+                MeasureBrush.Viewport = new Rect(0, 0, MeasureWidth * BaseFactor * Scale, 1);
             }
         }
     }

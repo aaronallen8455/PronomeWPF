@@ -225,7 +225,7 @@ namespace Pronome.Editor
                         cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
                         OpenMultGroups.Peek().Cells.AddLast(cell);
                         OpenMultGroups.Peek().Position = cell.Position;
-                        MultGroups.AddLast(OpenMultGroups.Peek());
+                        //MultGroups.AddLast(OpenMultGroups.Peek());
 
                         chunk = chunk.Remove(chunk.IndexOf('{'), 1);
                     }
@@ -245,7 +245,7 @@ namespace Pronome.Editor
                         cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
                         OpenRepeatGroups.Peek().Cells.AddLast(cell);
                         OpenRepeatGroups.Peek().Position = cell.Position;
-                        RepeatGroups.AddLast(OpenRepeatGroups.Peek());
+                        //RepeatGroups.AddLast(OpenRepeatGroups.Peek());
 
                         chunk = chunk.Remove(chunk.IndexOf('['), 1);
                     }
@@ -332,34 +332,41 @@ namespace Pronome.Editor
                     }
                     cell.Source = source;
                 }
-                
-                    // handle multiple groups
-                while (chunk.Contains('}'))
-                {
-                    MultGroup mg = OpenMultGroups.Pop();
-                    mg.Factor = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
-                    // set duration
-                    mg.Duration = cell.Position + cell.Duration - mg.Position;
-                    // render
-                    if (OpenRepeatGroups.Any())
-                    {
-                        OpenRepeatGroups.Peek().Canvas.Children.Add(mg.Rectangle);
-                    }
-                    else
-                    {
-                        Canvas.Children.Add(mg.Rectangle);
-                    }
-                    var m = Regex.Match(chunk, @"\}[\d.+\-/*]+");
 
-                    chunk = chunk.Remove(m.Index, m.Length);
-                }
-
-                // check for closing repeat group, getting times and last term modifier
-                if (chunk.IndexOf(']') > -1)
+                bool addedToRepCanvas = false;
+                while (chunk.Contains('}') || chunk.Contains(']'))
                 {
-                    // handle closely nested repeat group ends
-                    while (chunk.Contains(']'))
+                    // create the mult and rep groups in the correct order
+                    int multIndex = chunk.IndexOf('}');
+                    int repIndex = chunk.IndexOf(']');
+
+                    if (multIndex < repIndex && multIndex > -1)
                     {
+                        // add mult group
+
+                        MultGroup mg = OpenMultGroups.Pop();
+                        mg.Factor = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
+                        // set duration
+                        mg.Duration = cell.Position + cell.Duration - mg.Position;
+                        // render
+                        if (OpenRepeatGroups.Any())
+                        {
+                            OpenRepeatGroups.Peek().Canvas.Children.Add(mg.Rectangle);
+                        }
+                        else
+                        {
+                            Canvas.Children.Add(mg.Rectangle);
+                        }
+                        var m = Regex.Match(chunk, @"\}[\d.+\-/*]+");
+
+                        chunk = chunk.Remove(m.Index, m.Length);
+
+                        MultGroups.AddLast(mg);
+                    }
+                    else if (repIndex > -1)
+                    {
+                        // add rep group
+
                         RepeatGroup rg = OpenRepeatGroups.Pop();
                         rg.Duration = cell.Position + cell.Duration - rg.Position;
                         Match mtch = Regex.Match(chunk, @"](\d+)");
@@ -378,12 +385,68 @@ namespace Pronome.Editor
                         }
 
                         // build the group
-                        position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position);
+                        position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position, !addedToRepCanvas);
+
+                        addedToRepCanvas = true;
                         // move to outer group if exists
                         chunk = chunk.Substring(chunk.IndexOf(']') + 1);
                     }
                 }
-                else
+
+                //    // handle multiple groups
+                //while (chunk.Contains('}'))
+                //{
+                //    MultGroup mg = OpenMultGroups.Pop();
+                //    mg.Factor = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
+                //    // set duration
+                //    mg.Duration = cell.Position + cell.Duration - mg.Position;
+                //    // render
+                //    if (OpenRepeatGroups.Any())
+                //    {
+                //        OpenRepeatGroups.Peek().Canvas.Children.Add(mg.Rectangle);
+                //    }
+                //    else
+                //    {
+                //        Canvas.Children.Add(mg.Rectangle);
+                //    }
+                //    var m = Regex.Match(chunk, @"\}[\d.+\-/*]+");
+                //
+                //    chunk = chunk.Remove(m.Index, m.Length);
+                //
+                //    MultGroups.AddLast(mg);
+                //}
+                //
+                //// check for closing repeat group, getting times and last term modifier
+                //if (chunk.IndexOf(']') > -1)
+                //{
+                //    // handle closely nested repeat group ends
+                //    while (chunk.Contains(']'))
+                //    {
+                //        RepeatGroup rg = OpenRepeatGroups.Pop();
+                //        rg.Duration = cell.Position + cell.Duration - rg.Position;
+                //        Match mtch = Regex.Match(chunk, @"](\d+)");
+                //        if (mtch.Length == 0)
+                //        {
+                //            mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
+                //            rg.Times = int.Parse(mtch.Groups[1].Value);
+                //            if (mtch.Groups[2].Length != 0)
+                //            {
+                //                rg.LastTermModifier = mtch.Groups[2].Value;//.Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
+                //            }
+                //        }
+                //        else
+                //        {
+                //            rg.Times = int.Parse(mtch.Groups[1].Value);
+                //        }
+                //
+                //        // build the group
+                //        position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position);
+                //        // move to outer group if exists
+                //        chunk = chunk.Substring(chunk.IndexOf(']') + 1);
+                //    }
+                //}
+                //else
+                if (!addedToRepCanvas)
                 {
                     // add cell rect to canvas or repeat group sub-canvas
                     if (OpenRepeatGroups.Any())
@@ -664,7 +727,7 @@ namespace Pronome.Editor
         /// <param name="rg"></param>
         /// <param name="openRepeatGroups"></param>
         /// <returns></returns>
-        protected double BuildRepeatGroup(Cell cell, RepeatGroup rg, Stack<RepeatGroup> openRepeatGroups, double position)
+        protected double BuildRepeatGroup(Cell cell, RepeatGroup rg, Stack<RepeatGroup> openRepeatGroups, double position, bool addToCanvas = true)
         {
             //double position = 0;
             RepeatGroups.AddLast(rg);
@@ -685,7 +748,7 @@ namespace Pronome.Editor
             }
 
             // add cell rect if not a reference
-            if (string.IsNullOrEmpty(cell.Reference))
+            if (string.IsNullOrEmpty(cell.Reference) && addToCanvas)
             {
                 rg.Canvas.Children.Add(cell.Rectangle);
             }
@@ -883,6 +946,20 @@ namespace Pronome.Editor
                 {
                     Canvas.SetTop(selector, selectorOrigin.Y);
                     selector.Height = y - selectorOrigin.Y;
+                }
+
+                // scroll the window if necessary
+
+                double windowWidth = EditorWindow.Instance.Width - 20;
+                double scrollAmount = EditorWindow.Instance.layerPanelScrollViewer.HorizontalOffset;
+                // scroll right
+                if (windowWidth < x - scrollAmount)
+                {
+                    EditorWindow.Instance.layerPanelScrollViewer.ScrollToHorizontalOffset(scrollAmount + .1);
+                }
+                else if (x - scrollAmount < -20) // scroll left
+                {
+                    EditorWindow.Instance.layerPanelScrollViewer.ScrollToHorizontalOffset(scrollAmount - .1);
                 }
             }
         }

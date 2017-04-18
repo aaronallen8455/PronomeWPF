@@ -207,7 +207,7 @@ namespace Pronome.Editor
                 {
                     CanAdd = false;
                     CanRemoveOrEdit = true;
-                    GroupToRemoveOrEdit = first.MultGroups.Last.Value;
+                    GroupToRemoveOrEdit = first.RepeatGroups.Last.Value;
                 }
                 else
                 {

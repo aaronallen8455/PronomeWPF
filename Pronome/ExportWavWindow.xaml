@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="Wav Export Options" Height="200" Width="400">
+        Title="Wav Export Options" Height="200" Width="400"
+        ResizeMode="NoResize">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition/>

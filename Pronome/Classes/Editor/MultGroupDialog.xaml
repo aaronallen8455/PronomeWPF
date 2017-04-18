@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome.Classes.Editor"
         mc:Ignorable="d"
-        Title="Multiply Group" Height="220" Width="300">
+        Title="Multiply Group" Height="220" Width="300"
+        ResizeMode="NoResize">
     <Window.Resources>
         <Style TargetType="TextBox">
             <Style.Triggers>

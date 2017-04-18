@@ -56,6 +56,19 @@
             Opacity=".6"
             x:Key="boxSelect"
             x:Shared="True"/>
+        
+        <!--Measure tick elements-->
+        <Rectangle
+            Width="1"
+            Height="1"
+            x:Key="measureTick"
+            x:Shared="False"
+            Fill="#FF9FBBB9"/>
+        <Rectangle
+            Fill="Transparent"
+            Height="1"
+            x:Key="measureSizer"
+            x:Shared="False"/>
 
         <!--Selection grid elements-->
         <Rectangle
@@ -225,6 +238,10 @@
                 </Style>
             </WrapPanel.Resources>
             <StackPanel>
+                <Label Target="{Binding ElementName=measureSizeInput}">Measure Size</Label>
+                <TextBox Name="measureSizeInput" LostFocus="measureSizeInput_LostFocus" Width="50" Text="4"/>
+            </StackPanel>
+            <StackPanel>
                 <Label Target="{Binding ElementName=incrementInput}">Increment</Label>
                 <TextBox Name="incrementInput" LostFocus="incrementInput_LostFocus" Width="50" Text="1"/>
             </StackPanel>
@@ -251,7 +268,7 @@
                 <ColumnDefinition/>
                 <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" HorizontalAlignment="Left">
+            <StackPanel Grid.Column="0" HorizontalAlignment="Left" Margin="8">
                 <!--Scale ratio setting-->
                 <Label>Scale</Label>
                 <StackPanel Orientation="Horizontal" Grid.Column="0">
@@ -270,7 +287,7 @@
         </Grid>
         <!--Mouse position tracker-->
         <TextBlock Name="mousePositionText" DockPanel.Dock="Bottom"></TextBlock>
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Name="layerPanelScrollViewer">
             <StackPanel 
                 Name="layerPanel" 
                 SnapsToDevicePixels="True"
