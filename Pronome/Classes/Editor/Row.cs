@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -121,7 +120,7 @@ namespace Pronome.Editor
         /// <summary>
         /// Maps the index of a row to the indexes of the rows that reference it.
         /// </summary>
-        public static Dictionary<int, HashSet<int>> ReferenceMap = new Dictionary<int, HashSet<int>>();
+        public static Dictionary<int, HashSet<int>> ReferenceMap;
 
         /// <summary>
         /// The index of this row
@@ -139,18 +138,16 @@ namespace Pronome.Editor
             Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
             Offset = layer.Offset;
             OffsetValue = layer.GetOffsetValue();
-            //Panel.SetZIndex(Canvas, 20);
-            //Canvas.Margin = new System.Windows.Thickness(Offset * EditorWindow.Scale * EditorWindow.BaseFactor, 0, 0, 0);
+
             Background = EditorWindow.Instance.Resources["rowBackgroundRectangle"] as Rectangle;
             BackgroundBrush = new VisualBrush(Canvas);
             BackgroundBrush.TileMode = TileMode.Tile;
             Background.Fill = BackgroundBrush;
             Canvas.Children.Add(Sizer);
 
+            ReferenceMap = new Dictionary<int, HashSet<int>>();
+
             FillFromBeatCode(layer.ParsedString);
-            //ParsedBeatResult pbr = ParseBeat(layer.ParsedString);
-            //Cells = pbr.Cells;
-            //SetBackground(pbr.Duration);
 
             BaseElement = EditorWindow.Instance.Resources["rowBaseElement"] as Grid;
 
@@ -163,7 +160,6 @@ namespace Pronome.Editor
 
             BaseElement.Children.Add(SelectionCanvas);
             // Add the handlers for the drag select box
-            //BaseElement.MouseDown += Grid_MouseDownSelectBox;
             BaseElement.MouseUp += Grid_MouseUpSelectBox;
             BaseElement.MouseMove += Grid_MouseMoveSelectBox;
         }

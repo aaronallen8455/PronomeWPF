@@ -73,7 +73,15 @@ namespace Pronome
         protected VisualBrush MeasureBrush;
         protected double MeasureWidth;
 
+        /// <summary>
+        /// Each row's various elements are added to this panel.
+        /// </summary>
         public StackPanel LayerPanel;
+
+        /// <summary>
+        /// A copy of the cells and associated groups that are on the clipboard.
+        /// </summary>
+        public LinkedList<Cell> CopiedCells = new LinkedList<Cell>();
 
         /// <summary>
         /// The scale of the spacing in the UI
@@ -752,37 +760,135 @@ namespace Pronome
             AddUndoAction(action);
         }
 
-        private void scaleInput_LostFocus(object sender, RoutedEventArgs e)
+        private void CopyCells_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            string input = (sender as TextBox).Text;
+            // empty clipboard
+            CopiedCells.Clear();
+            // copy the selected cells to the clipboard
 
-            // validate percent input
-            if (double.TryParse(input, out double percent) && percent > 0)
+            // original is key, copy is value
+            Dictionary<RepeatGroup, RepeatGroup> CopiedRepeatGroups = new Dictionary<RepeatGroup, RepeatGroup>();
+            Dictionary<MultGroup, MultGroup> CopiedMultGroups = new Dictionary<MultGroup, MultGroup>();
+            foreach (Cell c in Cell.SelectedCells.Cells.Where(x => !x.IsReference))
             {
-                // set the scale amount
-                Scale = percent / 100;
+                Cell copy = new Cell(c.Row);
+                copy.Value = c.Value;
+                copy.Source = c.Source;
+                copy.Reference = c.Reference;
+                copy.IsBreak = c.IsBreak;
 
-                // redraw the UI for all Rows
-                foreach (Row row in Rows)
+                // if this is the first cell and is the first cell of a rep group or mult group, copy those groups
+                foreach (RepeatGroup rg in c.RepeatGroups)
                 {
-                    // preserve selection
-                    int selectionStart = -1;
-                    int selectionEnd = -1;
-                    if (Cell.SelectedCells.Cells.Any() && Cell.SelectedCells.FirstCell.Row == row)
+                    RepeatGroup rgCopy = null;
+                    if (CopiedRepeatGroups.ContainsKey(rg))
                     {
-                        selectionStart = row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
-                        selectionEnd = row.Cells.IndexOf(Cell.SelectedCells.LastCell);
+                        rgCopy = CopiedRepeatGroups[rg];
+                    }
+                    else if (rg.Cells.First.Value == c
+                        && (!Cell.SelectedCells.LastCell.RepeatGroups.Contains(rg)
+                        || rg.Cells.Last.Value == Cell.SelectedCells.LastCell))
+                    {
+                        rgCopy = new RepeatGroup();
+                        CopiedRepeatGroups.Add(rg, rgCopy);
+                        rgCopy.Times = rg.Times;
                     }
 
-                    row.Redraw();
-
-                    if (selectionStart > -1)
+                    if (rgCopy != null)
                     {
-                        Cell.SelectedCells.SelectRange(selectionStart, selectionEnd, row);
+                        rgCopy.Cells.AddLast(copy);
+                        copy.RepeatGroups.AddLast(rg);
                     }
                 }
+
+                foreach (MultGroup mg in c.MultGroups)
+                {
+                    MultGroup mgCopy = null;
+                    if (CopiedMultGroups.ContainsKey(mg))
+                    {
+                        mgCopy = CopiedMultGroups[mg];
+                    }
+                    else if (mg.Cells.First.Value == c
+                        && (!Cell.SelectedCells.LastCell.MultGroups.Contains(mg)
+                        || mg.Cells.Last.Value == Cell.SelectedCells.LastCell))
+                    {
+                        mgCopy = new MultGroup();
+                        mgCopy.Factor = mg.Factor;
+                        CopiedMultGroups.Add(mg, mgCopy);
+                    }
+
+                    if (mgCopy != null)
+                    {
+                        mgCopy.Cells.AddLast(copy);
+                        copy.MultGroups.AddLast(mg);
+                    }
+                }
+
+                // add copy to clipboard
+                CopiedCells.AddLast(copy);
             }
         }
+
+        private void CutCells_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            CopyCells_Executed(null, null);
+
+            RemoveCells action = new RemoveCells(Cell.SelectedCells.Cells.ToArray());
+            action.HeaderText = "Cut";
+            action.Redo();
+            AddUndoAction(action);
+        }
+
+        private void PasteCells_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Cell.SelectedCells.Cells.Any() && CopiedCells.Any();
+        }
+
+        private void PasteCells_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            // replace the selected cell(s) with the clipboarded cells
+            Row row = Cell.SelectedCells.FirstCell.Row;
+            int index = row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
+            int rightIndex = index + Cell.SelectedCells.Cells.Count;
+            // get groups that need to transfered to the new cells
+            PasteCells action = new PasteCells(index, row, CopiedCells, Cell.SelectedCells.Cells.ToArray(), rightIndex);
+            action.Redo();
+            AddUndoAction(action);
+        }
+
+        //private void scaleInput_LostFocus(object sender, RoutedEventArgs e)
+        //{
+        //    string input = (sender as TextBox).Text;
+        //
+        //    // validate percent input
+        //    if (double.TryParse(input, out double percent) && percent > 0)
+        //    {
+        //        // set the scale amount
+        //        Scale = percent / 100;
+        //
+        //        // redraw the UI for all Rows
+        //        foreach (Row row in Rows)
+        //        {
+        //            // preserve selection
+        //            int selectionStart = -1;
+        //            int selectionEnd = -1;
+        //            if (Cell.SelectedCells.Cells.Any() && Cell.SelectedCells.FirstCell.Row == row)
+        //            {
+        //                selectionStart = row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
+        //                selectionEnd = row.Cells.IndexOf(Cell.SelectedCells.LastCell);
+        //            }
+        //
+        //            row.Redraw();
+        //
+        //            if (selectionStart > -1)
+        //            {
+        //                Cell.SelectedCells.SelectRange(selectionStart, selectionEnd, row);
+        //            }
+        //        }
+        //
+        //        ResizeMeasures();
+        //    }
+        //}
 
         /// <summary>
         /// Set the measure size when input changes
@@ -793,13 +899,88 @@ namespace Pronome
         {
             string input = (sender as TextBox).Text;
             // validate the measure size input
-            if (BeatCell.TryParse(input, out double bpm))
+            if (BeatCell.TryParse(input, out double bpm) && bpm > 0)
             {
+                LayerPanel.Background = MeasureBrush;
+
                 MeasureWidth = bpm;// * BaseFactor * Scale;
 
                 // resize the measure tick
-                MeasureSizer.Width = MeasureWidth;
-                MeasureBrush.Viewport = new Rect(0, 0, MeasureWidth * BaseFactor * Scale, 1);
+                ResizeMeasures();
+            }
+            else if (bpm == 0)
+            {
+                LayerPanel.Background = Brushes.Transparent;
+            }
+        }
+
+        protected void ResizeMeasures()
+        {
+            double width = MeasureWidth * Scale * BaseFactor;
+            MeasureSizer.Width = width;
+            MeasureBrush.Viewport = new Rect(0, 0, width, 1);
+        }
+
+        private void ToolbarSelector_Click(object sender, RoutedEventArgs e)
+        {
+            string newIncrement = (sender as Button).ToolTip.ToString();
+
+            incrementInput.Text = newIncrement;
+            CurrentIncrement = newIncrement;
+            
+            UpdateUiForSelectedCell();
+        }
+
+        private void zoomComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0)
+            {
+                string newValue = (e.AddedItems[0] as ComboBoxItem).Content?.ToString().TrimEnd('%');
+
+                if (newValue != null && double.TryParse(newValue, out double percent))
+                {
+                    ChangeZoom(percent);
+                }
+            }
+        }
+
+        private void ChangeZoom(double percent)
+        {
+            // set the scale amount
+            Scale = percent / 100;
+
+            // redraw the UI for all Rows
+            foreach (Row row in Rows)
+            {
+                // preserve selection
+                int selectionStart = -1;
+                int selectionEnd = -1;
+                if (Cell.SelectedCells.Cells.Any() && Cell.SelectedCells.FirstCell.Row == row)
+                {
+                    selectionStart = row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
+                    selectionEnd = row.Cells.IndexOf(Cell.SelectedCells.LastCell);
+                }
+
+                row.Redraw();
+
+                if (selectionStart > -1)
+                {
+                    Cell.SelectedCells.SelectRange(selectionStart, selectionEnd, row);
+                }
+            }
+
+            ResizeMeasures();
+        }
+
+        private void zoomComboBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            string text = (sender as ComboBox).Text.TrimEnd('%');
+
+            if (double.TryParse(text, out double percent) && percent > 0)
+            {
+                ChangeZoom(percent);
+
+                zoomComboBox.Text = text + '%';
             }
         }
     }
@@ -864,6 +1045,21 @@ namespace Pronome
         public static readonly RoutedUICommand RemoveReference = new RoutedUICommand(
             "Remove Reference",
             "Remove Reference",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand CopyCells = new RoutedUICommand(
+            "Copy Cells",
+            "Copy Cells",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand CutCells = new RoutedUICommand(
+            "Cut Cells",
+            "Cut Cells",
+            typeof(Commands));
+
+        public static readonly RoutedUICommand PasteCells = new RoutedUICommand(
+            "Paste Cells",
+            "Paste Cells",
             typeof(Commands));
     }
 }

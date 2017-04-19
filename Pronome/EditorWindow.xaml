@@ -75,6 +75,7 @@
             Width="1"
             Height="{StaticResource rowHeight}"
             x:Key="gridTick"
+            SnapsToDevicePixels="True"
             x:Shared="True"
             Fill="Red"/>
         <Rectangle
@@ -173,6 +174,29 @@
         </Style>
 
         <RoutedCommand x:Key="deselectAll"/>
+
+        <Style TargetType="{x:Type ToolBar}">
+            <Setter Property="SnapsToDevicePixels" Value="true"/>
+            <Setter Property="OverridesDefaultStyle" Value="true"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToolBar}">
+                        <Border x:Name="Border"  CornerRadius="2" BorderThickness="1" Background="Transparent">
+                            <DockPanel >
+                                <ToggleButton Visibility="Collapsed"  DockPanel.Dock="Right" IsEnabled="False" IsChecked="False" ClickMode="Press">
+                                    <Popup x:Name="OverflowPopup" AllowsTransparency="true" Placement="Bottom" IsOpen="{Binding Path=IsOverflowOpen,RelativeSource={RelativeSource TemplatedParent}}" StaysOpen="false" Focusable="false" PopupAnimation="Slide">
+                                        <Border x:Name="DropDownBorder" Background="pink" BorderThickness="1" BorderBrush="pink">
+                                            <ToolBarOverflowPanel x:Name="PART_ToolBarOverflowPanel" Margin="2" WrapWidth="200" Focusable="true"  FocusVisualStyle="{x:Null}" KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.DirectionalNavigation="Cycle" Visibility="Collapsed"/>
+                                        </Border>
+                                    </Popup>
+                                </ToggleButton>
+                                <ToolBarPanel x:Name="PART_ToolBarPanel" IsItemsHost="true" Margin="5,1,2,2"/>
+                            </DockPanel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Window.CommandBindings>
@@ -191,6 +215,9 @@
         <CommandBinding Command="self:Commands.CreateReference" CanExecute="CreateReference_CanExecute" Executed="CreateReference_Executed"/>
         <CommandBinding Command="self:Commands.EditReference" CanExecute="EditReference_CanExecute" Executed="CreateReference_Executed"/>
         <CommandBinding Command="self:Commands.RemoveReference" CanExecute="EditReference_CanExecute" Executed="RemoveReference_Executed"/>
+        <CommandBinding Command="self:Commands.CopyCells" CanExecute="Deselect_CanExecute" Executed="CopyCells_Executed"/>
+        <CommandBinding Command="self:Commands.CutCells" CanExecute="DeleteSelection_CanExecute" Executed="CutCells_Executed"/>
+        <CommandBinding Command="self:Commands.PasteCells" CanExecute="PasteCells_CanExecute" Executed="PasteCells_Executed"/>
 
     </Window.CommandBindings>
 
@@ -198,6 +225,9 @@
         <KeyBinding Key="Delete" Command="self:Commands.DeleteSelection"/>
         <KeyBinding Key="A" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
         <KeyBinding Key="S" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
+        <KeyBinding Key="C" Modifiers="Ctrl" Command="self:Commands.CopyCells"/>
+        <KeyBinding Key="X" Modifiers="Ctrl" Command="self:Commands.CutCells"/>
+        <KeyBinding Key="V" Modifiers="Ctrl" Command="self:Commands.PasteCells"/>
     </Window.InputBindings>
 
     <DockPanel>
@@ -207,9 +237,14 @@
             <MenuItem Header="_Edit">
                 <MenuItem Header="Undo" InputGestureText="Ctrl+Z" Command="Undo" x:Name="undoMenuItem"/>
                 <MenuItem Header="Redo" InputGestureText="Ctrl+Y" Command="Redo" x:Name="redoMenuItem"/>
+                <Separator/>
+                <MenuItem Header="Copy" InputGestureText="Ctrl+C" Command="self:Commands.CopyCells"/>
+                <MenuItem Header="Cut" InputGestureText="Ctrl+X" Command="self:Commands.CutCells"/>
+                <MenuItem Header="Paste" InputGestureText="Ctrl+V" Command="self:Commands.PasteCells"/>
             </MenuItem>
             <MenuItem Header="Selection">
                 <MenuItem Header="Deselect All" Command="{StaticResource deselectAll}"/>
+                <Separator/>
                 <MenuItem Header="Repeat Group...">
                     <MenuItem Header="Create" Command="self:Commands.CreateRepeatGroup"/>
                     <MenuItem Header="Edit" Command="self:Commands.EditRepeatGroup"/>
@@ -225,68 +260,92 @@
                     <MenuItem Header="Edit Reference" Command="self:Commands.EditReference"/>
                     <MenuItem Header="Remove Reference" Command="self:Commands.RemoveReference"/>
                 </MenuItem>
+                <Separator/>
                 <MenuItem Header="Move Cell(s) Left" InputGestureText="A" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
                 <MenuItem Header="Move Cell(s) Right" InputGestureText="S" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
                 <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del" Command="self:Commands.DeleteSelection"/>
             </MenuItem>
         </Menu>
         <!--Inputs at top of window-->
-        <WrapPanel DockPanel.Dock="Top" FlowDirection="LeftToRight">
-            <WrapPanel.Resources>
-                <Style TargetType="StackPanel">
-                    <Setter Property="Margin" Value="5"/>
-                </Style>
-            </WrapPanel.Resources>
-            <StackPanel>
-                <Label Target="{Binding ElementName=measureSizeInput}">Measure Size</Label>
-                <TextBox Name="measureSizeInput" LostFocus="measureSizeInput_LostFocus" Width="50" Text="4"/>
-            </StackPanel>
-            <StackPanel>
-                <Label Target="{Binding ElementName=incrementInput}">Increment</Label>
-                <TextBox Name="incrementInput" LostFocus="incrementInput_LostFocus" Width="50" Text="1"/>
-            </StackPanel>
-            <StackPanel>
-                <Label Target="{Binding ElementName=durationInput}">Duration</Label>
-                <TextBox Name="durationInput" 
-                         LostFocus="durationInput_LostFocus"
-                         Width="50"
-                         IsEnabled="{DynamicResource cellSelected}"/>
-            </StackPanel>
-            <StackPanel>
-                <Label Target="{Binding ElementName=sourceSelector}">Source</Label>
-                <ComboBox Name="sourceSelector" 
-                          SelectionChanged="sourceSelector_SelectionChanged"
-                          IsEnabled="{DynamicResource cellSelected}"/>
-            </StackPanel>
-            <StackPanel Name="pitchInputPanel">
-                <Label Target="{Binding ElementName=pitchInput}">Pitch</Label>
-                <TextBox Name="pitchInput" Width="50" LostFocus="pitchInput_LostFocus"/>
-            </StackPanel>
-        </WrapPanel>
-        <Grid DockPanel.Dock="Bottom">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="auto"/>
-            </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" HorizontalAlignment="Left" Margin="8">
-                <!--Scale ratio setting-->
-                <Label>Scale</Label>
-                <StackPanel Orientation="Horizontal" Grid.Column="0">
-                    <TextBox Name="scaleInput" Width="30" Text="100" LostFocus="scaleInput_LostFocus"/>
-                    <TextBlock>%</TextBlock>
+        <StackPanel DockPanel.Dock="Top">
+            <WrapPanel FlowDirection="LeftToRight">
+                <WrapPanel.Resources>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Margin" Value="5"/>
+                    </Style>
+                </WrapPanel.Resources>
+                <StackPanel>
+                    <Label Target="{Binding ElementName=measureSizeInput}">Measure Size</Label>
+                    <TextBox Name="measureSizeInput" LostFocus="measureSizeInput_LostFocus" Width="50" Text="4"/>
                 </StackPanel>
+                <StackPanel>
+                    <Label Target="{Binding ElementName=incrementInput}">Increment</Label>
+                    <TextBox Name="incrementInput" LostFocus="incrementInput_LostFocus" Width="50" Text="1"/>
+                </StackPanel>
+                <StackPanel>
+                    <Label Target="{Binding ElementName=durationInput}">Duration</Label>
+                    <TextBox Name="durationInput" 
+                             LostFocus="durationInput_LostFocus"
+                             Width="50"
+                             IsEnabled="{DynamicResource cellSelected}"/>
+                </StackPanel>
+                <StackPanel>
+                    <Label Target="{Binding ElementName=sourceSelector}">Source</Label>
+                    <ComboBox Name="sourceSelector" 
+                              SelectionChanged="sourceSelector_SelectionChanged"
+                              IsEnabled="{DynamicResource cellSelected}"/>
+                </StackPanel>
+                <StackPanel Name="pitchInputPanel">
+                    <Label Target="{Binding ElementName=pitchInput}">Pitch</Label>
+                    <TextBox Name="pitchInput" Width="50" LostFocus="pitchInput_LostFocus"/>
+                </StackPanel>
+            </WrapPanel>
+
+            <ToolBarTray IsLocked="True">
+                <ToolBar RenderOptions.BitmapScalingMode="NearestNeighbor" OverflowMode="Never">
+                    <Button ToolTip="1" Click="ToolbarSelector_Click">1</Button>
+                    <Button ToolTip=".5" Click="ToolbarSelector_Click">.5</Button>
+                    <Button ToolTip=".25" Click="ToolbarSelector_Click">.25</Button>
+                    <Separator/>
+                    <Button ToolTip="2/3" Click="ToolbarSelector_Click">2/3</Button>
+                    <Button ToolTip="1/3" Click="ToolbarSelector_Click">1/3</Button>
+                    <Button ToolTip="1/6" Click="ToolbarSelector_Click">1/6</Button>
+                </ToolBar>
+            </ToolBarTray>
+        </StackPanel>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StackPanel Margin="8">
+                <Label>Zoom</Label>
+                <ComboBox IsEditable="True" 
+                          Name="zoomComboBox" 
+                          SelectionChanged="zoomComboBox_SelectionChanged" 
+                          LostFocus="zoomComboBox_LostFocus"
+                          IsTextSearchEnabled="False">
+                    <ComboBoxItem>800%</ComboBoxItem>
+                    <ComboBoxItem>400%</ComboBoxItem>
+                    <ComboBoxItem>200%</ComboBoxItem>
+                    <ComboBoxItem>150%</ComboBoxItem>
+                    <ComboBoxItem IsSelected="True">100%</ComboBoxItem>
+                    <ComboBoxItem>66.67%</ComboBoxItem>
+                    <ComboBoxItem>50%</ComboBoxItem>
+                    <ComboBoxItem>33%</ComboBoxItem>
+                    <ComboBoxItem>25%</ComboBoxItem>
+                </ComboBox>
             </StackPanel>
-            <StackPanel Grid.Column="1" Margin="8">
-                <!--Apply changes button-->
-                <Button Name="applyChangesButton"
-                        Click="applyChangesButton_Click"
-                        IsEnabled="{DynamicResource changesApplied}">
-                    Apply Changes
-                </Button>
-            </StackPanel>
-        </Grid>
+            
+            <StatusBarItem HorizontalAlignment="Right">
+                <StackPanel Margin="8" >
+                    <!--Apply changes button-->
+                    <Button Name="applyChangesButton"
+                            Click="applyChangesButton_Click"
+                            IsEnabled="{DynamicResource changesApplied}">
+                        Apply Changes
+                    </Button>
+                </StackPanel>
+            </StatusBarItem>
+        </StatusBar>
         <!--Mouse position tracker-->
-        <TextBlock Name="mousePositionText" DockPanel.Dock="Bottom"></TextBlock>
+        <TextBlock Name="mousePositionText" DockPanel.Dock="Bottom" Margin="10,0,0,0"></TextBlock>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Name="layerPanelScrollViewer">
             <StackPanel 
                 Name="layerPanel" 

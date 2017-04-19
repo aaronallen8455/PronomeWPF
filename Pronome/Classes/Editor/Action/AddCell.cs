@@ -53,7 +53,8 @@ namespace Pronome.Editor
                     {
                         // if the last selected cell is a reference, make the cell after the ref the selections last cell.
                         // this corrects the placement of cells being made above the selection.
-                        if (!string.IsNullOrEmpty(Cell.SelectedCells.LastCell.Reference) && Row.Cells.Last() != Cell.SelectedCells.LastCell)
+                        if (!string.IsNullOrEmpty(Cell.SelectedCells.LastCell.Reference) 
+                            && Row.Cells.Reverse<Cell>().SkipWhile(x => x.IsReference).First() != Cell.SelectedCells.LastCell)
                         {
                             Cell.SelectedCells.LastCell = Row.Cells
                                 .SkipWhile(x => x != Cell.SelectedCells.LastCell)
