@@ -27,6 +27,8 @@ namespace Pronome.Classes.Editor
 
         public RepeatGroupDialog()
         {
+            Owner = EditorWindow.Instance;
+
             InitializeComponent();
         }
 

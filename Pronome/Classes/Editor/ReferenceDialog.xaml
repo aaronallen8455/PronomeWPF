@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:Pronome.Classes.Editor"
         mc:Ignorable="d"
         Title="ReferenceDialog" Height="180" Width="230"
+        WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
     <Window.Resources>
         <Style TargetType="TextBox">

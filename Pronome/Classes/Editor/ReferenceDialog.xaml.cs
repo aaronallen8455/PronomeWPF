@@ -23,6 +23,8 @@ namespace Pronome.Classes.Editor
 
         public ReferenceDialog()
         {
+            Owner = EditorWindow.Instance;
+
             InitializeComponent();
         }
 

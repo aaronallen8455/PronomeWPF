@@ -153,6 +153,7 @@ namespace Pronome.Editor
 
             // handler for creating new cells on the grid
             BaseElement.MouseLeftButtonDown += BaseElement_MouseLeftButtonDown;
+            BaseElement.MouseRightButtonDown += Grid_MouseDownSelectBox;
 
             BaseElement.Background = Brushes.Transparent;
             BaseElement.Children.Add(Canvas);
@@ -389,59 +390,6 @@ namespace Pronome.Editor
                     }
                 }
 
-                //    // handle multiple groups
-                //while (chunk.Contains('}'))
-                //{
-                //    MultGroup mg = OpenMultGroups.Pop();
-                //    mg.Factor = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
-                //    // set duration
-                //    mg.Duration = cell.Position + cell.Duration - mg.Position;
-                //    // render
-                //    if (OpenRepeatGroups.Any())
-                //    {
-                //        OpenRepeatGroups.Peek().Canvas.Children.Add(mg.Rectangle);
-                //    }
-                //    else
-                //    {
-                //        Canvas.Children.Add(mg.Rectangle);
-                //    }
-                //    var m = Regex.Match(chunk, @"\}[\d.+\-/*]+");
-                //
-                //    chunk = chunk.Remove(m.Index, m.Length);
-                //
-                //    MultGroups.AddLast(mg);
-                //}
-                //
-                //// check for closing repeat group, getting times and last term modifier
-                //if (chunk.IndexOf(']') > -1)
-                //{
-                //    // handle closely nested repeat group ends
-                //    while (chunk.Contains(']'))
-                //    {
-                //        RepeatGroup rg = OpenRepeatGroups.Pop();
-                //        rg.Duration = cell.Position + cell.Duration - rg.Position;
-                //        Match mtch = Regex.Match(chunk, @"](\d+)");
-                //        if (mtch.Length == 0)
-                //        {
-                //            mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
-                //            rg.Times = int.Parse(mtch.Groups[1].Value);
-                //            if (mtch.Groups[2].Length != 0)
-                //            {
-                //                rg.LastTermModifier = mtch.Groups[2].Value;//.Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
-                //            }
-                //        }
-                //        else
-                //        {
-                //            rg.Times = int.Parse(mtch.Groups[1].Value);
-                //        }
-                //
-                //        // build the group
-                //        position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position);
-                //        // move to outer group if exists
-                //        chunk = chunk.Substring(chunk.IndexOf(']') + 1);
-                //    }
-                //}
-                //else
                 if (!addedToRepCanvas)
                 {
                     // add cell rect to canvas or repeat group sub-canvas
@@ -973,7 +921,7 @@ namespace Pronome.Editor
                 Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
 
                 // select all cells within the range
-                double start = Math.Min(selectorOrigin.X, Canvas.GetLeft(selector)) / EditorWindow.Scale / EditorWindow.BaseFactor;
+                double start = Math.Min(selectorOrigin.X, Canvas.GetLeft(selector)) / EditorWindow.Scale / EditorWindow.BaseFactor - Offset;
                 double end = start + selector.Width / EditorWindow.Scale / EditorWindow.BaseFactor;
                 IEnumerable<Cell> cells = Cells.SkipWhile(x => x.Position < start).TakeWhile(x => x.Position < end);
 
@@ -1002,25 +950,25 @@ namespace Pronome.Editor
         /// <param name="e"></param>
         private void Grid_MouseDownSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            // only draw the selection box if control key is down.
-            //if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
-            //{
-            // get selection origin
-            double x = e.GetPosition(BaseElement).X;
-            double y = e.GetPosition(BaseElement).Y;
-            selectorOrigin.X = x;
-            selectorOrigin.Y = y;
-
-            // attach the selection box to the canvas
-            SelectionCanvas.CaptureMouse();
             Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
-            selector.Width = 0;
-            selector.Height = 0;
-            Canvas.SetTop(selector, y);
-            Canvas.SetLeft(selector, x);
-            Canvas.SetZIndex(selector, 500);
-            SelectionCanvas.Children.Add(selector);
-            //}
+
+            if (selector.Parent == null)
+            {
+                // get selection origin
+                double x = e.GetPosition(BaseElement).X;
+                double y = e.GetPosition(BaseElement).Y;
+                selectorOrigin.X = x;
+                selectorOrigin.Y = y;
+
+                // attach the selection box to the canvas
+                SelectionCanvas.CaptureMouse();
+                selector.Width = 0;
+                selector.Height = 0;
+                Canvas.SetTop(selector, y);
+                Canvas.SetLeft(selector, x);
+                Canvas.SetZIndex(selector, 500);
+                SelectionCanvas.Children.Add(selector);
+            }
         }
     }
 }

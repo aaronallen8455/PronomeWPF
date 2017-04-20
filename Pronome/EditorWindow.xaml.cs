@@ -146,7 +146,7 @@ namespace Pronome
             RedoStack = new ActionStack(redoMenuItem, 50);
         }
 
-        public void BuildUI()
+        public void BuildUI(object sender = null, EventArgs e = null)
         {
             // remove old UI
             layerPanel.Children.Clear();
@@ -157,6 +157,13 @@ namespace Pronome
                 layerPanel.Children.Add(row.BaseElement);
                 Rows.Add(row);
             }
+
+            Metronome.AfterBeatParsed -= BuildUI;
+            Metronome.AfterBeatParsed += BuildUI;
+
+            // remove any undo /redo actions from old state
+            UndoStack.Clear();
+            RedoStack.Clear();
         }
 
         /// <summary>
@@ -287,10 +294,33 @@ namespace Pronome
 
             if (KeepOpen)
             {
-                Cell.SelectedCells.Clear();
-                SetCellSelected(false);
-                UpdateUiForSelectedCell();
-                Hide();
+                // if changes are not applied, prompt to discard, apply, or cancel
+                bool close = true;
+                if (!GetChangesApplied())
+                {
+                    var dialog = new Pronome.Classes.Editor.ConfirmCloseDialog();
+                    dialog.Owner = this;
+                    bool? dialogResult = dialog.ShowDialog();
+
+                    if (dialogResult == true && !dialog.Discard)
+                    {
+                        applyChangesButton_Click(null, null);
+                    }
+                    else if (dialogResult == false)
+                    {
+                        close = false;
+                    }
+                }
+
+                if (close)
+                {
+                    Cell.SelectedCells.Clear();
+                    SetCellSelected(false);
+                    UpdateUiForSelectedCell();
+                    SetChangesApplied(true);
+                    Metronome.AfterBeatParsed -= BuildUI;
+                    Hide();
+                }
                 e.Cancel = true;
             }
         }
@@ -309,6 +339,11 @@ namespace Pronome
             Resources["changesApplied"] = !applied;
         }
 
+        public bool GetChangesApplied()
+        {
+            return !(bool)Resources["changesApplied"];
+        }
+
         private void applyChangesButton_Click(object sender, RoutedEventArgs e)
         {
             Dispatcher.BeginInvoke(new Action(() =>
@@ -316,7 +351,6 @@ namespace Pronome
                 bool changesMade = false;
                 foreach (Row row in Rows)
                 {
-                    // TODO: what if a layer was removed / created while editor is open?
                     if (!row.BeatCodeIsCurrent) row.UpdateBeatCode();
                     string beatCode = row.BeatCode;
 
@@ -324,13 +358,18 @@ namespace Pronome
                     {
                         changesMade = true;
                         row.Layer.UI.textEditor.Text = beatCode;
+                        row.Layer.ParsedOffset = row.OffsetValue;
+                        row.Layer.UI.SetOffsetValue(row.OffsetValue);
+                        row.Layer.Offset = row.Offset;
                         row.Layer.Parse(beatCode);
                         // redraw beat graph / bounce if necessary
                     }
                 }
                 if (changesMade)
                 {
+                    Metronome.AfterBeatParsed -= BuildUI; // don't rebuild UI
                     Metronome.GetInstance().TriggerAfterBeatParsed();
+                    Metronome.AfterBeatParsed += BuildUI;
                 }
             }));
 
@@ -871,40 +910,6 @@ namespace Pronome
             action.Redo();
             AddUndoAction(action);
         }
-
-        //private void scaleInput_LostFocus(object sender, RoutedEventArgs e)
-        //{
-        //    string input = (sender as TextBox).Text;
-        //
-        //    // validate percent input
-        //    if (double.TryParse(input, out double percent) && percent > 0)
-        //    {
-        //        // set the scale amount
-        //        Scale = percent / 100;
-        //
-        //        // redraw the UI for all Rows
-        //        foreach (Row row in Rows)
-        //        {
-        //            // preserve selection
-        //            int selectionStart = -1;
-        //            int selectionEnd = -1;
-        //            if (Cell.SelectedCells.Cells.Any() && Cell.SelectedCells.FirstCell.Row == row)
-        //            {
-        //                selectionStart = row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
-        //                selectionEnd = row.Cells.IndexOf(Cell.SelectedCells.LastCell);
-        //            }
-        //
-        //            row.Redraw();
-        //
-        //            if (selectionStart > -1)
-        //            {
-        //                Cell.SelectedCells.SelectRange(selectionStart, selectionEnd, row);
-        //            }
-        //        }
-        //
-        //        ResizeMeasures();
-        //    }
-        //}
 
         /// <summary>
         /// Set the measure size when input changes

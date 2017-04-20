@@ -37,7 +37,7 @@ namespace Pronome
                 }
             }
         }
-        protected static double _decayLength = .15;
+        protected static double _decayLength = .04;
 
         /**<summary>The number of bytes/Second for this audio stream.</summary>*/
         public int BytesPerSec { get; set; }

@@ -13,6 +13,8 @@ namespace Pronome.Classes.Editor
 
         public MultGroupDialog()
         {
+            Owner = EditorWindow.Instance;
+
             InitializeComponent();
         }
 

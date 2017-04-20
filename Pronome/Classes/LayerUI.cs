@@ -283,9 +283,9 @@ namespace Pronome
         protected void offsetInput_LostFocus(object sender, RoutedEventArgs e)
         {
             //validate
-            if (Regex.IsMatch(offsetInput.Text, @"[\d+\-*/xX.]+"))
+            if (BeatCell.TryParse(offsetInput.Text, out double offset))
             {
-                Layer.SetOffset(BeatCell.Parse(offsetInput.Text));
+                Layer.SetOffset(offset);
                 Layer.ParsedOffset = offsetInput.Text;
 
                 Metronome.GetInstance().TriggerAfterBeatParsed();
@@ -362,9 +362,22 @@ namespace Pronome
                 controlPanel.Children.Add(panel);
         }
 
+        /// <summary>
+        /// Get the text value of the offset input.
+        /// </summary>
+        /// <returns></returns>
         public string GetOffsetValue()
         {
             return offsetInput.Text;
+        }
+
+        /// <summary>
+        /// Set the text value of the offset input.
+        /// </summary>
+        /// <param name="offset"></param>
+        public void SetOffsetValue(string offset)
+        {
+            offsetInput.Text = offset;
         }
 
         public string ValidateBeatCode()
