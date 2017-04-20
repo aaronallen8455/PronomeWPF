@@ -155,8 +155,6 @@ namespace Pronome
             {
                 var row = new Row(layer);
                 layerPanel.Children.Add(row.BaseElement);
-                //layerPanel.Children.Add(row.Canvas);
-                //layerPanel.Children.Add(row.Background);
                 Rows.Add(row);
             }
         }
@@ -182,6 +180,7 @@ namespace Pronome
                 {
                     durationInput.IsEnabled = true;
                     sourceSelector.IsEnabled = true;
+                    string source = null;
 
                     if (Cell.SelectedCells.Cells.Count == 1)
                     {
@@ -189,8 +188,32 @@ namespace Pronome
 
                         durationInput.Text = cell.Value;
 
-                        string source = string.IsNullOrEmpty(cell.Source) ? cell.Row.Layer.BaseSourceName : cell.Source;
-                        // is a pitch or wav?
+                        source = string.IsNullOrEmpty(cell.Source) ? cell.Row.Layer.BaseSourceName : cell.Source;
+                        
+                    }
+                    else
+                    {
+                        // check if all selected cells have the same source
+                        if (Cell.SelectedCells.Cells.All(x => string.Equals(x.Source, Cell.SelectedCells.Cells[0].Source)))
+                        {
+                            source = string.IsNullOrEmpty(
+                                Cell.SelectedCells.Cells[0].Source) 
+                                ? Cell.SelectedCells.Cells[0].Row.Layer.BaseSourceName 
+                                : Cell.SelectedCells.Cells[0].Source;
+                        }
+                        else
+                        {
+                            // sources are not the same
+                            durationInput.Text = string.Empty;
+                            sourceSelector.SelectedItem = null;
+                            pitchInput.Text = string.Empty;
+                            pitchInputPanel.Visibility = Visibility.Collapsed;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(source))
+                    {
+                        // is the source a pitch or a wav?
                         if (source.Contains(".wav"))
                         {
                             pitchInputPanel.Visibility = Visibility.Collapsed;
@@ -210,13 +233,6 @@ namespace Pronome
                             pitchInput.Text = source;
                             sourceSelector.SelectedItem = "Pitch";
                         }
-                    }
-                    else
-                    {
-                        durationInput.Text = string.Empty;
-                        sourceSelector.SelectedItem = null;
-                        pitchInput.Text = string.Empty;
-                        pitchInputPanel.Visibility = Visibility.Collapsed;
                     }
                 }
 
@@ -409,7 +425,7 @@ namespace Pronome
                 {
                     Cell.SelectedCells.Cells[0].Row.BeatCodeIsCurrent = false;
                     SetChangesApplied(false);
-                    UpdateUiForSelectedCell();
+                    //UpdateUiForSelectedCell();
                 }
             }
         }

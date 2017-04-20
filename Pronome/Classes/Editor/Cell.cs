@@ -116,6 +116,9 @@ namespace Pronome.Editor
         /// </summary>
         public string Reference;
         //public CellRepeat Repeat;
+        /// <summary>
+        /// The audio source for this cell.
+        /// </summary>
         public string Source;
         public LinkedList<MultGroup> MultGroups = new LinkedList<MultGroup>();
         public LinkedList<RepeatGroup> RepeatGroups = new LinkedList<RepeatGroup>();
