@@ -353,6 +353,15 @@ namespace Pronome
                 numerator += lcd;
                 whole--;
             }
+
+            if (lcd > 1)
+            {
+                // simplify the fraction
+                int gcf = (int)Gcf(numerator, lcd);
+                numerator /= gcf;
+                lcd /= gcf;
+            }
+
             string fractionPart = numerator.ToString() + '/' + lcd.ToString();
 
             // merge all whole numbers and decimals

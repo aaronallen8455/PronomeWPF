@@ -354,7 +354,7 @@ namespace Pronome
                     if (!row.BeatCodeIsCurrent) row.UpdateBeatCode();
                     string beatCode = row.BeatCode;
 
-                    if (beatCode != row.Layer.ParsedString)
+                    if (beatCode != row.Layer.ParsedString || row.Layer.ParsedOffset != row.OffsetValue)
                     {
                         changesMade = true;
                         row.Layer.UI.textEditor.Text = beatCode;

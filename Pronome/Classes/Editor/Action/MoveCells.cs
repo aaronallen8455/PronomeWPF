@@ -51,6 +51,11 @@ namespace Pronome.Editor
                 {
                     // subtract from offset
                     Row.OffsetValue = BeatCell.Subtract(Row.OffsetValue, value);
+                    // zero becomes an empty string, make it zero.
+                    if (string.IsNullOrEmpty(Row.OffsetValue))
+                    {
+                        Row.OffsetValue = "0";
+                    }
                     // add to last cell's value if not last cell of row
                     if (last != Row.Cells[Row.Cells.Count - 1])
                     {
