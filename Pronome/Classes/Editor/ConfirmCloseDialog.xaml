@@ -9,22 +9,30 @@
         WindowStartupLocation="CenterOwner"
         Title="Close Editor" Height="250" Width="360">
     <DockPanel>
-        <StatusBar DockPanel.Dock="Bottom" FlowDirection="RightToLeft">
+        <StatusBar DockPanel.Dock="Bottom" FlowDirection="RightToLeft" DataContext="{DynamicResource disableDuringPlay}">
             <StatusBar.Resources>
                 <Style TargetType="Button">
-                    <Setter Property="Margin" Value="2"/>
+                    <Setter Property="Margin" Value="{StaticResource dialogButtonMargin}"/>
+                    <Setter Property="Padding" Value="{StaticResource dialogButtonPadding}"/>
                 </Style>
             </StatusBar.Resources>
-            <Button Name="applyButton" IsDefault="True" Click="applyButton_Click">Apply</Button>
-            <Button Name="discardButton" Click="discardButton_Click">Discard</Button>
+            <Button Name="applyButton" 
+                    IsDefault="True" 
+                    Click="applyButton_Click"
+                    IsEnabled="{Binding Path=IsEnabled}">
+                Apply Changes
+            </Button>
+            <Button Name="discardButton" Click="discardButton_Click">Discard Changes</Button>
             <Button Name="cancelButton" IsCancel="True">Cancel</Button>
         </StatusBar>
         <StackPanel Margin="10">
-            <TextBlock FontSize="15">Apply Changes?</TextBlock>
+            <TextBlock FontSize="{StaticResource dialogHeaderFontSize}">Apply Changes?</TextBlock>
             <Separator/>
             <TextBlock TextWrapping="Wrap">
+                <LineBreak/>
                 Changes were made in the editor that have not been applied to the beat. Do you want to apply the changes or discard them before closing the editor?
             </TextBlock>
+            <TextBlock FontStyle="Italic" FontSize="10"><LineBreak></LineBreak>Note: Changes can't be applied while playing.</TextBlock>
         </StackPanel>
     </DockPanel>
 </Window>

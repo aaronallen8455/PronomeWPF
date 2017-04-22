@@ -331,17 +331,27 @@ namespace Pronome
         }
 
         /// <summary>
+        /// Whether the changes have been applied to the beat. Used by the beat stop button to enable the CA button if needed.
+        /// </summary>
+        public bool ChangesApplied = true;
+
+        /// <summary>
         /// Set the boolean that controls whether changes have been applied to Row's Layer.
         /// </summary>
         /// <param name="applied"></param>
         public void SetChangesApplied(bool applied)
         {
-            Resources["changesApplied"] = !applied;
+            ChangesApplied = applied;
+            // don't set the resource if beat is playing.
+            if (applied || !applied && Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+            {
+                Resources["changesApplied"] = !applied;
+            }
         }
 
         public bool GetChangesApplied()
         {
-            return !(bool)Resources["changesApplied"];
+            return ChangesApplied;//!(bool)Resources["changesApplied"];
         }
 
         private void applyChangesButton_Click(object sender, RoutedEventArgs e)

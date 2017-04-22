@@ -27,9 +27,18 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
+        
         <!--Used for the font size of the beat code input-->
         <sys:Double x:Key="textBoxFontSize">16</sys:Double>
+        
+        <!--Margin for action buttons in dialogs-->
+        <Thickness x:Key="dialogButtonMargin" Left="4" Right="0" Top="5" Bottom="5"/>
+
+        <!--Padding for buttons in dialogs-->
+        <Thickness x:Key="dialogButtonPadding" Left="3" Right="3" Top="3" Bottom="3"/>
+        
+        <!--Font size for header in dialogs-->
+        <sys:Double x:Key="dialogHeaderFontSize">15</sys:Double>
 
         <!--The base panel of the beat layer-->
         <Grid

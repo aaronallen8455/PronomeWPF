@@ -133,6 +133,7 @@ namespace Pronome
         private void exportWavButton_Click(object sender, RoutedEventArgs e)
         {
             ExportWavWindow wavWindow = new ExportWavWindow();
+            wavWindow.Owner = this;
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.AddExtension = true;
             saveFileDialog.DefaultExt = "wav";

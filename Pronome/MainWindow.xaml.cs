@@ -78,6 +78,12 @@ namespace Pronome
                 (Application.Current.Resources["disableDuringPlay"] as Button).IsEnabled = false;
                 playButton.IsEnabled = false;
                 pauseButton.IsEnabled = true;
+
+                // disable the apply changes button in editor if not already off
+                if (EditorWindow.Instance != null && !EditorWindow.Instance.ChangesApplied)
+                {
+                    EditorWindow.Instance.Resources["changesApplied"] = false;
+                }
             }
         }
 
@@ -98,6 +104,12 @@ namespace Pronome
             playButton.IsEnabled = true;
             pauseButton.IsEnabled = false;
             (Application.Current.Resources["disableDuringPlay"] as Button).IsEnabled = true;
+
+            // enable the apply changes button in the editor if some changes are pending
+            if (EditorWindow.Instance != null && !EditorWindow.Instance.ChangesApplied)
+            {
+                EditorWindow.Instance.Resources["changesApplied"] = true;
+            }
         }
 
         private List<int> tempoHistory = new List<int>();
@@ -337,9 +349,12 @@ namespace Pronome
         private void openEditorButton_Click(object sender, RoutedEventArgs e)
         {
             var editorWindow = Resources["editorWindow"] as EditorWindow;
+            if (!editorWindow.IsVisible)
+            {
+                editorWindow.BuildUI();
+            }
             editorWindow.Show();
             editorWindow.Activate();
-            editorWindow.BuildUI();
         }
 
         private void minimizeButton_Click(object sender, RoutedEventArgs e)

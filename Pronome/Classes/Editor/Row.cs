@@ -549,6 +549,7 @@ namespace Pronome.Editor
             string code = Stringify();
             Reset();
             FillFromBeatCode(code);
+            Offset = BeatCell.Parse(OffsetValue);
         }
 
         /// <summary>

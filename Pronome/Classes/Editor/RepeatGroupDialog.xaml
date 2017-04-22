@@ -19,11 +19,23 @@
     </Window.Resources>
     <DockPanel>
 
+        <StatusBar DockPanel.Dock="Bottom" FlowDirection="RightToLeft">
+            <StatusBar.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="{StaticResource dialogButtonMargin}"/>
+                    <Setter Property="Padding" Value="{StaticResource dialogButtonPadding}"/>
+                </Style>
+            </StatusBar.Resources>
+            <!--Buttons-->
+                <Button Name="okButton" Click="okButton_Click" IsDefault="True">OK</Button>
+                <Button Name="cancelButton" Click="cancelButton_Click">Cancel</Button>
+        </StatusBar>
+        
         <ItemsControl DockPanel.Dock="Top">
             <!-- target the wrapper parent of the child with a style -->
             <ItemsControl.ItemContainerStyle>
                 <Style TargetType="FrameworkElement">
-                    <Setter Property="Margin" Value="10"></Setter>
+                    <Setter Property="Margin" Value="10, 10, 10, 0"></Setter>
                 </Style>
             </ItemsControl.ItemContainerStyle>
 
@@ -33,6 +45,11 @@
                     <StackPanel Orientation="Vertical"/>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
+
+            <StackPanel>
+                <TextBlock FontSize="{StaticResource dialogHeaderFontSize}">Repeat Group Attributes</TextBlock>
+                <Separator/>
+            </StackPanel>
 
             <TextBlock TextWrapping="Wrap" HorizontalAlignment="Center">
                 Enter the number of times that the group of cells will be repeated.
@@ -82,17 +99,6 @@
                          Grid.Column="2"/>
             </Grid>
         </ItemsControl>
-        <!--Buttons-->
-        <Grid DockPanel.Dock="Bottom">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-            <Button Name="okButton" Click="okButton_Click" Grid.Column="1" IsDefault="True" Padding="8, 4"
-                        HorizontalAlignment="Center" VerticalAlignment="Center">OK</Button>
-            <Button Name="cancelButton" Click="cancelButton_Click" Grid.Column="2" Padding="8, 4"
-                        HorizontalAlignment="Center" VerticalAlignment="Center">Cancel</Button>
-        </Grid>
+        
     </DockPanel>
 </Window>
