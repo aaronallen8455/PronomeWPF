@@ -101,7 +101,7 @@
             PreviewKeyDown="TextEditor_PreviewKeyDown"/>
         
         <!--Source selector dropdown-->
-        <ComboBox
+        <local:ComboBoxFiltered
             Width="Auto"
             x:Key="sourceSelector"
             x:Shared="False"

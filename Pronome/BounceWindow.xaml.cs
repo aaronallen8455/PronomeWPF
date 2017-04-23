@@ -104,6 +104,7 @@ namespace Pronome
             Instance = this;
             InitializeComponent();
             //DrawScene();
+            //this.SetValue(RenderOptions.EdgeModeProperty, EdgeMode.Aliased);
             AddVisualChild(Drawing);
             AddLogicalChild(Drawing);
             Metronome.AfterBeatParsed += new EventHandler(DrawScene);
@@ -537,16 +538,9 @@ namespace Pronome
                 elapsedBpm = elapsedBpm % Layer.GetTotalBpmValue();
                 beatIndex = 0;
 
-                // Remove existing ticks
-                foreach (Tick tick in Ticks)
-                {
-                    //Instance.drawingGroup.Children.Remove(tick.GeoDrawing);
-                }
-
                 Ticks.Clear();
 
                 // sync up to elapsed
-                //if (beatIndex == Layer.Beat.Count) beatIndex = 0;
                 double bpm = 0;
                 while (bpm <= elapsedBpm || Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
                 {
@@ -554,8 +548,6 @@ namespace Pronome
                     beatIndex++;
                     if (beatIndex == Layer.Beat.Count) beatIndex = 0;
                 }
-                //beatIndex--;
-                //if (beatIndex == -1) beatIndex = Layer.Beat.Count - 1;
 
                 // fill in initial ticks
                 InitTicks(bpm - elapsedBpm, dc);

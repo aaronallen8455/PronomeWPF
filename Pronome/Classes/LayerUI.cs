@@ -31,7 +31,7 @@ namespace Pronome
 
         protected Panel layerList;
 
-        protected ComboBox baseSourceSelector;
+        protected ComboBoxFiltered baseSourceSelector;
 
         protected TextBox pitchInput;
 
@@ -105,7 +105,7 @@ namespace Pronome
             MakeLabel("Beat Code", textEditor, true);
 
             // source selector control
-            baseSourceSelector = resources["sourceSelector"] as ComboBox;
+            baseSourceSelector = resources["sourceSelector"] as ComboBoxFiltered;
             MakeLabel("Source", baseSourceSelector);
             // get array of sources
             List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
@@ -213,46 +213,45 @@ namespace Pronome
                 {
                     MessageBox.Show("Please fix the following errors:\r\r" + ex.Message, "Beat Code Contains Errors", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                //catch (Exception ex)
-                //{
-                //    MessageBox.Show($"This Beat contains a value that is too large ({ex.Message}). Use smaller values.", "Invalid Value", MessageBoxButton.OK, MessageBoxImage.Error);
-                //}
             }
         }
 
         protected async void baseSourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            MainWindow window = Application.Current.MainWindow as MainWindow;
-
-            if (baseSourceSelector.SelectedItem as string == "Pitch")
+            if (e.AddedItems.Count == 1)
             {
-                (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
-                // use contents of pitch field as source
-                //Layer.SetBaseSource(pitchInput.Text);
+                MainWindow window = Application.Current.MainWindow as MainWindow;
 
-                // disable play button while base source is being updated
-                window.playButton.IsEnabled = false;
-                
-                await window.Dispatcher.InvokeAsync(() =>
+                if (baseSourceSelector.SelectedItem as string == "Pitch")
                 {
-                    Layer.NewBaseSource(pitchInput.Text);
-                });
-                window.playButton.IsEnabled = true;
-            }
-            else
-            {
-                string newSource = WavFileStream.GetFileByName((baseSourceSelector.SelectedItem as string).Substring(4));
-                // set new base source
-                if (newSource != Layer.BaseSourceName)
-                {
-                    (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
+                    (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
+                    // use contents of pitch field as source
+                    //Layer.SetBaseSource(pitchInput.Text);
 
+                    // disable play button while base source is being updated
                     window.playButton.IsEnabled = false;
+                
                     await window.Dispatcher.InvokeAsync(() =>
                     {
-                        Layer.NewBaseSource(newSource);
+                        Layer.NewBaseSource(pitchInput.Text);
                     });
                     window.playButton.IsEnabled = true;
+                }
+                else
+                {
+                    string newSource = WavFileStream.GetFileByName((baseSourceSelector.SelectedItem as string).Substring(4));
+                    // set new base source
+                    if (newSource != Layer.BaseSourceName)
+                    {
+                        (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
+
+                        window.playButton.IsEnabled = false;
+                        await window.Dispatcher.InvokeAsync(() =>
+                        {
+                            Layer.NewBaseSource(newSource);
+                        });
+                        window.playButton.IsEnabled = true;
+                    }
                 }
             }
         }

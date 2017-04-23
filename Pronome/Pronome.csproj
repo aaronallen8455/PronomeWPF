@@ -57,6 +57,7 @@
     <Reference Include="NAudio, Version=1.8.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NAudio.1.8.0\lib\net35\NAudio.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationFramework.Aero" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Runtime.Serialization" />
@@ -91,6 +92,7 @@
     <Compile Include="Classes\Bounce\Lane.cs" />
     <Compile Include="Classes\Bounce\Tick.cs" />
     <Compile Include="Classes\ColorHelper.cs" />
+    <Compile Include="Classes\Control\ComboBoxFiltered.cs" />
     <Compile Include="Classes\Editor\Action.cs" />
     <Compile Include="Classes\Editor\Action\AddCell.cs" />
     <Compile Include="Classes\Editor\Action\AddRepeatGroup.cs" />
@@ -126,6 +128,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="BounceWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Classes\Control\ComboBoxFiltered.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -185,6 +191,10 @@
     <Page Include="OptionsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -285,5 +295,6 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -223,8 +223,8 @@
 
     <Window.InputBindings>
         <KeyBinding Key="Delete" Command="self:Commands.DeleteSelection"/>
-        <KeyBinding Key="A" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
-        <KeyBinding Key="S" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
+        <KeyBinding Key="Left" Modifiers="Ctrl" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
+        <KeyBinding Key="Right" Modifiers="Ctrl" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
         <KeyBinding Key="C" Modifiers="Ctrl" Command="self:Commands.CopyCells"/>
         <KeyBinding Key="X" Modifiers="Ctrl" Command="self:Commands.CutCells"/>
         <KeyBinding Key="V" Modifiers="Ctrl" Command="self:Commands.PasteCells"/>
@@ -261,8 +261,8 @@
                     <MenuItem Header="Remove Reference" Command="self:Commands.RemoveReference"/>
                 </MenuItem>
                 <Separator/>
-                <MenuItem Header="Move Cell(s) Left" InputGestureText="A" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
-                <MenuItem Header="Move Cell(s) Right" InputGestureText="S" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
+                <MenuItem Header="Move Cell(s) Left" InputGestureText="Ctrl+←" Command="self:Commands.MoveCellsLeft" CommandParameter="-1"/>
+                <MenuItem Header="Move Cell(s) Right" InputGestureText="Ctrl+→" Command="self:Commands.MoveCellsRight" CommandParameter="1"/>
                 <MenuItem Header="Delete Selected Cell(s)" InputGestureText="Del" Command="self:Commands.DeleteSelection"/>
             </MenuItem>
         </Menu>
@@ -291,7 +291,7 @@
                 </StackPanel>
                 <StackPanel>
                     <Label Target="{Binding ElementName=sourceSelector}">Source</Label>
-                    <ComboBox Name="sourceSelector" 
+                    <self:ComboBoxFiltered x:Name="sourceSelector" 
                               SelectionChanged="sourceSelector_SelectionChanged"
                               IsEnabled="{DynamicResource cellSelected}"/>
                 </StackPanel>
