@@ -38,6 +38,8 @@ namespace Pronome
             tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
 
             new LayerUI(layerStack);
+
+            new Instructions().Show();
         }
 
         /**<summary>Make top of window draggable</summary>*/

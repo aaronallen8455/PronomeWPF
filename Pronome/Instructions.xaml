@@ -1,0 +1,67 @@
+﻿<Window x:Class="Pronome.Instructions"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Pronome"
+        mc:Ignorable="d"
+        Title="Instructions" Height="300" Width="300">
+
+    <Window.Resources>
+        <FlowDocument x:Key="introduction" x:Shared="true">
+            <Paragraph>Test</Paragraph>
+            <Paragraph>
+                <Hyperlink Name="link">Test</Hyperlink>
+            </Paragraph>
+            <Paragraph>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elit libero, vulputate in nisl sit amet, volutpat pretium ex. Curabitur ut lorem consequat, fringilla erat ut, rhoncus sapien. Nullam placerat massa quis feugiat tempor. In hac habitasse platea dictumst. Nam ut ex mattis, tempus dui non, consectetur quam. Donec quis lacinia sem. Phasellus maximus tellus eu tortor pellentesque venenatis. Nulla nec imperdiet massa. Sed et sapien luctus, vestibulum purus vel, egestas quam. Suspendisse at pretium velit. Proin rutrum pellentesque ipsum vel molestie. Nam egestas ipsum nisi, auctor ornare dolor condimentum quis. Interdum et malesuada fames ac ante ipsum primis in faucibus.</Paragraph>
+            <Paragraph>Nullam nec tortor id ligula tincidunt sodales sed non dui. Integer dignissim laoreet magna elementum gravida. Duis quis sem accumsan, pellentesque orci in, commodo nisl. Donec felis lorem, eleifend eget nulla vitae, iaculis consectetur erat. Etiam nunc augue, placerat a imperdiet eu, viverra id sem. In id vestibulum diam. Aenean interdum lectus tellus, in posuere augue elementum vel. Sed fermentum nibh a dui elementum, in accumsan eros hendrerit. Morbi rhoncus massa quis felis faucibus hendrerit. Suspendisse a congue sem. Etiam eget dolor id nisl posuere bibendum. Vestibulum mattis nulla metus, eget iaculis mauris aliquet vitae. Nunc in dignissim ante.</Paragraph>
+        </FlowDocument>
+
+        <FlowDocument x:Key="creating a beat" x:Shared="true">
+            <Paragraph>Editor</Paragraph>
+        </FlowDocument>
+
+        <FlowDocument x:Key="using the editor" x:Shared="true">
+            <Paragraph>Graphics</Paragraph>
+        </FlowDocument>
+    </Window.Resources>
+    
+    <DockPanel>
+
+        <ListBox DockPanel.Dock="Left" 
+                 Name="tableOfContents" 
+                 SelectionMode="Single" 
+                 SelectionChanged="tableOfContents_SelectionChanged">
+            <ListBoxItem>
+                Introduction
+            </ListBoxItem>
+            <ListBoxItem>
+                Creating a Beat
+            </ListBoxItem>
+            <ListBoxItem>
+                Using the Editor
+            </ListBoxItem>
+            <ListBoxItem>
+                Setting the Pitch
+            </ListBoxItem>
+            <ListBoxItem>
+                Using Drum Sounds
+            </ListBoxItem>
+            <ListBoxItem>
+                Layer Controls
+            </ListBoxItem>
+            <ListBoxItem>
+                Main Controls
+            </ListBoxItem>
+            <ListBoxItem>
+                Visualizers
+            </ListBoxItem>
+            <ListBoxItem>
+                Options
+            </ListBoxItem>
+        </ListBox>
+
+        <FlowDocumentPageViewer Name="reader" Document="{StaticResource intro}"/>
+
+    </DockPanel>
+</Window>

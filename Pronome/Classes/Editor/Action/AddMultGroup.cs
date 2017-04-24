@@ -11,7 +11,7 @@ namespace Pronome.Editor
             Group = new MultGroup();
             Group.Row = cells[0].Row;
             Group.Cells = new LinkedList<Cell>(cells);
-            Group.Factor = factor;
+            Group.FactorValue = factor;
         }
 
         protected override void Transformation()

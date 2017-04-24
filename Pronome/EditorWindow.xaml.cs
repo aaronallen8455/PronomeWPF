@@ -685,7 +685,7 @@ namespace Pronome
         {
             MultGroup group = GroupCommandHelper<MultGroupCommandHelper>.GetGroupToRemoveOrEdit() as MultGroup;
             var dialog = new Classes.Editor.MultGroupDialog();
-            dialog.Factor = group.Factor;
+            dialog.Factor = group.FactorValue;
             if (dialog.ShowDialog() == true)
             {
                 var action = new EditMultGroup(group, dialog.Factor);
@@ -878,7 +878,7 @@ namespace Pronome
                         || mg.Cells.Last.Value == Cell.SelectedCells.LastCell))
                     {
                         mgCopy = new MultGroup();
-                        mgCopy.Factor = mg.Factor;
+                        mgCopy.FactorValue = mg.FactorValue;
                         CopiedMultGroups.Add(mg, mgCopy);
                     }
 

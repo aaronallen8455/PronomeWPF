@@ -63,7 +63,31 @@ namespace Pronome.Editor
                 }
                 // resize sizer
                 Row.ChangeSizerWidthByAmount(diff);
+                //// reevaluate the actual duration
+                //_actualDuration = -1;
             }
+        }
+
+        protected double _actualDuration = -1;
+        /// <summary>
+        /// Get the duration of the cell with multiplication groups applied
+        /// </summary>
+        public double ActualDuration
+        {
+            get => Duration;
+            //{
+            //    if (_actualDuration == -1)
+            //    {
+            //        _actualDuration = Duration;
+            //        // apply mult group transformation and cache the result
+            //        if (MultGroups.Any())
+            //        {
+            //            _actualDuration *= MultGroups.Select(x => x.Factor).Aggregate((a, b) => a * b);
+            //        }
+            //    }
+            //
+            //    return _actualDuration;
+            //}
         }
 
         protected string _value;
@@ -249,6 +273,7 @@ namespace Pronome.Editor
         public void SetDurationDirectly(double duration)
         {
             _duration = duration;
+            //_actualDuration = -1; // reevaluate actual duration
         }
 
         public int CompareTo(object obj)

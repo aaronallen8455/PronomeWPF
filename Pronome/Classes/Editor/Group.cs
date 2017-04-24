@@ -137,9 +137,14 @@ namespace Pronome.Editor
     public class MultGroup : Group
     {
         /// <summary>
-        /// The factor to multiply by. ex 1+1/3
+        /// The factor to multiply by, ex 1+1/3.
         /// </summary>
-        public string Factor;
+        public string FactorValue;
+
+        /// <summary>
+        /// The numeric value of the factor.
+        /// </summary>
+        public double Factor;
 
         public MultGroup()
         {

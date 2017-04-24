@@ -14,7 +14,7 @@
 
         protected override void Transformation()
         {
-            Group.Factor = Factor;
+            Group.FactorValue = Factor;
 
             Group = null;
         }

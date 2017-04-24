@@ -64,7 +64,7 @@ namespace Pronome.Editor
                         }
 
                         // if the new cell will be above the current row. Above all cells and above all repeat group LTMs
-                        if (position > Row.Cells.Last().Position + Row.Cells.Last().Duration - increment * Row.GridProx
+                        if (position > Row.Cells.Last().Position + Row.Cells.Last().ActualDuration - increment * Row.GridProx
                             && (!Row.RepeatGroups.Any() ||
                             position > Row.RepeatGroups.Last.Value.Position 
                             + Row.RepeatGroups.Last.Value.Duration * Row.RepeatGroups.Last.Value.Times 
@@ -270,7 +270,7 @@ namespace Pronome.Editor
                     // is new cell placed in the LTM zone of a rep group?
                     RepeatGroup repWithLtmToMod = null;
                     foreach (RepeatGroup rg in below.RepeatGroups.Where(
-                        x => x.Cells.Last.Value == below && position + increment * Row.GridProx > below.Position + below.Duration))
+                        x => x.Cells.Last.Value == below && position + increment * Row.GridProx > below.Position + below.ActualDuration))
                     {
                         repWithLtmToMod = rg;
                     }
@@ -482,7 +482,7 @@ namespace Pronome.Editor
                     // see if the cell is being added to a rep group's LTM zone
                     RepeatGroup repWithLtmToMod = null;
                     foreach (RepeatGroup rg in below.RepeatGroups.Where(
-                        x => x.Cells.Last.Value == below && position + increment * Row.GridProx > below.Position + below.Duration))
+                        x => x.Cells.Last.Value == below && position + increment * Row.GridProx > below.Position + below.ActualDuration))
                     {
                         repWithLtmToMod = rg;
                     }

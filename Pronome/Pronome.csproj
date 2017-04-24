@@ -159,6 +159,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Instructions.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -184,6 +188,9 @@
       <DependentUpon>ExportWavWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Classes\ITextMarker.cs" />
+    <Compile Include="Instructions.xaml.cs">
+      <DependentUpon>Instructions.xaml</DependentUpon>
+    </Compile>
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -295,6 +302,13 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Images\eighthtrip.gif" />
+    <Resource Include="Images\eightnote.gif" />
+    <Resource Include="Images\quarternote.gif" />
+    <Resource Include="Images\quartertrip.gif" />
+    <Resource Include="Images\sixnote.gif" />
+    <Resource Include="Images\sixtrip.gif" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

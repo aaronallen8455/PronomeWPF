@@ -214,17 +214,33 @@ namespace Pronome.Editor
                 string chunk = match.Value;
 
                 // check for opening mult group
-                if (chunk.IndexOf('{') > -1)
+                int multInd = chunk.IndexOf('{');
+                if (multInd > -1)
                 {
                     while (chunk.Contains('{'))
                     {
-                        OpenMultGroups.Push(new MultGroup() { Row = this });
+                        //// find the factor for this mult group
+                        //int openG = 0;
+                        //int i = 0;
+                        //foreach (char c in beat.Substring(match.Index + multInd))
+                        //{
+                        //    if (c == '{') openG++;
+                        //    else if (c == '}') openG--;
+                        //    if (openG == 0)
+                        //    {
+                        //        break;
+                        //    }
+                        //    i++;
+                        //}
+                        //string factor = Regex.Match(beat.Substring(match.Index + multInd + i), @"(?<=^})[\d.+\-/*]+").Value;
+
+                        OpenMultGroups.Push(new MultGroup() { Row = this });//, FactorValue = factor, Factor = BeatCell.Parse(factor) });
                         cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
                         OpenMultGroups.Peek().Cells.AddLast(cell);
                         OpenMultGroups.Peek().Position = cell.Position;
                         //MultGroups.AddLast(OpenMultGroups.Peek());
 
-                        chunk = chunk.Remove(chunk.IndexOf('{'), 1);
+                        chunk = chunk.Remove(multInd, 1);
                     }
                 }
                 else if (OpenMultGroups.Any())
@@ -315,7 +331,7 @@ namespace Pronome.Editor
                         cell.Value = bpm;
                         cell.SetDurationDirectly(BeatCell.Parse(bpm));
                         // progress position
-                        position += cell.Duration;
+                        position += cell.ActualDuration;
                     }
                 }
 
@@ -337,14 +353,15 @@ namespace Pronome.Editor
                     int multIndex = chunk.IndexOf('}');
                     int repIndex = chunk.IndexOf(']');
 
-                    if (multIndex < repIndex && multIndex > -1)
+                    if (multIndex > -1 && (multIndex < repIndex || repIndex == -1))
                     {
                         // add mult group
 
                         MultGroup mg = OpenMultGroups.Pop();
-                        mg.Factor = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
+                        mg.FactorValue = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
+                        mg.Factor = BeatCell.Parse(mg.FactorValue);
                         // set duration
-                        mg.Duration = cell.Position + cell.Duration - mg.Position;
+                        mg.Duration = cell.Position + cell.ActualDuration - mg.Position;
                         // render
                         if (OpenRepeatGroups.Any())
                         {
@@ -365,7 +382,7 @@ namespace Pronome.Editor
                         // add rep group
 
                         RepeatGroup rg = OpenRepeatGroups.Pop();
-                        rg.Duration = cell.Position + cell.Duration - rg.Position;
+                        rg.Duration = cell.Position + cell.ActualDuration - rg.Position;
                         Match mtch = Regex.Match(chunk, @"](\d+)");
                         if (mtch.Length == 0)
                         {
@@ -648,7 +665,7 @@ namespace Pronome.Editor
                 {
                     if (mg.Cells.Last.Value == cell)
                     {
-                        result.Append($"}}{mg.Factor}");
+                        result.Append($"}}{mg.FactorValue}");
                     }
                 }
                 // check if is break point |
@@ -698,7 +715,7 @@ namespace Pronome.Editor
                 rg.Canvas.Children.Add(cell.Rectangle);
             }
             // get size of the host rects
-            double hostWidth = (rg.Duration - (string.IsNullOrEmpty(cell.Reference) ? cell.Duration : 0)) * EditorWindow.Scale * EditorWindow.BaseFactor;
+            double hostWidth = (rg.Duration - (string.IsNullOrEmpty(cell.Reference) ? cell.ActualDuration : 0)) * EditorWindow.Scale * EditorWindow.BaseFactor;
             if (string.IsNullOrEmpty(cell.Reference))
             {
                 hostWidth += (double)EditorWindow.Instance.Resources["cellWidth"];
@@ -785,7 +802,7 @@ namespace Pronome.Editor
                 {
                     //else
                     //{
-                        duration += cell.Duration;
+                        duration += cell.ActualDuration;
                     //}
                     // find first cell
                     if (cell.Position < positionBpm)
@@ -803,7 +820,7 @@ namespace Pronome.Editor
                 if (string.IsNullOrEmpty(Cell.SelectedCells.LastCell.Reference))
                 {
                     // leave the duration in for references, otherwise it's zero width
-                    duration -= Cell.SelectedCells.LastCell.Duration;
+                    duration -= Cell.SelectedCells.LastCell.ActualDuration;
                 }
 
                 Rectangle sizer = EditorWindow.Instance.GridSizer;
