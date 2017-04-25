@@ -111,6 +111,50 @@ namespace Pronome.Editor
         }
 
         /**
+         * In order to have mult group resizing:
+         * 1) Adding to a mult group from flat within that group,
+         *    - the interval will need to be multiplied by the group factor
+         *    - use the cell values that have said group's factor applied
+         * 
+         * 2) adding from inside a mult group to outside that gorup
+         * 
+         * 3) adding from before a mult group to after that group
+         * 
+         * 4) adding from outside the group, into the group
+         *    - like normal, use the actualValue inside of mult group. Multiply result by group factor to get
+         *    base value.
+         */
+
+        /**
+         * Add above row works like this:
+         *    - if placed above all other cells, and above all rep group's LTMs,
+         *    increase the previous last cell's or rep group LTM's duration
+         *    * get the BPM value of the increment multiplied by how many ticks from last selected cell
+         *    * to the new cell
+         *    * Then subtract the accumulated value of all cells including rep groups from the total value.
+         *    make new cell duration the increment value
+         * 
+         * Add above selection, within row works like this:
+         *    - Get the value of increment times # of ticks between last selected cell and new cell position
+         *    - Subtract the accumulated values of all cells including rep groups to get the new value
+         *    of the preceding cell OR a rep group's LTM if we are placing the cell inside of the LTM
+         *    - The cells value is then the preceding cell's previous value minus it's new value.
+         * 
+         * Add below row works like this:
+         *    - Get the value of increment times # of ticks between first selected cell and new cell position
+         *    - subtract the accumulated values of all cells and groups between selected cell and new cell
+         *    to get the value of the new cell.
+         *    - Subtract new cell value from row's offset to get the new offset
+         * 
+         * add below section, within row works like this:
+         *    - Get the increment * # of ticks value between the first selected cell and new cell postion
+         *    - subtract the accumulated values of all cells and groups between selected cell and new cell
+         *    to get the value of the new cell.
+         *    - subtract new cell value from preceding cell / group LTM's old value to get value
+         * 
+         */ 
+
+        /**
          * Test Cases:
          * 
          * 1) Above row
