@@ -171,6 +171,9 @@ namespace Pronome
         /// </summary>
         public void UpdateUiForSelectedCell()
         {
+            // don't apply source changes
+            ignoreSourceChange = true;
+
             if (Cell.SelectedCells.Cells.Any())
             {
                 // if any references are selected, don't show inputs
@@ -265,6 +268,8 @@ namespace Pronome
 
                 RemoveGridLines();
             }
+
+            ignoreSourceChange = false;
         }
 
         public void RemoveGridLines()
@@ -401,53 +406,57 @@ namespace Pronome
             }
         }
 
+        private bool ignoreSourceChange = false;
         private void sourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if ((sender as ComboBox).SelectedValue == null) return;
+            //if ((sender as ComboBox).SelectedValue == null) return;
 
-            string value = (sender as ComboBox).SelectedValue.ToString();
-            string source = "";
-
-            if (value == "Pitch")
+            if (e.AddedItems.Count == 1 && !ignoreSourceChange)
             {
-                string pitchValue = pitchInput.Text;
+                string value = (sender as ComboBox).SelectedValue.ToString();
+                string source = "";
 
-                // validate pitch input
-                if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d+$|^\d+\.?\d*"))
+                if (value == "Pitch")
                 {
-                    source = pitchValue;
-                    // add 'p' if it's a numeric pitch
-                    if (char.IsNumber(pitchValue[0]))
+                    string pitchValue = pitchInput.Text;
+
+                    // validate pitch input
+                    if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d+$|^\d+\.?\d*"))
                     {
-                        source = 'p' + source;
+                        source = pitchValue;
+                        // add 'p' if it's a numeric pitch
+                        if (char.IsNumber(pitchValue[0]))
+                        {
+                            source = 'p' + source;
+                        }
                     }
                 }
-            }
-            else if (value == "Silent")
-            {
-                source = "0";
-            }
-            else
-            {
-                value = Regex.Replace(value, @"^\d+\.\s*", "");
-                // get wav source index
-                source = WavFileStream.GetFileByName(value);
-            }
+                else if (value == "Silent")
+                {
+                    source = "0";
+                }
+                else
+                {
+                    value = Regex.Replace(value, @"^\d+\.\s*", "");
+                    // get wav source index
+                    source = WavFileStream.GetFileByName(value);
+                }
 
-            bool wasChanged = false;
-            // set new source on selected cells
-            foreach (Cell c in Cell.SelectedCells.Cells)
-            {
-                string old = c.Source == null ? c.Row.Layer.BaseSourceName : c.Source;
-                if (old != source) wasChanged = true;
-                c.Source = source;
-            }
+                bool wasChanged = false;
+                // set new source on selected cells
+                foreach (Cell c in Cell.SelectedCells.Cells)
+                {
+                    string old = c.Source == null ? c.Row.Layer.BaseSourceName : c.Source;
+                    if (old != source) wasChanged = true;
+                    c.Source = source;
+                }
 
-            if (Cell.SelectedCells.Cells.Any() && wasChanged)
-            {
-                Cell.SelectedCells.Cells[0].Row.BeatCodeIsCurrent = false;
-                SetChangesApplied(false);
-                UpdateUiForSelectedCell();
+                if (Cell.SelectedCells.Cells.Any() && wasChanged)
+                {
+                    Cell.SelectedCells.Cells[0].Row.BeatCodeIsCurrent = false;
+                    SetChangesApplied(false);
+                    UpdateUiForSelectedCell();
+                }
             }
         }
 

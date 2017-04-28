@@ -189,7 +189,44 @@
         </FlowDocument>
 
         <FlowDocument x:Key="using the editor" x:Shared="true">
-            <Paragraph>Graphics</Paragraph>
+            <Paragraph Style="{StaticResource headerStyle}">Editor</Paragraph>
+            <Paragraph>
+                The editor is a powerful and easy to use tool for creating beats 
+                in a graphical interface that does most of the number work for you. 
+                To get started, click the 'Editor' button at the bottom of the main window.
+            </Paragraph>
+            <Paragraph>
+                The main area of the editor shows each layer as a rectangular row with tick marks 
+                representing the cells. Select a cell by left clicking on it or by holding down 
+                right click and dragging to make a selection box. You can add to a selection 
+                by shift clicking on a cell outside the current selection. This will add that cell 
+                and all the cells in-between to the selection. You can only have adjacent cells 
+                selected.
+            </Paragraph>
+            <Paragraph>
+                Once you have made a cell selection, a grid is projected onto the layer. Click on any of 
+                these grid lines to create a new cell at that position. The grid's spacing is set 
+                by the 'Increment' input field, which takes a value such as '1' for quarter-notes or 
+                '2/3' for quarter note triplets. There's also a row of buttons with preset rhythmic 
+                durations for quickly setting the increment value.
+                <LineBreak/>
+                <Span>Note: if you are working with a layer that has an offset value, placing a 
+                new cell into the offset area will make the offset value decrease.</Span>
+            </Paragraph>
+            <Paragraph>
+                The duration value of a selected cell is shown in the 'Duration' field. By changing 
+                this value, you can adjust the rhythmic value of a cell. If you have multiple cells 
+                selected, they will all take on the duration value you enter.
+            </Paragraph>
+            <Paragraph>
+                Selected cells can be moved on the grid by choosing 'Move Cell(s) Left' (Ctrl+A) 
+                or 'Move Cell(s) Right' (Ctrl+S) from the 'Selection' menu. The limitation is 
+                that you can't move a cell past another cell. If you move the first cell in a 
+                layer, this will change the offset value for that layer.
+            </Paragraph>
+            <Paragraph>
+                
+            </Paragraph>
         </FlowDocument>
     </Window.Resources>
     

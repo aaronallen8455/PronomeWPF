@@ -143,7 +143,7 @@ namespace Pronome.Editor
         /// <summary>
         /// The audio source for this cell.
         /// </summary>
-        public string Source;
+        public string Source = null;
         public LinkedList<MultGroup> MultGroups = new LinkedList<MultGroup>();
         public LinkedList<RepeatGroup> RepeatGroups = new LinkedList<RepeatGroup>();
         //public MultGroup MultGroup;

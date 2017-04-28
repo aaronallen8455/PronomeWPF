@@ -617,7 +617,7 @@ namespace Pronome.Editor
                     result.Append($"${cell.Reference}");
                 }
                 // check for source modifier
-                if (cell.Source != null && cell.Source != Layer.BaseSourceName)
+                if (!string.IsNullOrEmpty(cell.Source) && cell.Source != Layer.BaseSourceName)
                 {
                     string source;
                     // is pitch or wav?

@@ -26,6 +26,7 @@ namespace Pronome.Editor
 
         protected override void Transformation()
         {
+            // TODO: cells should be able to move past one another
             string value = BeatCell.MultiplyTerms(Increment, Math.Abs(Times));
 
             Cell last = Cells[Cells.Length - 1];

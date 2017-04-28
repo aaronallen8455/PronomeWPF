@@ -105,7 +105,7 @@ namespace Pronome.Editor
         {
             base.Redo();
 
-            // remove the groups that were added from the selection
+            // remove the groups that were added to the selection from the pasted area
             for (int i = 0; i < RepCount; i++)
             {
                 Cells.First.Value.RepeatGroups.RemoveLast();
@@ -191,11 +191,11 @@ namespace Pronome.Editor
                 AfterOffset = Row.OffsetValue;
             }
 
-            // if no change, don't do anything
-            if (AfterBeatCode == BeforeBeatCode && AfterOffset == BeforeOffset)
-            {
-                return;
-            }
+            //// if no change, don't do anything
+            //if (AfterBeatCode == BeforeBeatCode && AfterOffset == BeforeOffset)
+            //{
+            //    return;
+            //}
 
             bool selectFromBack = selectionEnd > RightIndexBoundOfTransform;
 
