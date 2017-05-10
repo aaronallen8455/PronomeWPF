@@ -39,7 +39,7 @@ namespace Pronome
 
             new LayerUI(layerStack);
 
-            //new Instructions().Show();
+            new Instructions().Show();
         }
 
         /**<summary>Make top of window draggable</summary>*/

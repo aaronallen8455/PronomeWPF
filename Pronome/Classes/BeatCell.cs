@@ -245,48 +245,11 @@ namespace Pronome
                 return x * y / Gcf(x, y);
             };
 
-            // replace common decimals with fraction if other fractions coexist in the string
-            if (value.IndexOf('/') > -1)
-            {
-                foreach (Match m in Regex.Matches(value, @"(^|\+|-)(\d*)\.(\d+)(?=$|\+|-)"))
-                {
-                    string sign = m.Groups[1].Value;
-                    string bridge = sign == "" ? "+" : sign;
-                    string wholeNum = m.Groups[2].Value;
-                    string fract = m.Groups[3].Value;
-                    // switch out decimal with fraction if matches
-                    bool switched = true;
-                    switch (fract)
-                    {
-                        case "5":
-                            fract = "1/2";
-                            break;
-                        case "25":
-                            fract = "1/4";
-                            break;
-                        case "75":
-                            fract = "3/4";
-                            break;
-                        default:
-                            switched = false;
-                            break;
-                    }
-
-                    if (switched)
-                    {
-                        StringBuilder replace = new StringBuilder();
-                        replace.Append(sign);
-                        if (!string.IsNullOrEmpty(wholeNum))
-                        {
-                            replace.Append(wholeNum).Append(bridge);
-                        }
-                        replace.Append(fract);
-                        // replace
-                        int index = value.IndexOf(m.Value);
-                        value = value.Substring(0, index) + replace.ToString() + value.Substring(index + m.Length);
-                    }
-                }
-            }
+            //// replace common decimals with fraction if other fractions coexist in the string
+            //if (value.IndexOf('/') > -1)
+            //{
+            //    value = ConvertCommonFractions(value);
+            //}
 
             // simplify all fractions
             var multDiv = Regex.Matches(value, @"(?<!\.\d*)(\d+?[*/](?=\d+))+\d+(?!\d*\.)"); // get just the fractions or whole number multiplication. filter out decimals
@@ -366,15 +329,21 @@ namespace Pronome
 
             // merge all whole numbers and decimals
             double numbers = whole + Parse("0+0" + value);// 0;
-            //if (!string.IsNullOrEmpty(value))
-            //{
-            //    numbers = whole + Parse("0+0" + value);
-            //}
 
             string result = numbers != 0 ? numbers.ToString().TrimStart('0') : "";
+
+            bool recurse = false;
             // append the fractional portion of it's not zero
             if (numerator != 0)
             {
+                // check if 'numbers' has some decimal that can become a fraction. If so, we'll recurse
+                string r = ConvertCommonFractions(result);
+                if (!string.IsNullOrEmpty(r))
+                {
+                    recurse = true;
+                    result = r;
+                }
+
                 // put the positive value first.
                 if (numbers < 0)
                 {
@@ -390,7 +359,70 @@ namespace Pronome
                 }
             }
 
+            // if there's more than one fraction, recurse
+            if (recurse)
+            {
+                return SimplifyValue(result);
+            }
+
             return result;
+        }
+
+        /// <summary>
+        /// Replace decimals with corresponding fractions if common.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns>String or Null</returns>
+        static protected string ConvertCommonFractions(string input)
+        {
+            bool changed = false;
+
+            foreach (Match m in Regex.Matches(input, @"(^|\+|-)(\d*)\.(\d+)(?=$|\+|-)"))
+            {
+                string sign = m.Groups[1].Value;
+                string bridge = sign == "" ? "+" : sign;
+                string wholeNum = m.Groups[2].Value;
+                string fract = m.Groups[3].Value;
+                // switch out decimal with fraction if matches
+                bool switched = true;
+                switch (fract)
+                {
+                    case "5":
+                        fract = "1/2";
+                        break;
+                    case "25":
+                        fract = "1/4";
+                        break;
+                    case "75":
+                        fract = "3/4";
+                        break;
+                    default:
+                        switched = false;
+                        break;
+                }
+
+                if (switched)
+                {
+                    changed = true;
+                    StringBuilder replace = new StringBuilder();
+                    replace.Append(sign);
+                    if (!string.IsNullOrEmpty(wholeNum))
+                    {
+                        replace.Append(wholeNum).Append(bridge);
+                    }
+                    replace.Append(fract);
+                    // replace
+                    int index = input.IndexOf(m.Value);
+                    input = input.Substring(0, index) + replace.ToString() + input.Substring(index + m.Length);
+                }
+            }
+
+            if (changed)
+            {
+                return input;
+            }
+
+            return null; // no change
         }
 
         /// <summary>

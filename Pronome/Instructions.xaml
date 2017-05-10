@@ -6,7 +6,7 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="Instructions" Height="600" Width="900">
+        Title="Instructions" Height="800" Width="1100">
 
     <Window.Resources>
         <Style TargetType="FlowDocument">
@@ -42,7 +42,7 @@
             </Paragraph>
         </FlowDocument>
 
-        <FlowDocument x:Key="creating a beat" x:Shared="true">
+        <FlowDocument x:Key="creating a beat with beat code" x:Shared="true">
             <Paragraph Style="{StaticResource headerStyle}">Creating a Beat</Paragraph>
             <Paragraph>
                 In ProNome, a 'beat' or 'groove' refers to a group of distinct rhythmic 
@@ -210,63 +210,156 @@
                 '2/3' for quarter note triplets. There's also a row of buttons with preset rhythmic 
                 durations for quickly setting the increment value.
                 <LineBreak/>
-                <Span>Note: if you are working with a layer that has an offset value, placing a 
+                <Span Style="{StaticResource noteStyle}">Note: if you are working with a layer that has an offset value, placing a 
                 new cell into the offset area will make the offset value decrease.</Span>
             </Paragraph>
             <Paragraph>
-                The duration value of a selected cell is shown in the 'Duration' field. By changing 
-                this value, you can adjust the rhythmic value of a cell. If you have multiple cells 
-                selected, they will all take on the duration value you enter.
+                The following actions are available when cell(s) are selected:
             </Paragraph>
+            <List>
+                <List.Resources>
+                    <Style TargetType="ListItem">
+                        <Setter Property="Margin" Value="0,0,0,10"/>
+                    </Style>
+                </List.Resources>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Duration</Bold>
+                        <LineBreak/>
+                        The duration value of a selected cell is shown in the 'Duration' field. By changing 
+                        this value, you can adjust the rhythmic value of a cell. If you have multiple cells 
+                        selected, they will all take on the duration value you enter.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Source</Bold>
+                        <LineBreak/>
+                        The sound source for the selected cell(s) can be changed using the 'Source' drop-down selector. 
+                        If "Pitch" is selected as the source, you can use the 'Note' field to specify the pitch.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Moving</Bold>
+                        <LineBreak/>
+                        Selected cells can be moved on the grid by choosing 'Move Cell(s) Left' (Ctrl+A) 
+                        or 'Move Cell(s) Right' (Ctrl+S) from the 'Selection' menu. The limitation is 
+                        that you can't move a cell past or on top of another cell. If you move the first cell in a 
+                        layer, this will change the offset value for that layer.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Copy/Cut/Paste</Bold>
+                        <LineBreak/>
+                        The copy, cut, and paste actions are available through the 'Edit' menu. Paste will replace 
+                        the currently selected cell(s) with the copied/cut cells.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Repeat Groups and Multiplication Groups</Bold>
+                        <LineBreak/>
+                        The action to form a repeat group or a multiplication group is found in the 'Selection' menu.
+                        <LineBreak/>
+                        Repeat groups are used to repeat a grouping of cells a set number of times and optionally 
+                        add a 'Last Term Modifier' value to the last cell on the last repeat.
+                        <LineBreak/>
+                        Multiplication groups will multiply the duration of each of it's cells by a given amount. 
+                        Unlike repeat groups, the effect of this group is not reflected in the visual display.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Insert Reference</Bold>
+                        <LineBreak/>
+                        With a single cell selection, you can insert a Reference which replaces the selected cell 
+                        with all the cells from a specified layer. Layer can have a reference to another layer or to 
+                        itself and when that layer changes, so will the reference.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Delete</Bold>
+                        <LineBreak/>
+                        Selected cells, groups, and references can be deleted from the selection menu, or by 
+                        pressing the 'Delete' key.
+                    </Paragraph>
+                </ListItem>
+            </List>
             <Paragraph>
-                Selected cells can be moved on the grid by choosing 'Move Cell(s) Left' (Ctrl+A) 
-                or 'Move Cell(s) Right' (Ctrl+S) from the 'Selection' menu. The limitation is 
-                that you can't move a cell past another cell. If you move the first cell in a 
-                layer, this will change the offset value for that layer.
+                It's important to know that the changes you make in the editor aren't applied to the actual 
+                beat until you click the 'Apply Changes' button in the lower right corner of the editor window, 
+                or by choosing to apply changes when closing the window.
+                <LineBreak/>
+                If you edit the beat code directly the editor window is updated to reflect those changes and 
+                if there were any unapplied changes in the editor, they will be lost.
             </Paragraph>
-            <Paragraph>
-                
-            </Paragraph>
+        </FlowDocument>
+
+        <FlowDocument x:Key="sound sources" x:Shared="true">
+            
+        </FlowDocument>
+
+        <FlowDocument x:Key="controls" x:Shared="true">
+            
+        </FlowDocument>
+
+        <FlowDocument x:Key="visualizers" x:Shared="true">
+            
+        </FlowDocument>
+
+        <FlowDocument x:Key="options" x:Shared="true">
+            
         </FlowDocument>
     </Window.Resources>
     
     <DockPanel>
-
-        <ListBox DockPanel.Dock="Left" 
+        
+        <DockPanel DockPanel.Dock="Left">
+            <Border DockPanel.Dock="Top" BorderBrush="SkyBlue" BorderThickness="1">
+               <TextBlock Padding="5" FontSize="17" Background="LightCyan">Topics</TextBlock>
+            </Border>
+            <ListBox
                  Name="tableOfContents" 
                  SelectionMode="Single" 
-                 SelectionChanged="tableOfContents_SelectionChanged">
-            <ListBoxItem>
-                Introduction
-            </ListBoxItem>
-            <ListBoxItem>
-                Creating a Beat
-            </ListBoxItem>
-            <ListBoxItem>
-                Using the Editor
-            </ListBoxItem>
-            <ListBoxItem>
-                Setting the Pitch
-            </ListBoxItem>
-            <ListBoxItem>
-                Using Drum Sounds
-            </ListBoxItem>
-            <ListBoxItem>
-                Layer Controls
-            </ListBoxItem>
-            <ListBoxItem>
-                Main Controls
-            </ListBoxItem>
-            <ListBoxItem>
-                Visualizers
-            </ListBoxItem>
-            <ListBoxItem>
-                Options
-            </ListBoxItem>
-        </ListBox>
+                 SelectionChanged="tableOfContents_SelectionChanged"
+                 BorderBrush="SkyBlue"
+                Background="#FFFBFBFB">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="Padding" Value="5"/>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBoxItem>
+                    Introduction
+                </ListBoxItem>
+                <ListBoxItem>
+                    Creating a Beat With Beat Code
+                </ListBoxItem>
+                <ListBoxItem>
+                    Using the Editor
+                </ListBoxItem>
+                <ListBoxItem>
+                    Sound Sources
+                </ListBoxItem>
+                <ListBoxItem>
+                    Controls
+                </ListBoxItem>
+                <ListBoxItem>
+                    Visualizers
+                </ListBoxItem>
+                <ListBoxItem>
+                    Options
+                </ListBoxItem>
+            </ListBox>
+        </DockPanel>
+        
 
         <FlowDocumentPageViewer Name="reader" 
-                                Document="{StaticResource creating a beat}"/>
+                                Document="{StaticResource creating a beat with beat code}"/>
 
     </DockPanel>
 </Window>

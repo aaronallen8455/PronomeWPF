@@ -172,8 +172,8 @@ namespace Pronome.Editor
             Canvas.SetTop(ReferenceRectangle, top);
 
             Panel.SetZIndex(Rectangle, 10);
-            Rectangle.MouseDown += Rectangle_MouseDown;
-            ReferenceRectangle.MouseDown += Rectangle_MouseDown;
+            Rectangle.MouseLeftButtonDown += Rectangle_MouseDown;
+            ReferenceRectangle.MouseLeftButtonDown += Rectangle_MouseDown;
         }
 
         /// <summary>

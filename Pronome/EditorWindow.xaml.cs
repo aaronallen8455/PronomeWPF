@@ -217,7 +217,23 @@ namespace Pronome
                             durationInput.Text = string.Empty;
                             sourceSelector.SelectedItem = null;
                             pitchInput.Text = string.Empty;
-                            pitchInputPanel.Visibility = Visibility.Collapsed;
+
+                            // if all cells are pitches, show a blank pitch input, otherwise hide it
+                            if (Cell.SelectedCells.Cells.All(x =>
+                                {
+                                    if (string.IsNullOrEmpty(x.Source))
+                                    {
+                                        return x.Row.Layer.BaseSourceName.Contains(".wav");
+                                    }
+                                    else
+                                    {
+                                        return x.Source.Contains(".wav");
+                                    }
+                                })
+                            )
+                            {
+                                pitchInputPanel.Visibility = Visibility.Collapsed;
+                            }
                         }
                     }
 
@@ -240,7 +256,7 @@ namespace Pronome
                         {
                             // pitch
                             pitchInputPanel.Visibility = Visibility.Visible;
-                            pitchInput.Text = source;
+                            pitchInput.Text = source.TrimStart('p');
                             sourceSelector.SelectedItem = "Pitch";
                         }
                     }
@@ -465,12 +481,16 @@ namespace Pronome
             string pitchValue = pitchInput.Text;
 
             // validate pitch input
-            if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d+$|^\d+\.?\d*"))
+            if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d{0,2}$|^\d+\.?\d*"))
             {
                 // add 'p' if it's a numeric pitch
                 if (char.IsNumber(pitchValue[0]))
                 {
                     pitchValue = 'p' + pitchValue;
+                }
+                else if (!char.IsDigit(pitchValue.Last()))
+                {
+                    pitchValue += '4'; // default octave is 4
                 }
 
                 // assign to cells

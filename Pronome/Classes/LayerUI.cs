@@ -259,10 +259,15 @@ namespace Pronome
         protected void pitchInput_LostFocus(object sender, RoutedEventArgs e)
         {
             // validate input
-            if (Regex.IsMatch(pitchInput.Text, @"^[A-Ga-g][#b]?[\d]$|^[\d.]+$"))
+            if (Regex.IsMatch(pitchInput.Text, @"^[A-Ga-g][#b]?\d{0,2}$|^[\d.]+$"))
             {
-                //Layer.SetBaseSource(pitchInput.Text);
-                Layer.NewBaseSource(pitchInput.Text);
+                string src = pitchInput.Text;
+                // assume octave 4 if non given
+                if (!char.IsDigit(src.Last()))
+                {
+                    src += '4';
+                }
+                Layer.NewBaseSource(src);
             }
         }
 
@@ -317,7 +322,47 @@ namespace Pronome
             var layers = Metronome.GetInstance().Layers.Where(x => x.ParsedString.Contains($"${index + 1}"));
             foreach(Layer layer in layers)
             {
-                layer.Parse(layer.ParsedString);
+                // check if the layer has no other cells besides the reference now pointing to itself. If so, replace the ref(s) with beat we are deleting
+                if (index == Metronome.GetInstance().Layers.IndexOf(layer))
+                {
+                    bool hasValue = false;
+                    foreach (string cell in layer.ParsedString.Split(',').Select(x => x.TrimStart(new char[] { '{', '[' })))
+                    {
+                        if (char.IsDigit(cell[0]))
+                        {
+                            hasValue = true;
+                            break;
+                        }
+                    }
+                    // replace with old beat
+                    if (!hasValue)
+                    {
+                        // check if deleted layer has more than one cell
+                        bool more = Layer.Beat.Count > 1;
+                        if (more)
+                        {
+                            // if a single cell repeat was used on the ref, convert o multi cell
+                            layer.ParsedString = Regex.Replace(
+                                layer.ParsedString, 
+                                $@"\${index + 1}(\(\d+\)[\d.+\-/*]*)", 
+                                $"[{Layer.ParsedString}]$1");
+                        }
+                        // straight replace all others
+                        layer.ParsedString = layer.ParsedString.Replace($"${index + 1}", Layer.ParsedString);
+                        layer.UI.textEditor.Text = layer.ParsedString;
+                    }
+                }
+                try
+                {
+                    layer.Parse(layer.ParsedString);
+                }
+                catch (Exception)
+                {
+                    // if there was something crazy going on, just make it "1"
+                    layer.ParsedString = "1";
+                    layer.Parse(layer.ParsedString);
+                    layer.UI.textEditor.Text = layer.ParsedString;
+                }
             }
             // redraw graph
             Metronome.GetInstance().TriggerAfterBeatParsed();

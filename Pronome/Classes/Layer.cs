@@ -151,9 +151,12 @@ namespace Pronome
                     int selfIndex = Metronome.GetInstance().Layers.IndexOf(this);
                     if (indexString == "s") refIndex = selfIndex;
                     else refIndex = int.Parse(indexString) - 1;
+
+                    string refString = ResolveReferences(refIndex, new HashSet<int>(new int[] { selfIndex }));
+
                     // perform the replacement
                     beat = beat.Substring(0, match.Index) + 
-                        ResolveReferences(refIndex, new HashSet<int>(new int[] { selfIndex })) + 
+                        refString + 
                         beat.Substring(match.Index + match.Length);
                 }
             }
