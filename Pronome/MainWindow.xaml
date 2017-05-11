@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Height="400" Width="800"
+        Height="400" Width="1100"
+        MinHeight="200" MinWidth="540"
         AllowsTransparency="True" WindowStyle="None" Background="Transparent"
         Title="ProNome">
     <Window.Resources>
@@ -84,6 +85,7 @@
             </Setter>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="#FF007ACC"/>
+            <Setter Property="Focusable" Value="False"/>
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
@@ -350,7 +352,18 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        
+        <RoutedCommand x:Key="startStopCommand"/>
+
     </Window.Resources>
+
+    <Window.CommandBindings>
+        <CommandBinding Command="{StaticResource startStopCommand}" Executed="CommandPlayStop_Executed" CanExecute="CommandPlayStop_CanExecute"/>
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Modifiers="Shift" Key="Space" Command="{StaticResource startStopCommand}"/>
+    </Window.InputBindings>
+    
     <Border BorderBrush="Black" BorderThickness="1,1,1,1" CornerRadius="8,8,8,8" Background="#B200008B">
 
         <Grid>
@@ -389,6 +402,9 @@
                                     <Setter Property="Margin" Value="6"/>
                                 </Style>
                             </WrapPanel.Resources>
+                            <WrapPanel.LayoutTransform>
+                                <ScaleTransform CenterX="0" CenterY="0" ScaleX="1.20" ScaleY="1.20"/>
+                            </WrapPanel.LayoutTransform>
                             <!--Add layer button-->
                             <Button Click="addLayerButton_Click">Add Layer</Button>
 
@@ -433,6 +449,7 @@
                                 </StackPanel>
                                 <TextBox Name="tempoInput" 
                                      LostFocus="tempoInput_LostFocus"
+                                     MouseWheel="tempoInput_MouseWheel"
                                      Background="Black"
                                      Foreground="White"
                                      Width="60"
@@ -446,6 +463,7 @@
                                 Name="masterVolume" 
                                 Value="1" 
                                 ValueChanged="masterVolume_ValueChanged" 
+                                MouseWheel="masterVolume_MouseWheel"
                                 Minimum="0" 
                                 Maximum="1" 
                                 Width="80"/>

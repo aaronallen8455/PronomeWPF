@@ -15,11 +15,12 @@
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="{StaticResource dialogButtonMargin}"/>
                     <Setter Property="Padding" Value="{StaticResource dialogButtonPadding}"/>
+                    <Setter Property="Width" Value="55"/>
                 </Style>
             </StatusBar.Resources>
-            <Button Name="okButton" Click="okButton_Click" Grid.Column="1" IsDefault="True" Padding="8, 4"
+            <Button Name="okButton" Click="okButton_Click" Grid.Column="1" IsDefault="True"
                     HorizontalAlignment="Center" VerticalAlignment="Center">OK</Button>
-            <Button Name="cancelButton" Click="cancelButton_Click" Grid.Column="2" Padding="8, 4"
+            <Button Name="cancelButton" Click="cancelButton_Click" Grid.Column="2"
                     HorizontalAlignment="Center" VerticalAlignment="Center">Cancel</Button>
         </StatusBar>
         

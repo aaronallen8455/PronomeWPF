@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Input;
 using System.Text.RegularExpressions;
 using System;
 using System.ComponentModel.Design;
@@ -147,12 +148,14 @@ namespace Pronome
             volumeSlider.Value = Layer.Volume;
             MakeLabel("Vol.", volumeSlider);
             volumeSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(volumeSlider_ValueChanged);
+            volumeSlider.MouseWheel += volumeSlider_MouseWheel;
 
             // pan control
             panSlider = resources["panControl"] as Slider;
             panSlider.Value = Layer.Pan;
             MakeLabel("Pan", panSlider);
             panSlider.ValueChanged += new RoutedPropertyChangedEventHandler<double>(panSlider_ValueChanged);
+            panSlider.MouseWheel += panSlider_MouseWheel;
 
             // offset control
             offsetInput = resources["offsetInput"] as TextBox;
@@ -279,9 +282,40 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// Control the volume with mouse wheel
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void volumeSlider_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var slider = sender as Slider;
+            double vol = Layer.Volume;
+            double change = (double)e.Delta / 4800;
+            vol += change;
+
+            if (vol >= 0 && vol <= 1)
+            {
+                slider.Value = vol;
+            }
+        }
+
         protected void panSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Layer.Pan = (float)panSlider.Value;
+        }
+
+        private void panSlider_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var slider = sender as Slider;
+            double pan = Layer.Pan;
+            double change = (double)e.Delta / 2400;
+            pan += change;
+
+            if (pan >= -1 && pan <= 1)
+            {
+                slider.Value = pan;
+            }
         }
 
         protected void offsetInput_LostFocus(object sender, RoutedEventArgs e)

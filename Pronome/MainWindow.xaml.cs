@@ -39,7 +39,7 @@ namespace Pronome
 
             new LayerUI(layerStack);
 
-            new Instructions().Show();
+            //new Instructions().Show();
         }
 
         /**<summary>Make top of window draggable</summary>*/
@@ -152,6 +152,19 @@ namespace Pronome
             }
         }
 
+        private void tempoInput_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var input = sender as TextBox;
+            float tempo = Metronome.GetInstance().Tempo;
+            tempo += e.Delta / 120;
+
+            if (tempo > 1)
+            {
+                input.Text = tempo.ToString();
+                Metronome.GetInstance().ChangeTempo(tempo);
+            }
+        }
+
         private void tempoUp_Click(object sender, RoutedEventArgs e)
         {
             float current = Metronome.GetInstance().Tempo;
@@ -174,6 +187,24 @@ namespace Pronome
         private void masterVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Metronome.GetInstance().Volume = masterVolume.Value;
+        }
+
+        /// <summary>
+        /// Control the volume with mouse wheel
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void masterVolume_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var slider = sender as Slider;
+            double vol = Metronome.GetInstance().Volume;
+            double change = (double)e.Delta / 4800;
+            vol += change;
+
+            if (vol >= 0 && vol <= 1)
+            {
+                slider.Value = vol;
+            }
         }
 
         Point resizeOffset;
@@ -200,7 +231,7 @@ namespace Pronome
                 double width = position.X + resizeOffset.X;
                 double height = position.Y + resizeOffset.Y;
                 Width = width > 540 ? width : 540; // limit the dimensions
-                Height = height > 150 ? height : 150;
+                Height = height > 200 ? height : 200;
             }
         }
 
@@ -363,6 +394,30 @@ namespace Pronome
         {
             WindowState = WindowState.Minimized;
         }
+
+        private void CommandPlayStop_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            // check if playing or not
+            if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
+            {
+                stopButton_Click(null, null);
+            }
+            else
+            {
+                playButton_Click(null, null);
+            }
+        }
+
+        private void CommandPlayStop_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            IInputElement focus = Keyboard.FocusedElement;
+            // check if focused element is a text editor or a button
+            if (focus is ICSharpCode.AvalonEdit.Editing.TextArea) e.CanExecute = false;
+            else e.CanExecute = true;
+            //e.CanExecute = focus == null;
+        }
+
+        
     }
 
     [ValueConversion(typeof(bool), typeof(bool))]

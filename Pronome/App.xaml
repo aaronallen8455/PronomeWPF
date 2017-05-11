@@ -35,7 +35,7 @@
         <Thickness x:Key="dialogButtonMargin" Left="4" Right="0" Top="5" Bottom="5"/>
 
         <!--Padding for buttons in dialogs-->
-        <Thickness x:Key="dialogButtonPadding" Left="3" Right="3" Top="3" Bottom="3"/>
+        <Thickness x:Key="dialogButtonPadding" Left="3" Right="3" Top="4" Bottom="4"/>
         
         <!--Font size for header in dialogs-->
         <sys:Double x:Key="dialogHeaderFontSize">15</sys:Double>

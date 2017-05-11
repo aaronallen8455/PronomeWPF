@@ -23,6 +23,7 @@
                 <Style TargetType="Button">
                     <Setter Property="Margin" Value="{StaticResource ResourceKey=dialogButtonMargin}"/>
                     <Setter Property="Padding" Value="{StaticResource ResourceKey=dialogButtonPadding}"/>
+                    <Setter Property="Width" Value="55"/>
                 </Style>
             </StatusBar.Resources>
             <!--Buttons-->

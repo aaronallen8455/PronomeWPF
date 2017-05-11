@@ -941,10 +941,9 @@ namespace Pronome.Editor
                 // select all cells within the range
                 double start = Math.Min(selectorOrigin.X, Canvas.GetLeft(selector)) / EditorWindow.Scale / EditorWindow.BaseFactor - Offset;
                 double end = start + selector.Width / EditorWindow.Scale / EditorWindow.BaseFactor;
-                IEnumerable<Cell> cells = Cells.SkipWhile(x => x.Position < start).TakeWhile(x => x.Position < end);
+                IEnumerable<Cell> cells = Cells.Where(x => !x.IsReference).SkipWhile(x => x.Position < start).TakeWhile(x => x.Position < end);
 
                 SelectionCanvas.Children.Remove(selector);
-
 
                 Cell.SelectedCells.DeselectAll(false);
 
