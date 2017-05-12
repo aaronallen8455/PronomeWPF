@@ -157,6 +157,7 @@
             x:Key="muteButton"
             x:Shared="False"
             Margin="4, 4, 4, 2"
+            Focusable="False"
             Width="18">
             M
         </ToggleButton>
@@ -166,6 +167,7 @@
             x:Key="soloButton"
             x:Shared="False"
             Margin="4, 2, 4, 4"
+            Focusable="False"
             Width="18">
             S
         </ToggleButton>

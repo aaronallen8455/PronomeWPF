@@ -27,7 +27,7 @@ namespace Pronome
 
         void SetSilentInterval(double audible, double silent);
 
-        void MultiplyByteInterval(double factor);
+        //void MultiplyByteInterval(double factor);
 
         void SetInitialMuting();
 

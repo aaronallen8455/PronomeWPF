@@ -322,6 +322,83 @@ namespace Pronome
             set { ChangeTempo(value); }
         }
 
+        private uint _multiplyIntervalOnCycle = 0;
+
+        /// <summary>
+        /// Used to queue when all layers change tempo so it happens in sync.
+        /// </summary>
+        public uint MultiplyIntervalOnCycle
+        {
+            get
+            {
+                lock (multIntervalLock)
+                {
+                    return _multiplyIntervalOnCycle;
+                }
+            }
+
+            set
+            {
+                lock (multIntervalLock)
+                {
+                    _multiplyIntervalOnCycle = value;
+                }
+            }
+        }
+        private static object multIntervalLock = new object();
+
+        private bool _tempoChangeCued = false;
+        private int _tempoChangeCounter = 0;
+        private static object tempoChangeCounterLock = new object();
+
+        /// <summary>
+        /// Used the count when each layer gets changed for dequeueing the tempo change.
+        /// </summary>
+        public int TempoChangeCounter
+        {
+            get
+            {
+                lock (tempoChangeCounterLock)
+                {
+                    return _tempoChangeCounter;
+                }
+            }
+            set
+            {
+                lock (tempoChangeCounterLock)
+                {
+                    _tempoChangeCounter = value;
+
+                    if (value == Mixer.MixerInputs.Count())
+                    {
+                        TempoChangeCued = false;
+                        _tempoChangeCounter = 0;
+                    }
+                }
+            }
+        }
+
+        private static object tempoChangeLock = new object();
+        public bool TempoChangeCued
+        {
+            get
+            {
+                lock (tempoChangeLock)
+                {
+                    return _tempoChangeCued;
+                }
+            }
+            set
+            {
+                lock (tempoChangeLock)
+                {
+                    _tempoChangeCued = value;
+                }
+            }
+        }
+
+        public double TempoChangeRatio;
+
         /** <summary>Change the tempo. Can be during play.</summary> */
         public void ChangeTempo(float newTempo)
         {
@@ -337,23 +414,25 @@ namespace Pronome
                 }
 
                 // modify the beat values and current byte intervals for all layers and audio sources.
-                float ratio = oldTempo / newTempo;
-                Layers.ForEach(x =>
-                {
-                    if (x.AudioSources != null)
-                    {
-                        x.AudioSources.Values.Select(a => {
-                            //a.BeatCollection.MultiplyBeatValues(ratio);
-                            a.MultiplyByteInterval(ratio);
-                            return a;
-                        }).ToArray();
-                    }
-                    if (x.BasePitchSource != null)
-                    {
-                        //x.BasePitchSource.BeatCollection.MultiplyBeatValues(ratio);
-                        x.BasePitchSource.MultiplyByteInterval(ratio);
-                    }
-                });
+                double ratio = oldTempo / newTempo;
+                TempoChangeRatio = ratio;
+                TempoChangeCued = true;
+                //Layers.ForEach(x =>
+                //{
+                //    if (x.AudioSources != null)
+                //    {
+                //        x.AudioSources.Values.Select(a => {
+                //            //a.BeatCollection.MultiplyBeatValues(ratio);
+                //            a.MultiplyByteInterval(ratio);
+                //            return a;
+                //        }).ToArray();
+                //    }
+                //    if (x.BasePitchSource != null)
+                //    {
+                //        //x.BasePitchSource.BeatCollection.MultiplyBeatValues(ratio);
+                //        x.BasePitchSource.MultiplyByteInterval(ratio);
+                //    }
+                //});
             }
             else //(if stopped) set new tempo by recalculating all the beatCollections
             {
@@ -494,6 +573,10 @@ namespace Pronome
                 try
                 {
                     ds.ReadObject(w);
+
+                    // need to initiate these values
+                    GetInstance().TempoChangeCued = false;
+                    GetInstance().TempoChangeCounter = 0;
                 }
                 catch (SerializationException e)
                 {

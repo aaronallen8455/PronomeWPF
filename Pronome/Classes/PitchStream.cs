@@ -173,9 +173,11 @@ namespace Pronome
         {
             lock (_multLock)
             {
-                if (intervalMultiplyCued)
-                {
+                //if (intervalMultiplyCued)
+                //{
                     BeatCollection.MultiplyBeatValues();
+
+                double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
 
                     double mult = intervalMultiplyFactor * ByteInterval;
                     ByteInterval = (long)mult;
@@ -212,25 +214,25 @@ namespace Pronome
                         initialOffset *= intervalMultiplyFactor;
                     }
 
-                    intervalMultiplyCued = false;
-                }
+                    //intervalMultiplyCued = false;
+                //}
             }
         }
-        /**<summary>Cue a multiply operation to occur at the start of the next stream read.</summary>
-         * <param name="factor">The number to multiply by</param>
-         */
-        public void MultiplyByteInterval(double factor)
-        {
-            lock(_multLock)
-            {
-                if (!intervalMultiplyCued)
-                {
-                    intervalMultiplyFactor = factor;
-                    intervalMultiplyCued = true;
-                }
-            }
-        }
-        bool intervalMultiplyCued = false;
+        ///**<summary>Cue a multiply operation to occur at the start of the next stream read.</summary>
+        // * <param name="factor">The number to multiply by</param>
+        // */
+        //public void MultiplyByteInterval(double factor)
+        //{
+        //    lock(_multLock)
+        //    {
+        //        if (!intervalMultiplyCued)
+        //        {
+        //            intervalMultiplyFactor = factor;
+        //            intervalMultiplyCued = true;
+        //        }
+        //    }
+        //}
+        //bool intervalMultiplyCued = false;
         double intervalMultiplyFactor;
         object _multLock = new object();
 
@@ -394,6 +396,8 @@ namespace Pronome
 
         double previousSample;
 
+        uint cycle = 0; // cycle count, used to sync up all layers
+
         /**<summary>Reads from the audio stream.</summary>
          * <param name="buffer">Sample array buffer.</param>
          */
@@ -404,8 +408,18 @@ namespace Pronome
             int outIndex = offset;
 
             // perform cued interval multiplication
-            if (intervalMultiplyCued)
-                MultiplyByteInterval();
+            if (offset == 0 && Metronome.GetInstance().TempoChangeCued)//intervalMultiplyCued)
+            {
+                if (Metronome.GetInstance().MultiplyIntervalOnCycle < cycle)
+                {
+                    Metronome.GetInstance().MultiplyIntervalOnCycle = cycle;
+                }
+                if (cycle == Metronome.GetInstance().MultiplyIntervalOnCycle)
+                {
+                    Metronome.GetInstance().TempoChangeCounter++;
+                    MultiplyByteInterval();
+                }
+            }
 
             double sampleValue;
 
@@ -497,6 +511,8 @@ namespace Pronome
                 }
                 ByteInterval -= 1;
             }
+
+            cycle++;
 
             return count;
         }

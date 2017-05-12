@@ -151,9 +151,11 @@ namespace Pronome
         {
             lock (_multLock)
             {
-                if (intervalMultiplyCued)
-                {
+                //if (intervalMultiplyCued)
+                //{
                     BeatCollection.MultiplyBeatValues();
+
+                double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
 
                     double div = ByteInterval / 2;
                     div *= intervalMultiplyFactor;
@@ -212,7 +214,7 @@ namespace Pronome
                     }
 
                     intervalMultiplyCued = false;
-                }
+                //}
             }
         }
         /**<summary>Cue a multiply byte interval operation to occur at next read cycle start.</summary>
@@ -375,7 +377,7 @@ namespace Pronome
         public long HiHatByteToMute;
         long CurrentHiHatDuration = 0;
         //bool HiHatMuteInitiated = false;
-        int cycle = 0;
+        uint cycle = 0;
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -384,10 +386,22 @@ namespace Pronome
             int bytesCopied = 0;
 
             // perform interval multiplication if cued
-            if (intervalMultiplyCued)
+            if (offset == 0 && Metronome.GetInstance().TempoChangeCued)//intervalMultiplyCued)
             {
-                MultiplyByteInterval();
+                if (Metronome.GetInstance().MultiplyIntervalOnCycle < cycle)
+                {
+                    Metronome.GetInstance().MultiplyIntervalOnCycle = cycle;
+                }
+                if (cycle == Metronome.GetInstance().MultiplyIntervalOnCycle)
+                {
+                    Metronome.GetInstance().TempoChangeCounter++;
+                    MultiplyByteInterval();
+                }
             }
+            //if (intervalMultiplyCued)
+            //{
+            //    MultiplyByteInterval();
+            //}
             
             // set the upcoming hihat close time for hihat open sounds
             if (!hasOffset && IsHiHatOpen && cycle == HiHatCycleToMute - 1)
@@ -493,7 +507,8 @@ namespace Pronome
                 
             }
 
-            if (IsHiHatOpen || IsHiHatClose) cycle++;
+            cycle++;
+
             return count;
         }
 

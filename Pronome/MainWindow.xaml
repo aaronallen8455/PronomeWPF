@@ -85,7 +85,7 @@
             </Setter>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="#FF007ACC"/>
-            <Setter Property="Focusable" Value="False"/>
+            <!--<Setter Property="Focusable" Value="False"/>-->
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
@@ -406,21 +406,32 @@
                                 <ScaleTransform CenterX="0" CenterY="0" ScaleX="1.20" ScaleY="1.20"/>
                             </WrapPanel.LayoutTransform>
                             <!--Add layer button-->
-                            <Button Click="addLayerButton_Click">Add Layer</Button>
+                            <Button Click="addLayerButton_Click" GotFocus="Button_GotFocus">Add Layer</Button>
 
                             <Border/>
 
                             <!--Play button-->
-                            <Button Name="playButton" Click="playButton_Click" Template="{StaticResource playButtonTemplate}"/>
+                            <Button Name="playButton" 
+                                    Click="playButton_Click" 
+                                    GotFocus="Button_GotFocus" 
+                                    Template="{StaticResource playButtonTemplate}"/>
                             <!--Pause button-->
-                            <Button Name="pauseButton" Click="pauseButton_Click" IsEnabled="False" Style="{StaticResource pauseButtonStyle}">Pause</Button>
+                            <Button Name="pauseButton"
+                                    Click="pauseButton_Click" 
+                                    GotFocus="Button_GotFocus" 
+                                    IsEnabled="False" 
+                                    Style="{StaticResource pauseButtonStyle}"/>
                             <!--Stop button-->
-                            <Button Name="stopButton" Click="stopButton_Click" Template="{StaticResource stopButtonTemplate}" IsEnabled="{Binding Path=IsEnabled, Converter={StaticResource inverseBooleanConverter}}">Stop</Button>
+                            <Button Name="stopButton" 
+                                    Click="stopButton_Click" 
+                                    GotFocus="Button_GotFocus" 
+                                    Template="{StaticResource stopButtonTemplate}" 
+                                    IsEnabled="{Binding Path=IsEnabled, Converter={StaticResource inverseBooleanConverter}}"/>
                             <!--Tempo tap button-->
 
                             <Border/>
 
-                            <Button Click="tempoTap_Click">Tempo</Button>
+                            <Button Click="tempoTap_Click" GotFocus="Button_GotFocus">Tempo</Button>
                             <!--Tempo input field-->
                             <Grid Margin="0, 0, 5, 0">
                                 <Grid.ColumnDefinitions>
@@ -472,13 +483,13 @@
                             <Border/>
 
                             <!--Open options-->
-                            <Button Name="openOptionsButton" Click="openOptionsButton_Click">Options</Button>
+                            <Button Name="openOptionsButton" Click="openOptionsButton_Click" GotFocus="Button_GotFocus">Options</Button>
                             <!--Graph-->
-                            <Button Name="openGraphButton" Click="openGraphButton_Click">Graph</Button>
+                            <Button Name="openGraphButton" Click="openGraphButton_Click" GotFocus="Button_GotFocus">Graph</Button>
                             <!--Bounce-->
-                            <Button Name="openBounceButton" Click="openBounceButton_Click">Bounce</Button>
+                            <Button Name="openBounceButton" Click="openBounceButton_Click" GotFocus="Button_GotFocus">Bounce</Button>
                             <!--Editor-->
-                            <Button Name="openEditorButton" Click="openEditorButton_Click">Editor</Button>
+                            <Button Name="openEditorButton" Click="openEditorButton_Click" GotFocus="Button_GotFocus">Editor</Button>
                         </WrapPanel>
 
                         <!--Window Resizer-->
@@ -522,7 +533,7 @@
                 </Border>
 
                 <!--Layer UI container-->
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Name="scrollViewer">
                     <Border Padding="0,0,0,5">
                         <StackPanel Name="layerStack"/>
                     </Border>

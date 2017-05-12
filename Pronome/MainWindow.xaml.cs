@@ -118,6 +118,9 @@ namespace Pronome
         /**<summary>Tempo tap handler</summary>*/
         private void tempoTap_Click(object sender, RoutedEventArgs e)
         {
+            // exit if a tempo change is currently queued.
+            if (Metronome.GetInstance().TempoChangeCued) return;
+
             // get total elapsed millisecs
             int current = (int)(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
 
@@ -143,6 +146,9 @@ namespace Pronome
 
         private void tempoInput_LostFocus(object sender, RoutedEventArgs e)
         {
+            // exit if a tempo change is currently queued.
+            if (Metronome.GetInstance().TempoChangeCued) return;
+
             float newTempo = 0f;
             float.TryParse(tempoInput.Text, out newTempo);
 
@@ -154,6 +160,9 @@ namespace Pronome
 
         private void tempoInput_MouseWheel(object sender, MouseWheelEventArgs e)
         {
+            // exit if a tempo change is currently queued.
+            if (Metronome.GetInstance().TempoChangeCued) return;
+
             var input = sender as TextBox;
             float tempo = Metronome.GetInstance().Tempo;
             tempo += e.Delta / 120;
@@ -167,6 +176,9 @@ namespace Pronome
 
         private void tempoUp_Click(object sender, RoutedEventArgs e)
         {
+            // exit if a tempo change is currently queued.
+            if (Metronome.GetInstance().TempoChangeCued) return;
+
             float current = Metronome.GetInstance().Tempo;
             current++;
             tempoInput.Text = current.ToString();
@@ -175,6 +187,9 @@ namespace Pronome
 
         private void tempoDown_Click(object sender, RoutedEventArgs e)
         {
+            // exit if a tempo change is currently queued.
+            if (Metronome.GetInstance().TempoChangeCued) return;
+
             float tempo = Metronome.GetInstance().Tempo;
             if (tempo > 1)
             {
@@ -417,7 +432,15 @@ namespace Pronome
             //e.CanExecute = focus == null;
         }
 
-        
+        /// <summary>
+        /// When button gets focus, lose it so it doesn't interfere with the shift+space shortcut
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Button_GotFocus(object sender, RoutedEventArgs e)
+        {
+            scrollViewer.Focus();
+        }
     }
 
     [ValueConversion(typeof(bool), typeof(bool))]
