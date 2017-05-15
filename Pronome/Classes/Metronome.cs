@@ -217,6 +217,9 @@ namespace Pronome
 
                 PlayState = State.Stopped;
 
+                // reset the tempo change cycle (counts cycles in audio steams)
+                MultiplyIntervalOnCycle = 0;
+
                 AnimationTimer.Stop(); // reset the stopwatch
                 ElapsedQuarters = 0;
             }
@@ -363,20 +366,27 @@ namespace Pronome
                     return _tempoChangeCounter;
                 }
             }
-            set
-            {
-                lock (tempoChangeCounterLock)
-                {
-                    _tempoChangeCounter = value;
+        }
 
-                    if (value == Mixer.MixerInputs.Count())
-                    {
-                        TempoChangeCued = false;
-                        _tempoChangeCounter = 0;
-                    }
+        public void IncrementTempoChangeCounter()
+        {
+            lock (tempoChangeCounterLock)
+            {
+                _tempoChangeCounter++;
+
+                if (_tempoChangeCounter == Mixer.MixerInputs.Count())
+                {
+                    TempoChangeCued = false;
+                    _tempoChangeCounter = 0;
+                    TempoChangedSet.Clear();
                 }
             }
         }
+
+        /// <summary>
+        /// Tracks which audio sources have been affected by a tempo change
+        /// </summary>
+        public HashSet<IStreamProvider> TempoChangedSet = new HashSet<IStreamProvider>();
 
         private static object tempoChangeLock = new object();
         public bool TempoChangeCued
@@ -576,7 +586,8 @@ namespace Pronome
 
                     // need to initiate these values
                     GetInstance().TempoChangeCued = false;
-                    GetInstance().TempoChangeCounter = 0;
+                    GetInstance().TempoChangedSet = new HashSet<IStreamProvider>();
+                    //GetInstance().TempoChangeCounter = 0;
                 }
                 catch (SerializationException e)
                 {

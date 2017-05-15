@@ -289,17 +289,58 @@
                 </ListItem>
             </List>
             <Paragraph>
-                It's important to know that the changes you make in the editor aren't applied to the actual 
+                The changes you make in the editor aren't applied to the actual 
                 beat until you click the 'Apply Changes' button in the lower right corner of the editor window, 
                 or by choosing to apply changes when closing the window.
                 <LineBreak/>
-                If you edit the beat code directly the editor window is updated to reflect those changes and 
+                If you edit the beat code directly, the editor window is updated to reflect those changes and 
                 if there were any unapplied changes in the editor, they will be lost.
             </Paragraph>
         </FlowDocument>
 
         <FlowDocument x:Key="sound sources" x:Shared="true">
-            
+            <Paragraph>
+                The sound that is applied to each beat cell is refered to as it's sound source. You set the 
+                sound source for a layer using it's 'Source' dropdown selector.
+                <LineBreak/>
+                There are three types of sound sources:
+            </Paragraph>
+            <List>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Pitch</Bold>
+                        <LineBreak/>
+                        The pitch source allows you to assign a specific pitch or frequency to use for 
+                        the default 'beep' sound. When Pitch is selected, the 'Note' field will allow you 
+                        to specify the pitch. You can use either standard note names, such as "A4", "c#5", 
+                        "Gb3", etc, where the number following the note name is the octave. Alternatively, You  
+                        can enter a frequency in hertz, such as '440'.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Drum Samples</Bold>
+                        <LineBreak/>
+                        ProNome has an array of high quality drum samples built in. They are organized by 
+                        instrument, articulation, and velocity where instrument is the type of drum or 
+                        cymbal, articulation is the method by which it is played, and velocity is the force 
+                        with which it is struck. For example, "Ride Center V2" is the ride cymbal played 
+                        in the center region with a relative velocity of 2. You can quickly find the sound 
+                        you want using the source selector's filter field.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Silent</Bold>
+                        <LineBreak/>
+                        The silent source is, predictably, silent. It's most useful when applied to the first 
+                        cell of a layer - more on this later.
+                    </Paragraph>
+                </ListItem>
+            </List>
+            <Paragraph>
+                
+            </Paragraph>
         </FlowDocument>
 
         <FlowDocument x:Key="controls" x:Shared="true">

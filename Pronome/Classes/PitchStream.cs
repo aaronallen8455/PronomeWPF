@@ -131,6 +131,7 @@ namespace Pronome
             BeatCollection.Enumerator = BeatCollection.GetEnumerator();
             ByteInterval = 0;
             previousSample = 0;
+            cycle = 0;
             Gain = Volume;
             if (Metronome.GetInstance().IsSilentInterval)
             {
@@ -408,7 +409,7 @@ namespace Pronome
             int outIndex = offset;
 
             // perform cued interval multiplication
-            if (offset == 0 && Metronome.GetInstance().TempoChangeCued)//intervalMultiplyCued)
+            if (offset == 0 && Metronome.GetInstance().TempoChangeCued && !Metronome.GetInstance().TempoChangedSet.Contains(this))//intervalMultiplyCued)
             {
                 if (Metronome.GetInstance().MultiplyIntervalOnCycle < cycle)
                 {
@@ -416,7 +417,8 @@ namespace Pronome
                 }
                 if (cycle == Metronome.GetInstance().MultiplyIntervalOnCycle)
                 {
-                    Metronome.GetInstance().TempoChangeCounter++;
+                    Metronome.GetInstance().TempoChangedSet.Add(this);
+                    Metronome.GetInstance().IncrementTempoChangeCounter();
                     MultiplyByteInterval();
                 }
             }

@@ -168,7 +168,7 @@ namespace Pronome
             // handle group multiply
             while (beat.Contains('{'))
             {
-                var match = Regex.Match(beat, @"\{([^}]*)}([^,\]]+)"); // match the inside and the factor
+                var match = Regex.Match(beat, @"\{([^}{]*)}([^,\]}]+)"); // match the inside and the factor
                 // insert the multiplication
                 string inner = Regex.Replace(match.Groups[1].Value, @"(?<!\]\d*)(?=([\]\(\|,+-]|$))", "*" + match.Groups[2].Value);
                 // switch the multiplier to be in front of pitch modifiers

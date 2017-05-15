@@ -298,6 +298,8 @@ namespace Pronome
             {
                 slider.Value = vol;
             }
+
+            e.Handled = true;
         }
 
         protected void panSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -316,6 +318,8 @@ namespace Pronome
             {
                 slider.Value = pan;
             }
+
+            e.Handled = true;
         }
 
         protected void offsetInput_LostFocus(object sender, RoutedEventArgs e)
