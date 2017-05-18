@@ -18,6 +18,8 @@
         <local:BounceWindow x:Key="bounceWindow"/>
         <!--window for editor-->
         <local:EditorWindow x:Key="editorWindow"/>
+        <!--help window-->
+        <local:Instructions x:Key="helpWindow"/>
         <!--Boolean inverter-->
         <local:InverseBooleanConverter x:Key="inverseBooleanConverter"/>
         <Style TargetType="Rectangle">
@@ -106,6 +108,49 @@
         <!--Used for border on playback controls-->
         <Ellipse Stroke="#FF234E9B" StrokeThickness="1" Width="20" Height="20" x:Key="controlButtonBorder" x:Shared="False"/>
 
+        <!--Help button template-->
+        <ControlTemplate TargetType="Button" x:Key="helpButtonTemplate">
+            <Viewbox Stretch="Uniform" MaxHeight="35" MaxWidth="35">
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup Name="CommonStates">
+                        <VisualState Name="Normal">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="background"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To="0"
+                                                 Duration="0:0:.23"/>
+                            </Storyboard>
+                        </VisualState>
+                        <VisualState Name="Disabled"/>
+                        <VisualState Name="MouseOver">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="background"
+                                                 Storyboard.TargetProperty="Opacity"
+                                                 To=".2"
+                                                 Duration="0"/>
+                            </Storyboard>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+                <Grid>
+                    <Ellipse Fill="White" Opacity="0" Width="20" Height="20" Name="background"/>
+                    <ContentControl Content="{StaticResource controlButtonBorder}"/>
+                    <ContentPresenter/>
+                </Grid>
+            </Viewbox>
+            <ControlTemplate.Triggers>
+                
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX=".95" ScaleY=".95"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        
         <!--Play button template-->
         <ControlTemplate TargetType="Button" x:Key="playButtonTemplate">
             <Viewbox Stretch="Uniform" MaxHeight="35" MaxWidth="35">
@@ -375,7 +420,20 @@
                     <Grid>
                         <!--<Rectangle Fill="Black" Opacity=".5"/>-->
                         <!--Title Element-->
-                        <TextBlock Foreground="White" FontSize="30pt" HorizontalAlignment="Center">ProNome</TextBlock>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Foreground="White" FontSize="30pt">ProNome</TextBlock>
+                            <Button Margin="15,0,0,0" 
+                                    Template="{StaticResource helpButtonTemplate}"
+                                    ToolTip="User Guide"
+                                    Name="helpButton"
+                                    Click="helpButton_Click">
+                                <TextBlock FontWeight="DemiBold" 
+                                           FontSize="15"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Margin="1, 0, 0, 0">?</TextBlock>
+                            </Button>
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                             <Button Name="minimizeButton" Width="23" Height="23" Click="minimizeButton_Click">
                                 <Line X1="0" X2="8" Y1="10" Y2="10" StrokeThickness="3" Stroke="#FFF1F1F1"/>

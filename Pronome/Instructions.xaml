@@ -6,7 +6,7 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="Instructions" Height="800" Width="1100">
+        Title="User Guide" Height="800" Width="1100">
 
     <Window.Resources>
         <Style TargetType="FlowDocument">
@@ -30,6 +30,10 @@
 
         <Style TargetType="Paragraph">
             <Setter Property="LineHeight" Value="25"/>
+        </Style>
+
+        <Style TargetType="ListItem">
+            <Setter Property="Margin" Value="0,15,0,0"/>
         </Style>
                 
         <FlowDocument x:Key="introduction" x:Shared="true">
@@ -214,6 +218,10 @@
                 new cell into the offset area will make the offset value decrease.</Span>
             </Paragraph>
             <Paragraph>
+                There is also a 'Measure Size' field that sets the distance between the vertical lines in the 
+                editor viewport. These lines are only a visual reference and have no effect on the beat itself.
+            </Paragraph>
+            <Paragraph>
                 The following actions are available when cell(s) are selected:
             </Paragraph>
             <List>
@@ -299,6 +307,7 @@
         </FlowDocument>
 
         <FlowDocument x:Key="sound sources" x:Shared="true">
+            <Paragraph Style="{StaticResource headerStyle}">Sound Sources</Paragraph>
             <Paragraph>
                 The sound that is applied to each beat cell is refered to as it's sound source. You set the 
                 sound source for a layer using it's 'Source' dropdown selector.
@@ -339,20 +348,261 @@
                 </ListItem>
             </List>
             <Paragraph>
-                
+                To assign a sound source to a specific cell, use the '@' symbol followed by either a note 
+                symbol or the index number of a drum sample (this is the number to the left of the sample 
+                in the source selector drop-down). For example,
+                <Span Style="{StaticResource codeSample}">1@Ab5</Span> assigns the 'Ab5' sound source to 
+                that cell, regardless of the layer's overall sound source. To make a cell silent, use
+                <Span Style="{StaticResource codeSample}">1@0</Span>. Note that the '@' has to come right 
+                after the cell's value expression, it can't be placed after any repeat syntax, or used with a 
+                reference cell.
+                <LineBreak/> 
+                If you're using the editor, you can assign sound sources by selecting cell(s) 
+                and changing the source or note fields.
             </Paragraph>
         </FlowDocument>
 
         <FlowDocument x:Key="controls" x:Shared="true">
-            
+            <Paragraph Style="{StaticResource headerStyle}">Controls</Paragraph>
+            <Paragraph>
+                ProNome's controls are divided into two main areas: master controls and layer controls. 
+                The master controls are found at the bottom of the main window and consist of the following:
+            </Paragraph>
+            <List>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Add Layer</Bold>
+                        <LineBreak/>
+                        This button adds a new layer to the beat. Layers are represented by rectangular panels 
+                        in the main area of the window. You can't add new layers while a beat is playing or 
+                        paused.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Play</Bold>
+                        <LineBreak/>
+                        Starts playing or unpauses the current beat.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Pause</Bold>
+                        <LineBreak/>
+                        Pauses a beat that is currently playing.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Stop</Bold>
+                        <LineBreak/>
+                        Stops playing the current beat. If the playback was being recorded to a .wav file, this 
+                        causes the recording to be finished.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Tempo</Bold>
+                        <LineBreak/>
+                        This controls the speed of the playback and is represented in BPM (beats per minute) 
+                        where 'beats' refers to a rhythmic value of '1'. For example, with a tempo of '60', 
+                        a beat consisting of a single '1' will sound once per second.
+                        <LineBreak/>
+                        There are multiple ways to set the tempo:
+                    </Paragraph>
+                    <List MarkerStyle="Decimal">
+                        <List.Resources>
+                            <Style TargetType="ListItem">
+                                <Setter Property="Margin" Value="0"/>
+                            </Style>
+                        </List.Resources>
+                        <ListItem>
+                            <Paragraph>
+                                Enter a value directly.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                Repeatedly click the 'Tempo' at the desired speed. This calculates the 
+                                average time between clicks.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                Use the up and down arrows to increase or decrease the tempo.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                Use the mouse wheel while the cursor is over the tempo field.
+                            </Paragraph>
+                        </ListItem>
+                    </List>
+                    <Paragraph>
+                        The tempo can be changed while the beat is playing.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Options</Bold>
+                        <LineBreak/>
+                        This button opens the Options menu. See the Options section for more information.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Graph</Bold>
+                        <LineBreak/>
+                        Opens the graph visualizer. See the Visualizer section.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Bounce</Bold>
+                        <LineBreak/>
+                        Opens the bounce visualizer.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Options</Bold>
+                        <LineBreak/>
+                        This button opens the options menu, where settings related to many different aspects 
+                        of ProNome reside.
+                    </Paragraph>
+                </ListItem>
+            </List>
+            <Paragraph>
+                Layer controls are found on the stacked rectangular panels in the middle of the window. 
+                Their effects apply only to a specific layer:
+            </Paragraph>
+            <List>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Mute</Bold>
+                        <LineBreak/>
+                        The 'M' toggle on the left end is used to mute it's layer.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Solo</Bold>
+                        <LineBreak/>
+                        The 'S' toggle beneath the mute switch is used to add the layer to the soloed group. 
+                        Any layers that aren't in the soloed group are muted and only the soloed layers will 
+                        be heard.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Beat Code</Bold>
+                        <LineBreak/>
+                        This is the where the beat code is edited. Read the section on beat code to learn more. 
+                        You'll be alerted if there is a syntax error and the problem code will be highlighted.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Source</Bold>
+                        <LineBreak/>
+                        Use this drop-down menu to set the base sound source for this layer.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Note</Bold>
+                        <LineBreak/>
+                        If the sound source is set to 'Pitch', you'll be able to enter to the desired note 
+                        in this field.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Vol.</Bold>
+                        <LineBreak/>
+                        This slider controls the volume for the layer.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Pan</Bold>
+                        <LineBreak/>
+                        This slider controls the panning of the layer.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Offset</Bold>
+                        <LineBreak/>
+                        The offset input is used to delay the start time of a layer. It takes a beat code expression 
+                        value, such as <Span Style="{StaticResource codeSample}">1+2/3</Span>. This results in 
+                        the layer waiting for the specified interval before it starts playing, it will then be 
+                        offset from the other layers. A similiar effect is accomplished by assigning the 'Silent' 
+                        sound source to the first cell of the layer.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>X</Bold>
+                        <LineBreak/>
+                        The 'X' button on the right end will delete the layer. This action can't be undone.
+                    </Paragraph>
+                </ListItem>
+            </List>
         </FlowDocument>
 
         <FlowDocument x:Key="visualizers" x:Shared="true">
-            
+            <Paragraph Style="{StaticResource headerStyle}">Visualizers</Paragraph>
+            <Paragraph>
+                Having a visual to go along with audio can be both helpful and entertaining.
+            </Paragraph>
+            <Paragraph>
+                To aid with understanding rhythmic relationships, ProNome offers two different types of 
+                visualizers. They are accessed from the main window by clicking the 'Graph' or 'Bounce' 
+                buttons:
+            </Paragraph>
+            <List>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Graph</Bold>
+                        <LineBreak/>
+                        The graph presents the beat mapped onto a clock face of sorts, where one trip around 
+                        the dial is a full cycle of the beat. A complete cycle of the beat is the amount of 
+                        time before it repeats. This can also be expressed as the least-common denominator of 
+                        the length of each of the layers. Each beat cell is represented by a tick mark on the 
+                        face of the dial, which is broken up into colored rings for each layer.
+                        <LineBreak/>
+                        With the beat playing, a line moves around the graph to mark the progression of time.
+                        <LineBreak/>
+                        When a beat cell gets played, portion of the graph for it's layer lights up briefly. 
+                        This behaviour can be turned off in the options menu.
+                        <LineBreak/>
+                        You can toggle full-screen mode by pressing the Ctrl+F key combo.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Bounce</Bold>
+                        <LineBreak/>
+                        The bounce visualizer has two components: bouncing balls and a conveyor belt like 
+                        queue. Each layer is represented with a ball that bounces each time a beat cell is 
+                        played, and moving lines to show the upcoming beat cells.
+                        <LineBreak/>
+                        In the visualizer section of the options menu you can control where the screen is divided 
+                        between the balls and the queue and also the amount of taper between the bottom and top 
+                        of the queue. You can use these two settings to create a variety of perspective effects.
+                        <LineBreak/>
+                        You can toggle full-screen mode by pressin the Ctrl+F key combo.
+                    </Paragraph>
+                </ListItem>
+            </List>
         </FlowDocument>
 
         <FlowDocument x:Key="options" x:Shared="true">
-            
+            <Paragraph Style="{StaticResource headerStyle}">Options</Paragraph>
+            <Paragraph>
+                
+            </Paragraph>
         </FlowDocument>
     </Window.Resources>
     
@@ -400,7 +650,7 @@
         
 
         <FlowDocumentPageViewer Name="reader" 
-                                Document="{StaticResource creating a beat with beat code}"/>
+                                Document="{StaticResource introduction}"/>
 
     </DockPanel>
 </Window>

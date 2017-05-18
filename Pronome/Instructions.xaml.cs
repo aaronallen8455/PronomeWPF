@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -23,6 +24,8 @@ namespace Pronome
         {
             InitializeComponent();
 
+            tableOfContents.SelectedIndex = 0;
+
         }
 
         private void tableOfContents_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -32,6 +35,18 @@ namespace Pronome
                 string input = (tableOfContents.SelectedItem as ListBoxItem).Content.ToString().ToLower();
 
                 reader.Document = Resources[input] as FlowDocument;
+            }
+        }
+
+        public bool KeepOpen = true;
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            if (KeepOpen)
+            {
+                Hide();
+                e.Cancel = true;
             }
         }
     }

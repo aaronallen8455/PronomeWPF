@@ -38,8 +38,6 @@ namespace Pronome
             tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
 
             new LayerUI(layerStack);
-
-            //new Instructions().Show();
         }
 
         /**<summary>Make top of window draggable</summary>*/
@@ -273,6 +271,10 @@ namespace Pronome
             editor.KeepOpen = false;
             editor.Close();
 
+            Instructions help = Resources["helpWindow"] as Instructions;
+            help.KeepOpen = false;
+            help.Close();
+
             // save user settings
             if (Settings.ContainsKey("winWidth")) Settings["winWidth"] = Width;
             else Settings.Add("winWidth", Width);
@@ -440,6 +442,13 @@ namespace Pronome
         private void Button_GotFocus(object sender, RoutedEventArgs e)
         {
             scrollViewer.Focus();
+        }
+
+        private void helpButton_Click(object sender, RoutedEventArgs e)
+        {
+            var helpWindow = Resources["helpWindow"] as Instructions;
+            helpWindow.Show();
+            helpWindow.Activate();
         }
     }
 
