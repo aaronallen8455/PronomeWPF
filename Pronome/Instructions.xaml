@@ -601,8 +601,104 @@
         <FlowDocument x:Key="options" x:Shared="true">
             <Paragraph Style="{StaticResource headerStyle}">Options</Paragraph>
             <Paragraph>
-                
+                The Options menu is where many additional features and configurable options are located. 
+                Access the options menu by clicking the 'Options' button at the bottom of the main window. 
+                The options are divided into the following sections:
             </Paragraph>
+            <List>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Random Muting</Bold>
+                        <LineBreak/>
+                        When random muting is enabled, there is a percent chance that a given beat cell will 
+                        not be played. You must enter the percent value (0-100) and can optionally supply a 
+                        'Ramp Duration' which is the number seconds overwhich the muting percent starts at 0 
+                        and ramps up to the full value.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Intervallic Muting</Bold>
+                        <LineBreak/>
+                        With intervallic muting, the beat will play for a set duration and then be silent for 
+                        a set duration. The 'Audible Interval' field takes a value expression such as
+                        <Span Style="{StaticResource codeSample}">4*2</Span> that is time the beat will be audible. 
+                        the 'Silent Interval' is the value for how long the beat will be silent.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Save and Load</Bold>
+                        <LineBreak/>
+                        You can save a beat and load previously saved beats from this section. Saved beats 
+                        have the file extension '.beat'.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Wav File Creation</Bold>
+                        <LineBreak/>
+                        There's two ways to export your beat to a Wav audio file:
+                    </Paragraph>
+                    <List MarkerStyle="None">
+                        <ListItem>
+                            <Paragraph>
+                                Choose 'Export Wav File' to bring up a dialog where you can specify a length 
+                                of time in seconds that you want to export. There's also an option to use 
+                                the length of the beat's cycle instead to create a loopable audio file.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                Choose 'Record to Wav File' to start playing the beat while simultaneously 
+                                recording to disk. This enables you to change settings such as tempo, volume, and 
+                                panning while recording. Stop the playback to end the recording.
+                            </Paragraph>
+                        </ListItem>
+                    </List>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Visuals</Bold>
+                        <LineBreak/>
+                        The following options apply to the graph or bounce visualizers:
+                    </Paragraph>
+                    <List MarkerStyle="Decimal">
+                        <ListItem>
+                            <Paragraph>
+                                Graph - Enable or disable the graph's blinking effect.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                Bounce - Set the queue size which will determine how far 
+                                ahead (in quarter-notes) the queue reaches.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                Bounce - Set where to divide the screen.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                Bounce - Set the amount of taper from the bottom of the queue to the top.
+                            </Paragraph>
+                        </ListItem>
+                    </List>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
+                        <Bold>Additional Settings</Bold>
+                        <LineBreak/>
+                        The 'Pitch Decay' field allows you to set how fast the beep sound lasts in seconds. 
+                        The default value is '.04'.
+                        <LineBreak/>
+                        The last option lets you set the font size for the beat code inputs. The default 
+                        value is 16.
+                    </Paragraph>
+                </ListItem>
+            </List>
         </FlowDocument>
     </Window.Resources>
     
