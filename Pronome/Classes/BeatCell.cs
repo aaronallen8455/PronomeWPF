@@ -224,6 +224,11 @@ namespace Pronome
             return false;
         }
 
+        /// <summary>
+        /// Simplify an expression so that fractions/decimals are combined.
+        /// </summary>
+        /// <param name="value">Ex. 1/3+1/6 = 1/2</param>
+        /// <returns></returns>
         public static string SimplifyValue(string value)
         {
             value = value.Replace('x', '*').Replace('X', '*'); // replace multiply symbol
@@ -476,6 +481,10 @@ namespace Pronome
         /// <returns></returns>
         static public string Invert(string exp)
         {
+            if (string.IsNullOrEmpty(exp))
+            {
+                return "";
+            }
 
             char[] ops = new char[] { '+', '-', '/', '*' };
             StringBuilder sb = new StringBuilder(exp);

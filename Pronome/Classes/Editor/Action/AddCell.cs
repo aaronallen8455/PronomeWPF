@@ -387,6 +387,12 @@ namespace Pronome.Editor
                     
                     // get new cells value by subtracting old value of below cell by new value.
                     string newVal = BeatCell.SimplifyValue(val.ToString());
+                    // placing a new cell on the beginning of a LTM is not illegal
+                    if (repWithLtmToMod != null && newVal == string.Empty)
+                    {
+                        newVal = "0";
+                    }
+
                     cell.Value = BeatCell.Subtract(repWithLtmToMod == null ? below.Value : repWithLtmToMod.LastTermModifier, newVal);
 
                     // if placing cell on top of another cell, it's not valid.
@@ -416,7 +422,8 @@ namespace Pronome.Editor
                     else
                     {
                         // changing a LTM value
-                        repWithLtmToMod.LastTermModifier = BeatCell.Subtract(repWithLtmToMod.LastTermModifier, newVal);
+                        //repWithLtmToMod.LastTermModifier = BeatCell.Subtract(repWithLtmToMod.LastTermModifier, newVal);
+                        repWithLtmToMod.LastTermModifier = newVal.TrimStart('0');
                     }
                 }
             }
