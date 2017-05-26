@@ -368,6 +368,9 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// Increment the tempo change counter and reset when a tempo change is complete.
+        /// </summary>
         public void IncrementTempoChangeCounter()
         {
             lock (tempoChangeCounterLock)
@@ -376,6 +379,7 @@ namespace Pronome
 
                 if (_tempoChangeCounter == Mixer.MixerInputs.Count())
                 {
+                    // all sound sources have had their tempos changed
                     TempoChangeCued = false;
                     _tempoChangeCounter = 0;
                     TempoChangedSet.Clear();
@@ -412,37 +416,22 @@ namespace Pronome
         /** <summary>Change the tempo. Can be during play.</summary> */
         public void ChangeTempo(float newTempo)
         {
+            // add the elapsed 1/4s at current tempo
+            if (PlayState == State.Playing)
+            {
+                UpdateElapsedQuarters();
+            }
+
             float oldTempo = tempo;
             tempo = newTempo;
 
             if (PlayState != State.Stopped)
             {
-                // add the elapsed 1/4s at current tempo
-                if (PlayState == State.Playing)
-                {
-                    UpdateElapsedQuarters();
-                }
 
                 // modify the beat values and current byte intervals for all layers and audio sources.
                 double ratio = oldTempo / newTempo;
                 TempoChangeRatio = ratio;
                 TempoChangeCued = true;
-                //Layers.ForEach(x =>
-                //{
-                //    if (x.AudioSources != null)
-                //    {
-                //        x.AudioSources.Values.Select(a => {
-                //            //a.BeatCollection.MultiplyBeatValues(ratio);
-                //            a.MultiplyByteInterval(ratio);
-                //            return a;
-                //        }).ToArray();
-                //    }
-                //    if (x.BasePitchSource != null)
-                //    {
-                //        //x.BasePitchSource.BeatCollection.MultiplyBeatValues(ratio);
-                //        x.BasePitchSource.MultiplyByteInterval(ratio);
-                //    }
-                //});
             }
             else //(if stopped) set new tempo by recalculating all the beatCollections
             {

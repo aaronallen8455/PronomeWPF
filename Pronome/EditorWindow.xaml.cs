@@ -288,6 +288,9 @@ namespace Pronome
             ignoreSourceChange = false;
         }
 
+        /// <summary>
+        /// Remove the cell placement guidelines
+        /// </summary>
         public void RemoveGridLines()
         {
             if (LastSelectedRow != null)
@@ -478,7 +481,7 @@ namespace Pronome
 
         private void pitchInput_LostFocus(object sender, RoutedEventArgs e)
         {
-            string pitchValue = pitchInput.Text;
+            string pitchValue = (sender as TextBox).Text;
 
             // validate pitch input
             if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d{0,2}$|^\d+\.?\d*"))

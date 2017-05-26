@@ -561,6 +561,9 @@ namespace Pronome.Editor
             Cells.Clear();
         }
 
+        /// <summary>
+        /// Redraw the editor to reflect the internal state
+        /// </summary>
         public void Redraw()
         {
             string code = Stringify();
@@ -967,6 +970,9 @@ namespace Pronome.Editor
         /// <param name="e"></param>
         private void Grid_MouseDownSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            // unfocus any ui elements (prevents a value holding over to a group selection)
+            Keyboard.ClearFocus();
+
             Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
 
             if (selector.Parent == null)
@@ -986,6 +992,13 @@ namespace Pronome.Editor
                 Canvas.SetZIndex(selector, 500);
                 SelectionCanvas.Children.Add(selector);
             }
+        }
+
+
+        private void BaseElement_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // unfocus
+            Keyboard.ClearFocus();
         }
     }
 }
