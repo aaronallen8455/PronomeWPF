@@ -9,8 +9,8 @@ namespace Pronome
     /**<summary>Contains the timing information for each individual beat cell.</summary>*/
     public class BeatCell
     {
-        /**<summary>The time length in number of bytes.</summary>*/
-        public double ByteInterval;
+        //**<summary>The time length in number of bytes.</summary>*/
+        //public double ByteInterval;
 
         /**<summary>The time length in quarter notes</summary>*/
         public double Bpm; // value expressed in BPM time.
@@ -33,12 +33,12 @@ namespace Pronome
         /**<summary>If using hihat sounds, how long in BPM the open hihat sound should last.</summary>*/
         public double hhDuration = 0;
 
-        /**<summary>Sets the 'byteinterval' based on current tempo and audiosource sample rate.</summary>*/
-        public void SetBeatValue()
-        {
-            // set byte interval based on tempo and audiosource sample rate
-            ByteInterval = ConvertFromBpm(Bpm, AudioSource);
-        }
+        ///**<summary>Sets the 'byteinterval' based on current tempo and audiosource sample rate.</summary>*/
+        //public void SetBeatValue()
+        //{
+        //    // set byte interval based on tempo and audiosource sample rate
+        //    //ByteInterval = ConvertFromBpm(Bpm, AudioSource);
+        //}
 
         /**<summary>Convert a quarter note time value into a byte count.</summary>
          * <param name="bpm">Number of quarter-notes.</param>
@@ -47,6 +47,11 @@ namespace Pronome
         static public double ConvertFromBpm(double bpm, IStreamProvider src)
         {
             double result = bpm * (60d / Metronome.GetInstance().Tempo) * src.WaveFormat.SampleRate;
+
+            if (!src.IsPitch)
+            {
+                result *= src.WaveFormat.AverageBytesPerSecond / 32000 * src.WaveFormat.Channels;
+            }
 
             if (result > long.MaxValue) throw new Exception(bpm.ToString());
 

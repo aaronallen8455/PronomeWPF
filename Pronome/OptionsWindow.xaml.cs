@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
+using System.Collections.Generic;
 
 // TODO: pitch random muting doesn't occur on first note
 namespace Pronome
@@ -266,5 +267,69 @@ namespace Pronome
         {
             (sender as TextBox).Text = PitchStream.DecayLength.ToString();
         }
+
+        /// <summary>
+        /// Add a new source to the user defined sound sources
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void customSoundNewButton_Click(object sender, RoutedEventArgs e)
+        {
+            //UserSourceLibrary library = Resources["userSourceLibrary"] as UserSourceLibrary;
+
+            // get the target wav file
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Wav file (*.wav)|*.wav";
+            openFileDialog.Title = "Select Audio File";
+            openFileDialog.DefaultExt = "wav";
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                new UserSource(openFileDialog.FileName, openFileDialog.SafeFileName);
+            }
+        }
+
+        private void CommandBinding_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
+        {
+            // remove the selected items
+            var listBox = customSoundListBox as ListBox;
+
+            LinkedList<UserSource> toRemove = new LinkedList<UserSource>();
+            foreach (UserSource source in listBox.SelectedItems)
+            {
+                toRemove.AddLast(source);
+            }
+
+            foreach (UserSource source in toRemove)
+            {
+                UserSource.Library.Remove(source);
+            }
+        }
+
+        private void CommandBinding_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
+        {
+            // check if any sources are selected
+            var listBox = customSoundListBox as ListBox;
+            if (listBox != null)
+            {
+                e.CanExecute = listBox.SelectedItems.Count > 0;
+            }
+        }
+
+        ///// <summary>
+        ///// Add custom sounds to the list box
+        ///// </summary>
+        ///// <param name="sender"></param>
+        ///// <param name="e"></param>
+        //private void customSoundListBox_Loaded(object sender, RoutedEventArgs e)
+        //{
+        //    ListBox listBox = sender as ListBox;
+        //    // add library entries to the list box
+        //    foreach (UserSource source in UserSource.Library.Values)
+        //    {
+        //        ListBoxItem lbi = new ListBoxItem();
+        //        lbi.Content = 
+        //    }
+        //}
     }
 }

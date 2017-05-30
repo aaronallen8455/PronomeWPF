@@ -100,6 +100,17 @@ namespace Pronome
             return frequency;
         }
 
+        /// <summary>
+        /// Check if a source name is a pitch source.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static bool IsPitchSourceName(string name)
+        {
+            return !name.Contains(".wav");
+            //return System.Text.RegularExpressions.Regex.IsMatch(name, @"\w+\.[a-z]+$");
+        }
+
         /**<summary>Used in converting symbols to pitches.</summary>*/
         protected static Dictionary<string, int> Notes = new Dictionary<string, int>
         {
@@ -234,7 +245,7 @@ namespace Pronome
         //    }
         //}
         //bool intervalMultiplyCued = false;
-        double intervalMultiplyFactor;
+        //double intervalMultiplyFactor;
         object _multLock = new object();
 
         /**<summary>The volume control for this stream.</summary>*/

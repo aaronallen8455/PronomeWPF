@@ -36,10 +36,35 @@ namespace Pronome
         public WavFileStream(string fileName)
         {
             this.fileName = fileName;
-            Assembly myAssembly = Assembly.GetExecutingAssembly();
-            Stream s = myAssembly.GetManifestResourceStream(fileName);
+            // check if it's an outside source or in assembly
+            Stream s = null;
+            if (fileName.IndexOf("Pronome") == 0)
+            {
+                Assembly myAssembly = Assembly.GetExecutingAssembly();
+                s = myAssembly.GetManifestResourceStream(fileName);
+            }
+            else
+            {
+                // outside file
+                s = File.OpenRead(fileName);
+                
+            }
+
             sourceStream = new WaveFileReader(s);
-            Panner = new PanningSampleProvider(this.ToSampleProvider());
+
+            ISampleProvider provider = null;
+
+            // convert to mono
+            if (sourceStream.WaveFormat.Channels == 2)
+            {
+                provider = new StereoToMonoSampleProvider(this.ToSampleProvider());
+            }
+            else
+            {
+                provider = this.ToSampleProvider();
+            }
+
+            Panner = new PanningSampleProvider(provider);
             Panner.Pan = 0;
             Panner.PanStrategy = new StereoPanStrategy();
             VolumeProvider = new VolumeSampleProvider(Panner);

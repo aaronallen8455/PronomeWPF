@@ -357,7 +357,7 @@ namespace Pronome
 
                 var met = Metronome.GetInstance();
                 // is new source a pitch or a wav?
-                if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$"))
+                if (PitchStream.IsPitchSourceName(baseSourceName))
                 {
                     // Pitch
                     
@@ -751,7 +751,7 @@ namespace Pronome
                     }
                 }
                 // set beat's value based on tempo and bytes/sec
-                beat[i].SetBeatValue();
+                //beat[i].SetBeatValue();
             }
 
             Beat = beat.ToList();

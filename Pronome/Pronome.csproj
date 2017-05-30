@@ -121,8 +121,9 @@
       <DependentUpon>RepeatGroupDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Classes\Editor\Row.cs" />
+    <Compile Include="Classes\Sound\UserSource.cs" />
     <Compile Include="Classes\StereoPanStrategy.cs" />
-    <Compile Include="Classes\TextMarkerService.cs" />
+    <Compile Include="Classes\Avalon\TextMarkerService.cs" />
     <Page Include="BeatGraphWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -172,22 +173,22 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Classes\BeatCell.cs" />
-    <Compile Include="Classes\IStreamProvider.cs" />
+    <Compile Include="Classes\Sound\IStreamProvider.cs" />
     <Compile Include="Classes\Layer.cs" />
     <Compile Include="Classes\LayerUI.cs" />
     <Compile Include="Classes\Metronome.cs" />
-    <Compile Include="Classes\PitchStream.cs" />
-    <Compile Include="Classes\SampleConverter.cs" />
+    <Compile Include="Classes\Sound\PitchStream.cs" />
+    <Compile Include="Classes\Sound\SampleConverter.cs" />
     <Compile Include="Classes\SourceBeatCollection.cs" />
     <Compile Include="Classes\StreamToWavFile.cs" />
-    <Compile Include="Classes\WavFileStream.cs" />
+    <Compile Include="Classes\Sound\WavFileStream.cs" />
     <Compile Include="EditorWindow.xaml.cs">
       <DependentUpon>EditorWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ExportWavWindow.xaml.cs">
       <DependentUpon>ExportWavWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Classes\ITextMarker.cs" />
+    <Compile Include="Classes\Avalon\ITextMarker.cs" />
     <Compile Include="Instructions.xaml.cs">
       <DependentUpon>Instructions.xaml</DependentUpon>
     </Compile>

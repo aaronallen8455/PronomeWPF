@@ -32,7 +32,7 @@ namespace Pronome
 
         protected Panel layerList;
 
-        protected ComboBoxFiltered baseSourceSelector;
+        public ComboBoxFiltered baseSourceSelector;
 
         protected TextBox pitchInput;
 
@@ -113,8 +113,10 @@ namespace Pronome
                 .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
+            sources.AddRange(UserSource.Library.Select(x => x.ToString())); // add custom sources
             baseSourceSelector.ItemsSource = sources;
-            if (Layer.BaseSourceName.First() == 'P') // if wav source get the the selector name from file name
+
+            if (!PitchStream.IsPitchSourceName(Layer.BaseSourceName)) // if wav source get the the selector name from file name
             {
                 string selector = WavFileStream.GetSelectorNameByFile(Layer.BaseSourceName);
                 if (sources.Contains(selector))
@@ -225,7 +227,9 @@ namespace Pronome
             {
                 MainWindow window = Application.Current.MainWindow as MainWindow;
 
-                if (baseSourceSelector.SelectedItem as string == "Pitch")
+                string sourceName = baseSourceSelector.SelectedItem as string;
+
+                if (sourceName == "Pitch")
                 {
                     (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
                     // use contents of pitch field as source
@@ -242,7 +246,19 @@ namespace Pronome
                 }
                 else
                 {
-                    string newSource = WavFileStream.GetFileByName((baseSourceSelector.SelectedItem as string).Substring(4));
+                    string newSource = string.Empty;
+                    bool custom = sourceName.First() == 'u';
+                    sourceName = sourceName.Substring(sourceName.IndexOf('.') + 1).TrimStart();
+                    // is it a user defined source?
+                    if (custom)
+                    {
+                        newSource = UserSource.Library.Where(x => x.Label == sourceName).First().Uri;
+                    }
+                    else
+                    {
+                        newSource = WavFileStream.GetFileByName(sourceName);
+                    }
+
                     // set new base source
                     if (newSource != Layer.BaseSourceName)
                     {

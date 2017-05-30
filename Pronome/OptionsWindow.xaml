@@ -7,6 +7,26 @@
         mc:Ignorable="d"
         Title="ProNome Options" Height="600" Width="530"
         Name="optionsWindow">
+    <Window.Resources>
+        <!--Define the data source for the user source library-->
+        <local:UserSourceLibrary x:Key="userSourceLibrary"/>
+        <!--<CollectionViewSource x:Key="userSourceLibrarySorted" 
+                              Source="{Binding Source={StaticResource userSourceLibrary}}"
+                              xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="Index"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>-->
+
+        <RoutedCommand x:Key="userSourceRemoveCommand"/>
+    </Window.Resources>
+    
+    <Window.CommandBindings>
+        <CommandBinding Command="{StaticResource userSourceRemoveCommand}" 
+                        Executed="CommandBinding_Executed" 
+                        CanExecute="CommandBinding_CanExecute"/>
+    </Window.CommandBindings>
+    
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         
         <DockPanel Name="dock" HorizontalAlignment="Stretch" 
@@ -122,6 +142,40 @@
                         <Button Name="loadButton" Click="loadButton_Click" IsEnabled="{Binding Path=IsEnabled}">Load Beat</Button>
                     </WrapPanel>
                 </StackPanel>
+            </Expander>
+            <!--Custom Sound Library-->
+            <Expander Header="Custom Sound Library">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom">
+                        <TextBox>
+                            <TextBox.Text>
+                                <Binding ElementName="customSoundListBox" Path="SelectedItem.Label">
+                                    <Binding.ValidationRules>
+                                        <local:UserSouceLabelRule/>
+                                    </Binding.ValidationRules>
+                                </Binding>
+                            </TextBox.Text>
+                        </TextBox>
+                        <TextBlock Text="{Binding ElementName=customSoundListBox, Path=SelectedItem.Uri}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
+                        <Button Name="customSoundNewButton" Click="customSoundNewButton_Click">New</Button>
+                        <Button Name="customSoundRemoveButton" Command="{StaticResource userSourceRemoveCommand}">Remove</Button>
+                    </StackPanel>
+                    <ListBox Name="customSoundListBox" 
+                             ItemsSource="{Binding Source={StaticResource userSourceLibrary}}" 
+                             HorizontalAlignment="Stretch"
+                             Height="110"
+                             SelectionMode="Single">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    u<Run Text="{Binding Path=Index}"/>. <Run Text="{Binding Path=Label}"/>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
             </Expander>
             <Expander Header="Wav File Creation">
                 <StackPanel>
