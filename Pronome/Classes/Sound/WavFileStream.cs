@@ -78,6 +78,8 @@ namespace Pronome
             // is this a hihat sound?
             if (BeatCell.HiHatOpenFileNames.Contains(fileName)) IsHiHatOpen = true;
             else if (BeatCell.HiHatClosedFileNames.Contains(fileName)) IsHiHatClose = true;
+
+            chunkSizeOverflow = 1280 * WaveFormat.BlockAlign;
         }
 
         /**<summary>The volume for this sound source.</summary>*/
@@ -151,6 +153,11 @@ namespace Pronome
             set { sourceStream.Position = value; }
         }
 
+        /// <summary>
+        /// If a chunksize is requested at this amount, skip it.
+        /// </summary>
+        public int chunkSizeOverflow;
+
         /**<summary>Get the next byte interval while also setting the mute status.</summary>*/
         public long GetNextInterval()
         {
@@ -178,7 +185,7 @@ namespace Pronome
             {
                 //if (intervalMultiplyCued)
                 //{
-                    BeatCollection.MultiplyBeatValues();
+                    BeatCollection.ConvertBpmValues();
 
                 double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
 
@@ -406,7 +413,7 @@ namespace Pronome
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (count == 2560) { return count; } // somtimes count is double at start for some reason
+            if (count == chunkSizeOverflow) { return count; } // somtimes count is double at start for some reason
 
             int bytesCopied = 0;
 

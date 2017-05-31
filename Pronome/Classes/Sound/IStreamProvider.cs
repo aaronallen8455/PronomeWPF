@@ -21,8 +21,16 @@ namespace Pronome
 
         int BytesPerSec { get; set; }
 
+        /// <summary>
+        /// Set the amount of offset in bytes
+        /// </summary>
+        /// <param name="value"></param>
         void SetOffset(double value);
 
+        /// <summary>
+        /// Get the amount of offset in bytes
+        /// </summary>
+        /// <returns></returns>
         double GetOffset();
 
         void SetSilentInterval(double audible, double silent);

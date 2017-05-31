@@ -187,7 +187,7 @@ namespace Pronome
             {
                 //if (intervalMultiplyCued)
                 //{
-                    BeatCollection.MultiplyBeatValues();
+                    BeatCollection.ConvertBpmValues();
 
                 double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
 

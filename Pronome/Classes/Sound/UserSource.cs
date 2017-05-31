@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Serialization;
 using System.Collections.ObjectModel;
@@ -15,7 +14,7 @@ namespace Pronome
     /// <summary>
     ///  A class for representing user defined sound sources.
     /// </summary>
-    public class UserSource
+    [DataContract] public class UserSource
     {
         [DataMember]
         public string Uri { get; set; }
@@ -33,6 +32,11 @@ namespace Pronome
 
         [DataMember]
         public int Index { get; set; }
+
+        public enum HiHatStatuses { None, Open, Closed };
+
+        [DataMember]
+        public HiHatStatuses HiHatStatus = HiHatStatuses.None;
 
         public UserSource (string uri, string label)
         {
@@ -65,23 +69,27 @@ namespace Pronome
 
         public static void LibraryCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            // apply changes to the source selectors in the layer UIs and in the editor.
+            // apply changes to the source selectors in the layer UIs.
+            List<string> sources = null;
             foreach (LayerUI ui in LayerUI.Items)
             {
                 ComboBox sourceSelector = ui.baseSourceSelector;
                 string current = (string)ui.baseSourceSelector.SelectedValue;
 
-                List<string> sources = new List<string>();
-
-                foreach (string s in sourceSelector.ItemsSource)
+                if (sources == null)
                 {
-                    if (s.First() != 'u')
-                    {
-                        sources.Add(s);
-                    }
-                }
+                    sources = new List<string>();
 
-                sources.AddRange(Library.Select(x => x.ToString()));
+                    foreach (string s in sourceSelector.ItemsSource)
+                    {
+                        if (s.First() != 'u') // don't add any prexisting custom sources
+                        {
+                            sources.Add(s);
+                        }
+                    }
+
+                    sources.AddRange(Library.Select(x => x.ToString()));
+                }
 
                 sourceSelector.ItemsSource = sources;
 
@@ -90,6 +98,12 @@ namespace Pronome
                 {
                     sourceSelector.SelectedValue = "Pitch";
                 }
+            }
+
+            // apply changes to editor
+            if (sources != null)
+            {
+                //EditorWindow.Instance.sourceSelector.ItemsSource = sources;
             }
         }
 
@@ -101,6 +115,7 @@ namespace Pronome
         }
     }
 
+    [CollectionDataContract]
     public class UserSourceLibrary : ObservableCollection<UserSource> { }
 
     public class UserSouceLabelRule : ValidationRule

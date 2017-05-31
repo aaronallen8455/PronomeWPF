@@ -50,7 +50,7 @@ namespace Pronome
 
             if (!src.IsPitch)
             {
-                result *= src.WaveFormat.AverageBytesPerSecond / 32000 * src.WaveFormat.Channels;
+                result *= src.WaveFormat.AverageBytesPerSecond / 32000;// * src.WaveFormat.Channels;
             }
 
             if (result > long.MaxValue) throw new Exception(bpm.ToString());

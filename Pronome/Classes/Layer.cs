@@ -513,7 +513,15 @@ namespace Pronome
                     newBaseSource = newSource;
                     AudioSources.Add("", newBaseSource);
                     IsPitch = false;
+                    //newBaseSource.SetOffset(BeatCell.ConvertFromBpm(Offset, newBaseSource));
                 }
+
+                    // TODO: deal with offset
+                    // re-convert BPM values
+                newBaseSource.BeatCollection.Source = newBaseSource;
+                newBaseSource.BeatCollection.ConvertBpmValues();
+                newBaseSource.BeatCollection.isWav = !IsPitch;
+
                 // update hihat statuses
                 HasHiHatClosed = Beat.Where(x => BeatCell.HiHatClosedFileNames.Contains(x.SourceName)).Any();
                 HasHiHatOpen = Beat.Where(x => BeatCell.HiHatOpenFileNames.Contains(x.SourceName)).Any();
@@ -702,7 +710,7 @@ namespace Pronome
             for (int i = 0; i < beat.Count(); i++)
             {
                 beat[i].Layer = this;
-                if (beat[i].SourceName != string.Empty && !Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[Pp][\d.]+$"))
+                if (beat[i].SourceName != string.Empty && !PitchStream.IsPitchSourceName(beat[i].SourceName))// !Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[Pp][\d.]+$"))
                 {
                     // should cells of the same source use the same audiosource instead of creating new source each time? Yes
                     if (!AudioSources.ContainsKey(beat[i].SourceName))
@@ -720,7 +728,7 @@ namespace Pronome
                 }
                 else
                 {
-                    if (beat[i].SourceName != string.Empty/* && Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[\d.]+$")*/)
+                    if (beat[i].SourceName != string.Empty)
                     {
                         // beat has a defined pitch
                         // check if basepitch source exists

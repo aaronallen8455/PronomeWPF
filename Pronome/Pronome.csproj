@@ -182,6 +182,7 @@
     <Compile Include="Classes\SourceBeatCollection.cs" />
     <Compile Include="Classes\StreamToWavFile.cs" />
     <Compile Include="Classes\Sound\WavFileStream.cs" />
+    <Compile Include="Classes\UserSettings.cs" />
     <Compile Include="EditorWindow.xaml.cs">
       <DependentUpon>EditorWindow.xaml</DependentUpon>
     </Compile>
