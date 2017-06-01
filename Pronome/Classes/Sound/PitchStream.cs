@@ -111,6 +111,11 @@ namespace Pronome
             //return System.Text.RegularExpressions.Regex.IsMatch(name, @"\w+\.[a-z]+$");
         }
 
+        public int BlockAlignment
+        {
+            get => 2;
+        }
+
         /**<summary>Used in converting symbols to pitches.</summary>*/
         protected static Dictionary<string, int> Notes = new Dictionary<string, int>
         {

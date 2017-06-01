@@ -45,7 +45,7 @@ namespace Pronome
 
                 if (isWav)
                 {
-                    whole *= 2; // multiply for wav files. 4 bytes per sample
+                    whole *= Source.BlockAlignment; // multiply for wav files. 4 bytes per sample
                 }
 
                 yield return whole;

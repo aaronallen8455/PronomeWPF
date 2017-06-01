@@ -11,7 +11,7 @@ namespace Pronome
     /** <summary>Handles the reading of .wav file sound sources.</summary> */
     public class WavFileStream : WaveStream, IStreamProvider
     {
-        WaveFileReader sourceStream;
+        WaveStream sourceStream;
 
         /**<summary>Used to implement panning.</summary>*/
         public PanningSampleProvider Panner { get; set; }
@@ -32,26 +32,38 @@ namespace Pronome
         /**<summary>The byte rate for this stream.</summary>*/
         public int BytesPerSec { get; set; }
         string fileName;
+
+        Stream rawStream;
+
         /**<summary>Constructor</summary>*/
         public WavFileStream(string fileName)
         {
             this.fileName = fileName;
             // check if it's an outside source or in assembly
-            Stream s = null;
+            //Stream s = null;
             if (fileName.IndexOf("Pronome") == 0)
             {
                 Assembly myAssembly = Assembly.GetExecutingAssembly();
-                s = myAssembly.GetManifestResourceStream(fileName);
+                rawStream = myAssembly.GetManifestResourceStream(fileName);
+                sourceStream = new WaveFileReader(rawStream);
             }
             else
             {
+                //var s = new MemoryStream();
+                //using (var reader = new AudioFileReader(fileName))
+                //{
+                //    var resampler = new WdlResamplingSampleProvider(reader, 16000);
+                //    //WaveFileWriter.CreateWaveFile16("test.wav", resampler);
+                //    WaveFileWriter.WriteWavFileToStream(s, resampler.ToWaveProvider());
+                //    
+                //}
+                //s.Dispose();
                 // outside file
-                s = File.OpenRead(fileName);
-                
+                //rawStream = File.OpenRead(fileName);
+                sourceStream = new WaveFileReader(fileName);
             }
 
-            sourceStream = new WaveFileReader(s);
-
+            
             ISampleProvider provider = null;
 
             // convert to mono
@@ -153,6 +165,11 @@ namespace Pronome
             set { sourceStream.Position = value; }
         }
 
+        public int BlockAlignment
+        {
+            get => sourceStream.BlockAlign;
+        }
+
         /// <summary>
         /// If a chunksize is requested at this amount, skip it.
         /// </summary>
@@ -189,26 +206,26 @@ namespace Pronome
 
                 double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
 
-                    double div = ByteInterval / 2;
+                double div = ByteInterval / BlockAlignment;
                     div *= intervalMultiplyFactor;
                     Layer.Remainder *= intervalMultiplyFactor; // multiply remainder as well
                     Layer.Remainder += div - (int)div;
-                    ByteInterval = (int)div * 2;
+                    ByteInterval = (int)div * BlockAlignment;
                     
                     if (Layer.Remainder >= 1)
                     {
-                        ByteInterval += (int)Layer.Remainder * 2;
+                        ByteInterval += (int)Layer.Remainder * BlockAlignment;
                         Layer.Remainder -= (int)Layer.Remainder;
                     }
 
                     // multiply the offset aswell
                     if (hasOffset)
                     {
-                        div = totalOffset / 2;
+                        div = totalOffset / BlockAlignment;
                         div *= intervalMultiplyFactor;
                         offsetRemainder *= intervalMultiplyFactor;
                         offsetRemainder += div - (int)div;
-                        totalOffset = (int)div * 2;
+                        totalOffset = (int)div * BlockAlignment;
                     }
                     if (initialOffset > 0)
                     {
@@ -218,11 +235,11 @@ namespace Pronome
                     // multiply the silent interval
                     if (Metronome.GetInstance().IsSilentInterval)
                     {
-                        double sid = currentSlntIntvl / 2;
+                        double sid = currentSlntIntvl / BlockAlignment;
                         sid *= intervalMultiplyFactor;
                         SilentIntervalRemainder *= intervalMultiplyFactor;
                         SilentIntervalRemainder += sid - (int)sid;
-                        currentSlntIntvl = (int)sid * 2;
+                        currentSlntIntvl = (int)sid * BlockAlignment;
                         SilentInterval *= intervalMultiplyFactor;
                         AudibleInterval *= intervalMultiplyFactor;
                     }
@@ -230,19 +247,20 @@ namespace Pronome
                     //// do the hihat cutoff interval
                     if (IsHiHatOpen && CurrentHiHatDuration != 0)
                     {
-                        div = CurrentHiHatDuration / 2;
-                        CurrentHiHatDuration = (int)(div * intervalMultiplyFactor) * 2;
+                        div = CurrentHiHatDuration / BlockAlignment;
+                        CurrentHiHatDuration = (int)(div * intervalMultiplyFactor) * BlockAlignment;
                     }
 
                     // recalculate the hihat count and byte to cutoff values
                     if (IsHiHatOpen && Layer.HasHiHatClosed)
                     {
+                        int cycleSize = 640 * BlockAlignment;
                         long countDiff = HiHatCycleToMute - cycle;
-                        long totalBytes = countDiff * 1280 + HiHatByteToMute;
+                        long totalBytes = countDiff * cycleSize + HiHatByteToMute;
                         totalBytes = (long)(totalBytes * intervalMultiplyFactor);
-                        HiHatCycleToMute = cycle + totalBytes / 1280;
-                        HiHatByteToMute = totalBytes % 1280;
-                        HiHatByteToMute -= HiHatByteToMute % 2; // align
+                        HiHatCycleToMute = cycle + totalBytes / cycleSize;
+                        HiHatByteToMute = totalBytes % cycleSize;
+                        HiHatByteToMute -= HiHatByteToMute % BlockAlignment; // align
                     }
 
                     intervalMultiplyCued = false;
@@ -282,9 +300,10 @@ namespace Pronome
                 // if this is a hihat down, pass it's time position to all hihat opens in this layer
                 if (IsHiHatClose && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
                 {
+                    int cycleSize = 640 * BlockAlignment;
                     int total = totalOffset;
-                    int cycles = total / 1280;
-                    int bytes = total % 1280;
+                    int cycles = total / cycleSize;
+                    int bytes = total % cycleSize;
 
                     // assign the hihat cutoff to all open hihat sounds.
                     IEnumerable hhos = Layer.AudioSources.Values.Where(x => !x.IsPitch && ((WavFileStream)x).IsHiHatOpen);
@@ -364,7 +383,7 @@ namespace Pronome
         public void SetOffset(double value)
         {
             initialOffset = value;
-            totalOffset = ((int)value) * 2;
+            totalOffset = ((int)value) * BlockAlignment;
             offsetRemainder = value - (int)value;
             
             hasOffset = totalOffset > 0;
@@ -393,9 +412,9 @@ namespace Pronome
 
         public void SetSilentInterval(double audible, double silent)
         {
-            AudibleInterval = BeatCell.ConvertFromBpm(audible, this) * 2;
-            SilentInterval = BeatCell.ConvertFromBpm(silent, this) * 2;
-            currentSlntIntvl = (long)(AudibleInterval - initialOffset * 2 - 2);
+            AudibleInterval = BeatCell.ConvertFromBpm(audible, this) * BlockAlignment;
+            SilentInterval = BeatCell.ConvertFromBpm(silent, this) * BlockAlignment;
+            currentSlntIntvl = (long)(AudibleInterval - initialOffset * BlockAlignment - BlockAlignment);
             SilentIntervalRemainder = audible - (int)audible + offsetRemainder;
 
             SetInitialMuting();
@@ -644,6 +663,7 @@ namespace Pronome
         {
             //memStream.Dispose();
             sourceStream.Dispose();
+            rawStream?.Dispose();
             //Channel.Dispose();
             Dispose();
         }

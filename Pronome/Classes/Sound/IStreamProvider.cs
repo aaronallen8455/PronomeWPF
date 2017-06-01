@@ -19,7 +19,9 @@ namespace Pronome
 
         void Reset();
 
-        int BytesPerSec { get; set; }
+        int BytesPerSec { get; }
+
+        int BlockAlignment { get; }
 
         /// <summary>
         /// Set the amount of offset in bytes

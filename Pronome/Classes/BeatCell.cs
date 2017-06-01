@@ -48,11 +48,6 @@ namespace Pronome
         {
             double result = bpm * (60d / Metronome.GetInstance().Tempo) * src.WaveFormat.SampleRate;
 
-            if (!src.IsPitch)
-            {
-                result *= src.WaveFormat.AverageBytesPerSecond / 32000;// * src.WaveFormat.Channels;
-            }
-
             if (result > long.MaxValue) throw new Exception(bpm.ToString());
 
             return result;
