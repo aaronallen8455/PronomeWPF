@@ -8,6 +8,8 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Globalization;
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace Pronome
 {
@@ -67,6 +69,11 @@ namespace Pronome
             Library.CollectionChanged += LibraryCollectionChanged;
         }
 
+        /// <summary>
+        /// Apply changes to user sources in all source selector drop-downs
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public static void LibraryCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             // apply changes to the source selectors in the layer UIs.
@@ -101,13 +108,41 @@ namespace Pronome
             }
 
             // apply changes to editor
-            if (sources != null)
+            if (sources != null && EditorWindow.Instance != default(EditorWindow))
             {
-                //EditorWindow.Instance.sourceSelector.ItemsSource = sources;
+                EditorWindow.Instance.sourceSelector.ItemsSource = sources;
             }
         }
 
+        /// <summary>
+        /// A collection of all user defined sources
+        /// </summary>
         static public UserSourceLibrary Library;
+
+        /// <summary>
+        /// Convert an audio file to 16000hz wave file
+        /// </summary>
+        /// <param name="inPath"></param>
+        /// <param name="outPath"></param>
+        /// <returns></returns>
+        static public bool ConvertToWave16(string inPath, string outPath)
+        {
+            try
+            {
+                using (AudioFileReader reader = new AudioFileReader(inPath))
+                {
+                    var resampler = new WdlResamplingSampleProvider(reader, 16000);
+
+                    WaveFileWriter.CreateWaveFile16(outPath, resampler);
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                // something went wrong
+                return false;
+            }
+        }
 
         override public string ToString()
         {
@@ -118,6 +153,9 @@ namespace Pronome
     [CollectionDataContract]
     public class UserSourceLibrary : ObservableCollection<UserSource> { }
 
+    /// <summary>
+    /// A rule used for validation of source label in the options menu
+    /// </summary>
     public class UserSouceLabelRule : ValidationRule
     {
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)

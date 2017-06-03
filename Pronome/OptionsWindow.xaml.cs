@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using System.Collections.Generic;
+using NAudio.Wave;
+using System.Runtime.InteropServices;
 
 // TODO: pitch random muting doesn't occur on first note
 namespace Pronome
@@ -275,20 +277,80 @@ namespace Pronome
         /// <param name="e"></param>
         private void customSoundNewButton_Click(object sender, RoutedEventArgs e)
         {
-            //UserSourceLibrary library = Resources["userSourceLibrary"] as UserSourceLibrary;
+            string fileName = "";
+            string safeFileName = "";
 
             // get the target wav file
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Wav file (*.wav)|*.wav";
+            openFileDialog.Filter = "Audio File|*.wav;*.mp3;*.aiff";
             openFileDialog.Title = "Select Audio File";
             openFileDialog.DefaultExt = "wav";
 
             if (openFileDialog.ShowDialog() == true)
             {
-                new UserSource(openFileDialog.FileName, openFileDialog.SafeFileName);
+                // check if file is in the correct format
+                try
+                {
+                    using (WaveFileReader reader = new WaveFileReader(openFileDialog.FileName))
+                    {
+                        if (reader.WaveFormat.SampleRate != 16000)
+                        {
+                            throw new Exception(); // must be 16000hz
+                        }
+
+                        fileName = openFileDialog.FileName;
+                        safeFileName = openFileDialog.SafeFileName;
+                    }
+                }
+                catch (Exception)
+                {
+                    
+                    var result = MainWindow.TaskDialog(
+                        new System.Windows.Interop.WindowInteropHelper(this).Handle, 
+                        IntPtr.Zero, 
+                        "Incorrect Format", 
+                        $"The file, {openFileDialog.SafeFileName}, isn't in the correct format.", 
+                        "Do you want to save a converted version to use instead?", 
+                        MainWindow.TaskDialogButtons.Yes | MainWindow.TaskDialogButtons.No, 
+                        MainWindow.TaskDialogIcon.Warning);
+                    if (result == MainWindow.TaskDialogResult.Yes)
+                    //if (MessageBox.Show(
+                    //    $"The file, {openFileDialog.SafeFileName}, isn't in the correct format. Do you want to save a converted version to use instead?",
+                    //    "Incorrect Format", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    {
+                        // save file prompt
+                        var saveFile = new SaveFileDialog();
+                        saveFile.AddExtension = true;
+                        saveFile.Filter = "Wav file (*.wav)|*.wav";
+                        saveFile.FileName = openFileDialog.SafeFileName.Substring(0, openFileDialog.SafeFileName.LastIndexOf('.')) + ".wav";
+                        if (saveFile.ShowDialog() == true)
+                        {
+                            if (UserSource.ConvertToWave16(openFileDialog.FileName, saveFile.FileName))
+                            {
+                                // success
+                                fileName = saveFile.FileName;
+                                safeFileName = saveFile.SafeFileName;
+                            }
+                            else
+                            {
+                                MessageBox.Show("The file could not be converted, an error occured.", "", MessageBoxButton.OK);
+                            }
+                        }
+                    }
+                }
+
+                if (fileName != string.Empty)
+                {
+                    new UserSource(fileName, safeFileName);
+                }
             }
         }
 
+        /// <summary>
+        /// Remove the selected source
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void CommandBinding_Executed(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
         {
             // remove the selected items
@@ -306,6 +368,11 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// Is a source selected for removal?
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void CommandBinding_CanExecute(object sender, System.Windows.Input.CanExecuteRoutedEventArgs e)
         {
             // check if any sources are selected
@@ -315,21 +382,6 @@ namespace Pronome
                 e.CanExecute = listBox.SelectedItems.Count > 0;
             }
         }
-
-        ///// <summary>
-        ///// Add custom sounds to the list box
-        ///// </summary>
-        ///// <param name="sender"></param>
-        ///// <param name="e"></param>
-        //private void customSoundListBox_Loaded(object sender, RoutedEventArgs e)
-        //{
-        //    ListBox listBox = sender as ListBox;
-        //    // add library entries to the list box
-        //    foreach (UserSource source in UserSource.Library.Values)
-        //    {
-        //        ListBoxItem lbi = new ListBoxItem();
-        //        lbi.Content = 
-        //    }
-        //}
     }
+
 }

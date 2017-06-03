@@ -12,6 +12,7 @@ using System.ComponentModel.Design;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.SharpDevelop.Editor;
 using ICSharpCode.AvalonEdit.AddIn;
+using System.Runtime.InteropServices;
 
 namespace Pronome
 {
@@ -216,7 +217,14 @@ namespace Pronome
                 }
                 catch (BeatSyntaxException ex)
                 {
-                    MessageBox.Show("Please fix the following errors:\r\r" + ex.Message, "Beat Code Contains Errors", MessageBoxButton.OK, MessageBoxImage.Error);
+                    var result = MainWindow.TaskDialog(
+                        new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle,
+                        IntPtr.Zero,
+                        "Beat Code Contains Error(s)",
+                        $"Please fix the following errors:",
+                        ex.Message,
+                        MainWindow.TaskDialogButtons.Ok,
+                        MainWindow.TaskDialogIcon.Warning);
                 }
             }
         }

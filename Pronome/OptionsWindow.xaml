@@ -147,21 +147,29 @@
             <Expander Header="Custom Sound Library">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom">
-                        <TextBox>
-                            <TextBox.Text>
-                                <Binding ElementName="customSoundListBox" Path="SelectedItem.Label">
-                                    <Binding.ValidationRules>
-                                        <local:UserSouceLabelRule/>
-                                    </Binding.ValidationRules>
-                                </Binding>
-                            </TextBox.Text>
-                        </TextBox>
-                        <TextBlock Text="{Binding ElementName=customSoundListBox, Path=SelectedItem.Uri}"/>
+                        <WrapPanel Orientation="Vertical">
+                            <Label Target="{Binding ElementName=customSourceLabel}">Label</Label>
+                            <TextBox Name="customSourceLabel" Width="130">
+                                <TextBox.Text>
+                                    <Binding ElementName="customSoundListBox" Path="SelectedItem.Label">
+                                        <Binding.ValidationRules>
+                                            <local:UserSouceLabelRule/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+                        </WrapPanel>
+                        <WrapPanel Orientation="Vertical">
+                            <Label Target="{Binding ElementName=customSoundFilePath}">File Path</Label>
+                            <TextBlock Name="customSoundFilePath" Text="{Binding ElementName=customSoundListBox, Path=SelectedItem.Uri}"/>
+                        </WrapPanel>
+                        
                     </StackPanel>
                     <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
-                        <Button Name="customSoundNewButton" Click="customSoundNewButton_Click">New</Button>
-                        <Button Name="customSoundRemoveButton" Command="{StaticResource userSourceRemoveCommand}">Remove</Button>
+                        <Button Name="customSoundNewButton" Click="customSoundNewButton_Click" Margin="0,0,0,5">New</Button>
+                        <Button Name="customSoundRemoveButton" Command="{StaticResource userSourceRemoveCommand}" Margin="0,0,0,0">Remove</Button>
                     </StackPanel>
+                    
                     <ListBox Name="customSoundListBox" 
                              ItemsSource="{Binding Source={StaticResource userSourceLibrary}}" 
                              HorizontalAlignment="Stretch"
