@@ -341,7 +341,7 @@ namespace Pronome.Editor
                     string source = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|\d+|[a-gA-G][b#]?\d+)").Value;
                     if (char.IsNumber(source[0]) && source != "0")
                     {
-                        source = WavFileStream.FileNameIndex[int.Parse(source), 0];
+                        source = WavFileStream.FileNameIndex[int.Parse(source), 0];j
                     }
                     cell.Source = source;
                 }

@@ -95,7 +95,7 @@ namespace Pronome
                         }
                     }
 
-                    sources.AddRange(Library.Select(x => x.ToString()));
+                    sources.AddRange(Library.OrderBy(x => x.Label).Select(x => x.ToString()));
                 }
 
                 sourceSelector.ItemsSource = sources;

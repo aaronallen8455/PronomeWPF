@@ -234,10 +234,15 @@ namespace Pronome
                     string source = match.Groups[2].Value;
 
                     //if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}$|^[pP][\d.]+$"))
-                    if (Regex.IsMatch(source, @"[a-gA-GpP]"))
+                    if (Regex.IsMatch(source, @"^[a-gA-GpP]"))
                     {
                         // is a pitch reference
                         return new BeatCell(match.Groups[1].Value, source);
+                    }
+                    else if (Regex.IsMatch(source, @"^u\d+$"))
+                    {
+                        // it's a custom source
+                        return new BeatCell(match.Groups[1].Value, UserSource.Library[int.Parse(source.Trim('u')) - 1].Uri);
                     }
                     else // ref is a plain number (wav source) or "" base source.
                     {

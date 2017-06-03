@@ -107,7 +107,7 @@ namespace Pronome
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Silent";
             sources.Insert(0, "Pitch");
-            sources.AddRange(UserSource.Library.Select(x => x.ToString()));
+            sources.AddRange(UserSource.Library.OrderBy(x => x.Label).Select(x => x.ToString()));
             //sources[0] = "Pitch"; // replace Silentbeat with Pitch
             sourceSelector.ItemsSource = sources;
 

@@ -114,7 +114,7 @@ namespace Pronome
                 .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
                 .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
-            sources.AddRange(UserSource.Library.Select(x => x.ToString())); // add custom sources
+            sources.AddRange(UserSource.Library.OrderBy(x => x.Label).Select(x => x.ToString())); // add custom sources
             baseSourceSelector.ItemsSource = sources;
 
             if (!PitchStream.IsPitchSourceName(Layer.BaseSourceName)) // if wav source get the the selector name from file name
@@ -217,14 +217,12 @@ namespace Pronome
                 }
                 catch (BeatSyntaxException ex)
                 {
-                    var result = MainWindow.TaskDialog(
-                        new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle,
-                        IntPtr.Zero,
+                    new TaskDialogWrapper(Application.Current.MainWindow).Show(
                         "Beat Code Contains Error(s)",
-                        $"Please fix the following errors:",
+                        "Please fix the following error(s):",
                         ex.Message,
-                        MainWindow.TaskDialogButtons.Ok,
-                        MainWindow.TaskDialogIcon.Warning);
+                        TaskDialogWrapper.TaskDialogButtons.Ok,
+                        TaskDialogWrapper.TaskDialogIcon.Warning);
                 }
             }
         }
@@ -594,7 +592,7 @@ namespace Pronome
                 @",[a-zA-Z]", "Invalid beat cell value."
             },
             {
-                @"@[^a-gA-G\dPp]|"+
+                @"@[^a-gA-G\dPpu]|"+
                 @"@[a-gA-G]?[b#]?$|"+
                 @"@[a-gA-G][^#b\d]", "Invalid pitch assignment using '@.'"
             },

@@ -154,7 +154,7 @@ namespace Pronome.Editor
                 // will be increasing the row offset, but only if
                 // selection is not part of a rep group that is not
                 // encompassed by the selection
-                if (RepGroups.Contains(firstCell.RepeatGroups.First.Value))
+                if (!firstCell.RepeatGroups.Any() || !RepGroups.Contains(firstCell.RepeatGroups.First.Value))
                 {
                     // augment the row's offset
                     ChangeOffset = true;

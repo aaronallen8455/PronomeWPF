@@ -304,19 +304,15 @@ namespace Pronome
                 }
                 catch (Exception)
                 {
+                    var result = new TaskDialogWrapper(this).Show(
+                        "Incorrect Format",
+                        $"The file, {openFileDialog.SafeFileName}, isn't in the correct format.",
+                        "Do you want to save a converted version to use instead?",
+                        TaskDialogWrapper.TaskDialogButtons.Yes | TaskDialogWrapper.TaskDialogButtons.No,
+                        TaskDialogWrapper.TaskDialogIcon.Warning
+                    );
                     
-                    var result = MainWindow.TaskDialog(
-                        new System.Windows.Interop.WindowInteropHelper(this).Handle, 
-                        IntPtr.Zero, 
-                        "Incorrect Format", 
-                        $"The file, {openFileDialog.SafeFileName}, isn't in the correct format.", 
-                        "Do you want to save a converted version to use instead?", 
-                        MainWindow.TaskDialogButtons.Yes | MainWindow.TaskDialogButtons.No, 
-                        MainWindow.TaskDialogIcon.Warning);
-                    if (result == MainWindow.TaskDialogResult.Yes)
-                    //if (MessageBox.Show(
-                    //    $"The file, {openFileDialog.SafeFileName}, isn't in the correct format. Do you want to save a converted version to use instead?",
-                    //    "Incorrect Format", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    if (result == TaskDialogWrapper.TaskDialogResult.Yes)
                     {
                         // save file prompt
                         var saveFile = new SaveFileDialog();
@@ -325,15 +321,38 @@ namespace Pronome
                         saveFile.FileName = openFileDialog.SafeFileName.Substring(0, openFileDialog.SafeFileName.LastIndexOf('.')) + ".wav";
                         if (saveFile.ShowDialog() == true)
                         {
+                            // check if new file and source file have the same name
+                            bool overwrite = false;
+                            if (openFileDialog.FileName == saveFile.FileName)
+                            {
+                                System.IO.File.Move(openFileDialog.FileName, openFileDialog.FileName + "x");
+                                openFileDialog.FileName += "x";
+                                overwrite = true;
+                            }
                             if (UserSource.ConvertToWave16(openFileDialog.FileName, saveFile.FileName))
                             {
                                 // success
                                 fileName = saveFile.FileName;
                                 safeFileName = saveFile.SafeFileName;
+
+                                // delete source file if overwriting
+                                if (overwrite)
+                                {
+                                    System.IO.File.Delete(openFileDialog.FileName);
+                                }
                             }
                             else
                             {
-                                MessageBox.Show("The file could not be converted, an error occured.", "", MessageBoxButton.OK);
+                                // change name back if there was an error
+                                System.IO.File.Move(openFileDialog.FileName, openFileDialog.FileName.Substring(0, openFileDialog.FileName.Length - 1));
+
+                                new TaskDialogWrapper(this)
+                                    .Show(
+                                    "Error", 
+                                    "The file could not be converted, an error occured.", 
+                                    "",
+                                    TaskDialogWrapper.TaskDialogButtons.Ok,
+                                    TaskDialogWrapper.TaskDialogIcon.Error);
                             }
                         }
                     }
