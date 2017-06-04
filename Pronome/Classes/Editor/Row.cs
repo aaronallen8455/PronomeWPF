@@ -338,10 +338,16 @@ namespace Pronome.Editor
                 // check for source modifier
                 if (chunk.IndexOf('@') > -1)
                 {
-                    string source = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|\d+|[a-gA-G][b#]?\d+)").Value;
+                    string source = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|u?\d+|[a-gA-G][b#]?\d+)").Value;
                     if (char.IsNumber(source[0]) && source != "0")
                     {
-                        source = WavFileStream.FileNameIndex[int.Parse(source), 0];j
+                        source = WavFileStream.FileNameIndex[int.Parse(source), 0];
+                    }
+                    else if (source[0] == 'u')
+                    {
+                        // user source
+                        int id = int.Parse(source.Substring(1)) - 1;
+                        source = UserSource.Library.SkipWhile(x => x.Index < id).First().Uri;
                     }
                     cell.Source = source;
                 }
@@ -624,13 +630,22 @@ namespace Pronome.Editor
                 {
                     string source;
                     // is pitch or wav?
-                    if (cell.Source.IndexOf(".wav") == -1)
+                    if (PitchStream.IsPitchSourceName(cell.Source))
                     {
                         source = cell.Source;
                     }
                     else
                     {
-                        source = WavFileStream.GetIndexByName(cell.Source).ToString();//WavFileStream.FileNameIndex[int.Parse(cell.Source), 0];
+                        source = WavFileStream.GetIndexByName(cell.Source).ToString();
+                        if (source == "-1")
+                        {
+                            // check user sources
+                            var src = UserSource.Library.Where(x => x.Uri == cell.Source).FirstOrDefault();
+                            if (src != default(UserSource))
+                            {
+                                source = 'u' + src.Index.ToString();
+                            }
+                        }
                     }
                     result.Append($"@{source}");
                 }

@@ -224,7 +224,7 @@ namespace Pronome
             }
 
             // fix instances of a pitch modifier being following by +0 from repeater
-            beat = Regex.Replace(beat, $@"(@[a-gA-G]?[#b]?[pP]?[0-9.]+)(\+[\d.\-+/*]+)", "$2$1");
+            beat = Regex.Replace(beat, $@"(@[a-gA-G]?[#b]?[pP]?u?[0-9.]+)(\+[\d.\-+/*]+)", "$2$1");
 
             if (beat != string.Empty)
             {
@@ -242,7 +242,8 @@ namespace Pronome
                     else if (Regex.IsMatch(source, @"^u\d+$"))
                     {
                         // it's a custom source
-                        return new BeatCell(match.Groups[1].Value, UserSource.Library[int.Parse(source.Trim('u')) - 1].Uri);
+                        int id = int.Parse(source.Substring(1));
+                        return new BeatCell(match.Groups[1].Value, UserSource.Library.SkipWhile(src => src.Index < id).First().Uri);
                     }
                     else // ref is a plain number (wav source) or "" base source.
                     {

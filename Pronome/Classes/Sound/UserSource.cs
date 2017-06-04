@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Runtime.Serialization;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Globalization;
@@ -18,9 +16,15 @@ namespace Pronome
     /// </summary>
     [DataContract] public class UserSource
     {
+        /// <summary>
+        /// Uri path to the wave file
+        /// </summary>
         [DataMember]
         public string Uri { get; set; }
 
+        /// <summary>
+        /// The label string
+        /// </summary>
         [DataMember]
         protected string _label;
         public string Label {
@@ -32,13 +36,16 @@ namespace Pronome
             }
         }
 
+        /// <summary>
+        /// 1 based index of the source
+        /// </summary>
         [DataMember]
         public int Index { get; set; }
 
-        public enum HiHatStatuses { None, Open, Closed };
+        
 
         [DataMember]
-        public HiHatStatuses HiHatStatus = HiHatStatuses.None;
+        public InternalSource.HiHatStatuses HiHatStatus = InternalSource.HiHatStatuses.None;
 
         public UserSource (string uri, string label)
         {

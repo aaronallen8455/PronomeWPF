@@ -124,6 +124,7 @@
       <DependentUpon>RepeatGroupDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Classes\Editor\Row.cs" />
+    <Compile Include="Classes\Sound\InternalSource.cs" />
     <Compile Include="Classes\Sound\UserSource.cs" />
     <Compile Include="Classes\StereoPanStrategy.cs" />
     <Compile Include="Classes\Avalon\TextMarkerService.cs" />

@@ -224,11 +224,13 @@ namespace Pronome
                                 {
                                     if (string.IsNullOrEmpty(x.Source))
                                     {
-                                        return x.Row.Layer.BaseSourceName.Contains(".wav");
+                                        return !PitchStream.IsPitchSourceName(x.Row.Layer.BaseSourceName);
+                                        //return x.Row.Layer.BaseSourceName.Contains(".wav");
                                     }
                                     else
                                     {
-                                        return x.Source.Contains(".wav");
+                                        return !PitchStream.IsPitchSourceName(x.Source);
+                                        //return x.Source.Contains(".wav");
                                     }
                                 })
                             )
@@ -241,10 +243,19 @@ namespace Pronome
                     if (!string.IsNullOrEmpty(source))
                     {
                         // is the source a pitch or a wav?
-                        if (source.Contains(".wav"))
+                        if (!PitchStream.IsPitchSourceName(source))
                         {
                             pitchInputPanel.Visibility = Visibility.Collapsed;
                             string name = WavFileStream.GetSelectorNameByFile(source);
+                            if (string.IsNullOrEmpty(name))
+                            {
+                                // check custom sources
+                                var src = UserSource.Library.Where(x => x.Uri == source).FirstOrDefault();
+                                if (src != default(UserSource))
+                                {
+                                    name = src.ToString();
+                                }
+                            }
                             sourceSelector.SelectedItem = name;
                         }
                         else if (source == "0")
@@ -457,9 +468,18 @@ namespace Pronome
                 }
                 else
                 {
-                    value = Regex.Replace(value, @"^\d+\.\s*", "");
-                    // get wav source index
-                    source = WavFileStream.GetFileByName(value);
+                    if (value[0] == 'u')
+                    {
+                        // user source
+                        int id = int.Parse(Regex.Match(value.Substring(1), @"[0-9]+").Value);
+                        source = UserSource.Library.SkipWhile(x => x.Index < id).First().Uri;
+                    }
+                    else
+                    {
+                        value = Regex.Replace(value, @"^\d+\.\s*", "");
+                        // get wav source index
+                        source = WavFileStream.GetFileByName(value);
+                    }
                 }
 
                 bool wasChanged = false;
