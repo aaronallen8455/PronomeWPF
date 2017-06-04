@@ -110,9 +110,10 @@ namespace Pronome
             baseSourceSelector = resources["sourceSelector"] as ComboBoxFiltered;
             MakeLabel("Source", baseSourceSelector);
             // get array of sources
-            List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
-                .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
-                .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
+            List<string> sources = InternalSource.Library.Select(x => x.ToString()).ToList();
+            //List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
+            //    .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
+            //    .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
             sources[0] = "Pitch"; // replace Silentbeat with Pitch
             sources.AddRange(UserSource.Library.OrderBy(x => x.Label).Select(x => x.ToString())); // add custom sources
             baseSourceSelector.ItemsSource = sources;

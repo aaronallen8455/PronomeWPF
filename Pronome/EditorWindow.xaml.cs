@@ -102,10 +102,11 @@ namespace Pronome
             LayerPanel = layerPanel;
 
             // add items to source selector
-            List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
-                .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
-                .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
-            sources[0] = "Silent";
+            List<string> sources = InternalSource.Library.Select(x => x.ToString()).ToList();
+            //List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
+            //    .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
+            //    .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
+            //sources[0] = "Silent";
             sources.Insert(0, "Pitch");
             sources.AddRange(UserSource.Library.OrderBy(x => x.Label).Select(x => x.ToString()));
             //sources[0] = "Pitch"; // replace Silentbeat with Pitch
