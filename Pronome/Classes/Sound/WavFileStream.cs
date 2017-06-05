@@ -49,18 +49,17 @@ namespace Pronome
             }
             else
             {
-                //var s = new MemoryStream();
-                //using (var reader = new AudioFileReader(fileName))
-                //{
-                //    var resampler = new WdlResamplingSampleProvider(reader, 16000);
-                //    //WaveFileWriter.CreateWaveFile16("test.wav", resampler);
-                //    WaveFileWriter.WriteWavFileToStream(s, resampler.ToWaveProvider());
-                //    
-                //}
-                //s.Dispose();
-                // outside file
-                //rawStream = File.OpenRead(fileName);
-                sourceStream = new WaveFileReader(fileName);
+                if (File.Exists(fileName))
+                {
+                    sourceStream = new WaveFileReader(fileName);
+                }
+                else
+                {
+                    // if file doesn't exist, use silence
+                    Assembly myAssembly = Assembly.GetExecutingAssembly();
+                    rawStream = myAssembly.GetManifestResourceStream(InternalSource.Library[0].Uri);
+                    sourceStream = new WaveFileReader(rawStream);
+                }
             }
 
             

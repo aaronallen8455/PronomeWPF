@@ -182,7 +182,7 @@ namespace Pronome
             // handle single cell repeats
             while (Regex.IsMatch(beat, @"[^\]]\(\d+\)"))
             {
-                var match = Regex.Match(beat, @"([.\d+\-/*]+@?[a-gA-G]?[#b]?[Pp]?\d*)\((\d+)\)([\d\-+/*.]*)");
+                var match = Regex.Match(beat, @"([.\d+\-/*]+@?[a-gA-G]?[#b]?[Pp]?u?\d*)\((\d+)\)([\d\-+/*.]*)");
                 StringBuilder result = new StringBuilder(beat.Substring(0, match.Index));
                 for (int i = 0; i < int.Parse(match.Groups[2].Value); i++)
                 {
@@ -243,11 +243,20 @@ namespace Pronome
                     {
                         // it's a custom source
                         int id = int.Parse(source.Substring(1));
-                        return new BeatCell(match.Groups[1].Value, UserSource.Library.SkipWhile(src => src.Index < id).First().Uri);
+                        var s = UserSource.Library.SkipWhile(src => src.Index < id);
+                        return new BeatCell(match.Groups[1].Value, s.Any() ? s.First().Uri : "A4");
                     }
                     else // ref is a plain number (wav source) or "" base source.
                     {
-                        return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
+                        InternalSource src = null;
+                        if (source != "")
+                        {
+                            int id = int.Parse(source);
+                            src = InternalSource.Library.ElementAtOrDefault(id);
+                        }
+                        return new BeatCell(match.Groups[1].Value, source != "" ? (src == null ? "A4" : src.Uri) : "");
+
+                        //return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
                     }
 
                 }).ToArray();

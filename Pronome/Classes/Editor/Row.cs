@@ -341,13 +341,31 @@ namespace Pronome.Editor
                     string source = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|u?\d+|[a-gA-G][b#]?\d+)").Value;
                     if (char.IsNumber(source[0]) && source != "0")
                     {
-                        source = WavFileStream.FileNameIndex[int.Parse(source), 0];
+                        int id = int.Parse(source);
+                        var s = InternalSource.Library.ElementAtOrDefault(id);
+                        if (s == null)
+                        {
+                            source = "A4";
+                        }
+                        else
+                        {
+                            source = s.Uri;
+                        }
+                        //source = WavFileStream.FileNameIndex[int.Parse(source), 0];
                     }
                     else if (source[0] == 'u')
                     {
                         // user source
-                        int id = int.Parse(source.Substring(1)) - 1;
-                        source = UserSource.Library.SkipWhile(x => x.Index < id).First().Uri;
+                        int id = int.Parse(source.Substring(1));
+                        var s = UserSource.Library.SkipWhile(x => x.Index < id);
+                        if (s.Any())
+                        {
+                            source = s.First().Uri;
+                        }
+                        else
+                        {
+                            source = "A4";
+                        }
                     }
                     cell.Source = source;
                 }
@@ -986,7 +1004,13 @@ namespace Pronome.Editor
         private void Grid_MouseDownSelectBox(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             // unfocus any ui elements (prevents a value holding over to a group selection)
-            Keyboard.ClearFocus();
+            //Keyboard.ClearFocus();
+            //Keyboard.Focus(EditorWindow.Instance);
+            var focused = Keyboard.FocusedElement;
+            if (focused.GetType() == typeof (TextBox))
+            {
+                focused.RaiseEvent(new RoutedEventArgs(TextBox.LostFocusEvent));
+            }
 
             Rectangle selector = EditorWindow.Instance.Resources["boxSelect"] as Rectangle;
 

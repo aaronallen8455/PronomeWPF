@@ -103,13 +103,15 @@ namespace Pronome
             base.OnDropDownClosed(e);
         }
 
+        public bool AllowNull = false;
+
         /// <summary>
         /// Don't let the selection become NULL
         /// </summary>
         /// <param name="e"></param>
         protected override void OnSelectionChanged(SelectionChangedEventArgs e)
         {
-            if (e.AddedItems.Count == 0)
+            if (!AllowNull && e.AddedItems.Count == 0)
             {
                 e.Handled = true;
                 return;

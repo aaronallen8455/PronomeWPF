@@ -153,7 +153,7 @@ namespace Pronome
 
         override public string ToString()
         {
-            return $"u{Index}. {Label}";
+            return $"u{Index}.".PadRight(4) + Label;
         }
     }
 

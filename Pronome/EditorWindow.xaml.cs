@@ -185,7 +185,9 @@ namespace Pronome
                     sourceSelector.IsEnabled = false;
                     pitchInputPanel.Visibility = Visibility.Collapsed;
                     durationInput.Text = string.Empty;
-                    sourceSelector.SelectedItem = null;
+                    sourceSelector.AllowNull = true;
+                    sourceSelector.SelectedIndex = -1;
+                    sourceSelector.AllowNull = false;
                     pitchInput.Text = string.Empty;
                 }
                 else
@@ -217,8 +219,12 @@ namespace Pronome
                         {
                             // sources are not the same
                             durationInput.Text = string.Empty;
-                            sourceSelector.SelectedItem = null;
+                            
                             pitchInput.Text = string.Empty;
+
+                            sourceSelector.AllowNull = true;
+                            sourceSelector.SelectedIndex = -1;
+                            sourceSelector.AllowNull = false;
 
                             // if all cells are pitches, show a blank pitch input, otherwise hide it
                             if (Cell.SelectedCells.Cells.All(x =>
@@ -291,7 +297,9 @@ namespace Pronome
                 sourceSelector.IsEnabled = false;
                 // empty the fields and remove grid
                 durationInput.Text = string.Empty;
-                sourceSelector.SelectedItem = null;
+                sourceSelector.AllowNull = true;
+                sourceSelector.SelectedIndex = -1;
+                sourceSelector.AllowNull = false;
                 pitchInput.Text = string.Empty;
                 pitchInputPanel.Visibility = Visibility.Collapsed;
 
@@ -772,7 +780,7 @@ namespace Pronome
                         RepeatGroup belowGroup = null;
                         if (below.RepeatGroups.Any())
                         {
-                            belowGroup = below.RepeatGroups.Where(x => x.Cells.Last.Value == below).Last();
+                            belowGroup = below.RepeatGroups.Where(x => x.Cells.Last.Value == below).LastOrDefault();
                         }
 
                         // if above rep group, check against the LTM
@@ -820,7 +828,7 @@ namespace Pronome
                 {
                     // check that last's value is greater than the move amount.
                     double move = BeatCell.Parse(CurrentIncrement);
-                    if (last.Duration >= move)// + .0001)
+                    if (last.Duration > move)// + .0001)
                     {
                         e.CanExecute = true;
                     }
