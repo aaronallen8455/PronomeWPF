@@ -72,11 +72,6 @@ namespace Pronome.Editor
         public string OffsetValue;
 
         /// <summary>
-        /// Determines how close a mouse click needs to be to a grid line to count as that line. It's a factor of the increment size.
-        /// </summary>
-        public const float GridProx = .1f;
-
-        /// <summary>
         /// Total BPM length of the row
         /// </summary>
         public double Duration;

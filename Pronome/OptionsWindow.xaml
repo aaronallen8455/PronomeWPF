@@ -18,6 +18,9 @@
             </CollectionViewSource.SortDescriptions>
         </CollectionViewSource>-->
 
+        <local:HiHatStatusConverter x:Key="hihatStatusConverter"/>
+        <local:NullToBooleanConverter x:Key="nullToBoolConverter"/>
+
         <RoutedCommand x:Key="userSourceRemoveCommand"/>
     </Window.Resources>
     
@@ -145,45 +148,60 @@
             </Expander>
             <!--Custom Sound Library-->
             <Expander Header="Custom Sound Library">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Bottom">
-                        <WrapPanel Orientation="Vertical">
-                            <Label Target="{Binding ElementName=customSourceLabel}">Label</Label>
-                            <TextBox Name="customSourceLabel" Width="130">
-                                <TextBox.Text>
-                                    <Binding ElementName="customSoundListBox" Path="SelectedItem.Label">
-                                        <Binding.ValidationRules>
-                                            <local:UserSouceLabelRule/>
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </TextBox.Text>
-                            </TextBox>
-                        </WrapPanel>
-                        <WrapPanel Orientation="Vertical">
-                            <Label Target="{Binding ElementName=customSoundFilePath}">File Path</Label>
-                            <TextBlock Name="customSoundFilePath" Text="{Binding ElementName=customSoundListBox, Path=SelectedItem.Uri}"/>
-                        </WrapPanel>
-                        
-                    </StackPanel>
-                    <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
-                        <Button Name="customSoundNewButton" Click="customSoundNewButton_Click" Margin="0,0,0,5">New</Button>
-                        <Button Name="customSoundRemoveButton" Command="{StaticResource userSourceRemoveCommand}" Margin="0,0,0,0">Remove</Button>
-                    </StackPanel>
-                    
-                    <ListBox Name="customSoundListBox" 
-                             ItemsSource="{Binding Source={StaticResource userSourceLibrary}}" 
-                             HorizontalAlignment="Stretch"
-                             Height="110"
-                             SelectionMode="Single">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock>
-                                    u<Run Text="{Binding Path=Index}"/>. <Run Text="{Binding Path=Label}"/>
-                                </TextBlock>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
+                <StackPanel>
+                    <TextBlock>
+                        Manage your custom sound sample library.
+                    </TextBlock>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Bottom">
+                            <WrapPanel Orientation="Vertical">
+                                <Label Target="{Binding ElementName=customSourceLabel}">Label</Label>
+                                <TextBox Name="customSourceLabel" 
+                                         Width="130" 
+                                         IsEnabled="{Binding ElementName=customSoundListBox, Path=SelectedItem, Converter={StaticResource nullToBoolConverter}}">
+                                    <TextBox.Text>
+                                        <Binding ElementName="customSoundListBox" Path="SelectedItem.Label">
+                                            <Binding.ValidationRules>
+                                                <local:UserSouceLabelRule/>
+                                            </Binding.ValidationRules>
+                                        </Binding>
+                                    </TextBox.Text>
+                                </TextBox>
+                            </WrapPanel>
+                            <WrapPanel Orientation="Vertical">
+                                <Label Target="{Binding ElementName=customSoundHiHatStatus}">HiHat Status</Label>
+                                <ComboBox Name="customSoundHiHatStatus" 
+                                          IsEnabled="{Binding ElementName=customSoundListBox, Path=SelectedItem, Converter={StaticResource nullToBoolConverter}}"
+                                          SelectedIndex="{Binding ElementName=customSoundListBox, Path=SelectedItem.HiHatStatus, Converter={StaticResource hihatStatusConverter}}">
+                                    <ComboBoxItem>None</ComboBoxItem>
+                                    <ComboBoxItem>Open</ComboBoxItem>
+                                    <ComboBoxItem>Down</ComboBoxItem>
+                                </ComboBox>
+                            </WrapPanel>
+                            <WrapPanel Orientation="Vertical">
+                                <Label Target="{Binding ElementName=customSoundFilePath}">File Path</Label>
+                                <TextBlock Name="customSoundFilePath" Text="{Binding ElementName=customSoundListBox, Path=SelectedItem.Uri}"/>
+                            </WrapPanel>
+
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
+                            <Button Name="customSoundNewButton" Click="customSoundNewButton_Click" Margin="0,0,0,5">New</Button>
+                            <Button Name="customSoundRemoveButton" Command="{StaticResource userSourceRemoveCommand}" Margin="0,0,0,0">Remove</Button>
+                        </StackPanel>
+
+                        <ListBox Name="customSoundListBox" 
+                                 ItemsSource="{Binding Source={StaticResource userSourceLibrary}}" 
+                                 HorizontalAlignment="Stretch"
+                                 Height="110"
+                                 SelectionMode="Single">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </StackPanel>
             </Expander>
             <Expander Header="Wav File Creation">
                 <StackPanel>

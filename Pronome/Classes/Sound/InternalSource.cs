@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
+using System.Linq;
 
 
 namespace Pronome
@@ -92,5 +94,25 @@ namespace Pronome
             new InternalSource(50, "Pronome.wav.snare_xstick_v11.wav", "Snare XStick V2"),
             new InternalSource(51, "Pronome.wav.snare_xstick_v16.wav", "Snare XStick V3")
         };
+    }
+
+    public class CompleteSourceLibrary : IEnumerable<ISoundSource>
+    {
+        public IEnumerator<ISoundSource> GetEnumerator()
+        {
+            return GetAllSources().GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public IEnumerable<ISoundSource> GetAllSources()
+        {
+            return InternalSource.Library
+                .Select(x => (ISoundSource)x)
+                .Concat(UserSource.Library.Select(x => (ISoundSource)x));
+        }
     }
 }

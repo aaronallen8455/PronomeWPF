@@ -15,6 +15,7 @@
         <sys:Boolean x:Key="changesApplied">False</sys:Boolean>
         <sys:Boolean x:Key="cellSelected">False</sys:Boolean>
 
+        <self:CompleteSourceLibrary x:Key="completeSourceLibrary"/>
         <!--The base element for the rows.-->
         <Grid x:Key="rowBaseElement" 
               x:Shared="False"
@@ -294,6 +295,7 @@
                     <self:ComboBoxFiltered x:Name="sourceSelector" 
                               SelectionChanged="sourceSelector_SelectionChanged"
                               IsEnabled="{DynamicResource cellSelected}"/>
+                              <!--ItemsSource="{Binding Source={StaticResource completeSourceLibrary}}"-->
                 </StackPanel>
                 <StackPanel Name="pitchInputPanel">
                     <Label Target="{Binding ElementName=pitchInput}">Pitch</Label>

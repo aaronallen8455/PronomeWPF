@@ -162,6 +162,8 @@ namespace Pronome
 
             Metronome.AfterBeatParsed -= BuildUI;
             Metronome.AfterBeatParsed += BuildUI;
+            //Metronome.AfterBeatParsed -= UpdateUiForSelectedCell;
+            //Metronome.AfterBeatParsed += UpdateUiForSelectedCell;
 
             // remove any undo /redo actions from old state
             UndoStack.Clear();
@@ -171,7 +173,7 @@ namespace Pronome
         /// <summary>
         /// Will alter the UI to reflect a change in cell selection. Includes grid lines and inputs.
         /// </summary>
-        public void UpdateUiForSelectedCell()
+        public void UpdateUiForSelectedCell(object sender = null, EventArgs e = null)
         {
             // don't apply source changes
             ignoreSourceChange = true;
@@ -364,6 +366,7 @@ namespace Pronome
                     UpdateUiForSelectedCell();
                     SetChangesApplied(true);
                     Metronome.AfterBeatParsed -= BuildUI;
+                    //Metronome.AfterBeatParsed -= UpdateUiForSelectedCell;
                     Hide();
                 }
                 e.Cancel = true;

@@ -19,6 +19,11 @@ namespace Pronome.Editor
         /// </summary>
         public bool IsValid = false;
 
+        /// <summary>
+        /// Determines how close a mouse click needs to be to a grid line to count as that line. It's a factor of the increment size.
+        /// </summary>
+        public const float GridProx = .15f;
+
         public AddCell(double clickPosition, Row row) : base(row, "Add Cell")
         {
             ClickPosition = clickPosition;
@@ -43,7 +48,7 @@ namespace Pronome.Editor
                     bool outsideRepeat = true;
                     foreach (RepeatGroup rg in Row.RepeatGroups)
                     {
-                        if (position > rg.Position + rg.Duration - increment * Row.GridProx && position < rg.Position + rg.Duration * rg.Times)
+                        if (position > rg.Position + rg.Duration - increment * GridProx && position < rg.Position + rg.Duration * rg.Times)
                         {
                             outsideRepeat = false;
                             break;
@@ -64,11 +69,11 @@ namespace Pronome.Editor
                         }
 
                         // if the new cell will be above the current row. Above all cells and above all repeat group LTMs
-                        if (position > Row.Cells.Last().Position + Row.Cells.Last().ActualDuration - increment * Row.GridProx
+                        if (position > Row.Cells.Last().Position + Row.Cells.Last().ActualDuration - increment * GridProx
                             && (!Row.RepeatGroups.Any() ||
                             position > Row.RepeatGroups.Last.Value.Position 
                             + Row.RepeatGroups.Last.Value.Duration * Row.RepeatGroups.Last.Value.Times 
-                            + BeatCell.Parse(Row.RepeatGroups.Last.Value.LastTermModifier) - increment * Row.GridProx))
+                            + BeatCell.Parse(Row.RepeatGroups.Last.Value.LastTermModifier) - increment * GridProx))
                         {
                             AddCellAboveRow(position, increment);
                         }
@@ -84,18 +89,18 @@ namespace Pronome.Editor
                     // New cell is below selection
                     // is new cell in the offset area, or is inside the row?
                     // check by seeing if the position is less than the least posible grid line position within the row from the selected cell.
-                    if (position < -increment * Row.GridProx)//Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * Row.GridProx))
+                    if (position < -increment * GridProx)//Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment - increment * GridProx))
                     {
                         AddCellBelowRow(position, increment);
                     }
-                    else if (position >= Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment) - increment * Row.GridProx)
+                    else if (position >= Cell.SelectedCells.FirstCell.Position - ((int)(Cell.SelectedCells.FirstCell.Position / increment) * increment) - increment * GridProx)
                     {
                         // insert withinin row, below selection
                         // check if it's within a repeat's ghosted zone
                         bool outsideRepeat = true;
                         foreach (RepeatGroup rg in Row.RepeatGroups)
                         {
-                            if (position > rg.Position + rg.Duration - increment * Row.GridProx && position < rg.Position + rg.Duration * rg.Times)
+                            if (position > rg.Position + rg.Duration - increment * GridProx && position < rg.Position + rg.Duration * rg.Times)
                             {
                                 outsideRepeat = false;
                                 break;
@@ -181,8 +186,8 @@ namespace Pronome.Editor
         {
             double diff = position - Cell.SelectedCells.LastCell.Position;
             int div = (int)(diff / increment);
-            double lower = increment * div + Row.GridProx * increment;
-            double upper = lower + increment - Row.GridProx * 2 * increment;
+            double lower = increment * div + GridProx * increment;
+            double upper = lower + increment - GridProx * 2 * increment;
             Cell cell = null;
             // use upper or lower grid line?
             if (diff <= lower && diff > 0)
@@ -281,17 +286,14 @@ namespace Pronome.Editor
             double upper = lower + increment;// - .2 * increment;
 
             Cell cell = null;
-            //Cell below = null;
             // is lower, or upper in range?
-            if (lower + Row.GridProx * increment > diff)
+            if (lower + GridProx * increment > diff)
             {
-                //below = Cells.TakeWhile(x => x.Position < lastCellPosition + lower).Last();
                 cell = new Cell(Row);
                 cell.Position = lastCellPosition + lower;
             }
-            else if (upper - Row.GridProx * increment < diff)
+            else if (upper - GridProx * increment < diff)
             {
-                //below = Cells.TakeWhile(x => x.Position < lastCellPosition + upper).Last();
                 cell = new Cell(Row);
                 cell.Position = lastCellPosition + upper;
                 div++;
@@ -306,15 +308,12 @@ namespace Pronome.Editor
 
                     Cell below = Row.Cells[index - 1];
 
-                    //if (below.RepeatGroups.Any())
-                    //{
                     Group.AddToGroups(cell, below);
-                    //}
                     
                     // is new cell placed in the LTM zone of a rep group?
                     RepeatGroup repWithLtmToMod = null;
                     foreach (RepeatGroup rg in below.RepeatGroups.Where(
-                        x => x.Cells.Last.Value == below && position + increment * Row.GridProx > below.Position + below.ActualDuration))
+                        x => x.Cells.Last.Value == below && position + increment * GridProx > below.Position + below.ActualDuration))
                     {
                         repWithLtmToMod = rg;
                     }
@@ -438,12 +437,12 @@ namespace Pronome.Editor
             int div = (int)(diff / increment);
             // is it closer to lower of upper grid line?
             Cell cell = null;
-            if (diff % increment <= increment * Row.GridProx)
+            if (diff % increment <= increment * GridProx)
             {
                 // upper
                 cell = new Cell(Row);
             }
-            else if (diff % increment >= increment * Row.GridProx)
+            else if (diff % increment >= increment * GridProx)
             {
                 // lower
                 cell = new Cell(Row);
@@ -505,12 +504,12 @@ namespace Pronome.Editor
             int div = (int)(diff / increment);
             Cell cell = null;
             // is it in range of the left or right grid line?
-            if (diff % increment <= increment * Row.GridProx)
+            if (diff % increment <= increment * GridProx)
             {
                 // right
                 cell = new Cell(Row);
             }
-            else if (diff % increment >= increment * (1 - Row.GridProx))
+            else if (diff % increment >= increment * (1 - GridProx))
             {
                 // left
                 cell = new Cell(Row);
@@ -533,7 +532,7 @@ namespace Pronome.Editor
                     // see if the cell is being added to a rep group's LTM zone
                     RepeatGroup repWithLtmToMod = null;
                     foreach (RepeatGroup rg in below.RepeatGroups.Where(
-                        x => x.Cells.Last.Value == below && position + increment * Row.GridProx > below.Position + below.ActualDuration))
+                        x => x.Cells.Last.Value == below && position + increment * GridProx > below.Position + below.ActualDuration))
                     {
                         repWithLtmToMod = rg;
                     }
