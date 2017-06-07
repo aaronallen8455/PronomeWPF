@@ -21,7 +21,8 @@ namespace Pronome
         /// </summary>
         public VolumeSampleProvider VolumeProvider { get; set; }
 
-        public bool IsPitch { get { return false; } }
+        //public bool IsPitch { get { return false; } }
+        public ISoundSource SoundSource { get; set; }
 
         /**<summary>The layer that this sound is associated with</summary>*/
         public Layer Layer { get; set; }
@@ -31,27 +32,28 @@ namespace Pronome
 
         /**<summary>The byte rate for this stream.</summary>*/
         public int BytesPerSec { get; set; }
-        string fileName;
+        //string fileName;
 
         Stream rawStream;
 
         /**<summary>Constructor</summary>*/
-        public WavFileStream(string fileName)
+        public WavFileStream(ISoundSource source)
         {
-            this.fileName = fileName;
+            SoundSource = source;
+            //this.fileName = fileName;
             // check if it's an outside source or in assembly
             //Stream s = null;
-            if (fileName.IndexOf("Pronome") == 0)
+            if (source.Uri.IndexOf("Pronome") == 0)
             {
                 Assembly myAssembly = Assembly.GetExecutingAssembly();
-                rawStream = myAssembly.GetManifestResourceStream(fileName);
+                rawStream = myAssembly.GetManifestResourceStream(source.Uri);
                 sourceStream = new WaveFileReader(rawStream);
             }
             else
             {
-                if (File.Exists(fileName))
+                if (File.Exists(source.Uri))
                 {
-                    sourceStream = new WaveFileReader(fileName);
+                    sourceStream = new WaveFileReader(source.Uri);
                 }
                 else
                 {
@@ -87,8 +89,8 @@ namespace Pronome
                 SetSilentInterval(met.AudibleInterval, met.SilentInterval);
 
             // is this a hihat sound?
-            if (BeatCell.HiHatOpenFileNames.Contains(fileName)) IsHiHatOpen = true;
-            else if (BeatCell.HiHatClosedFileNames.Contains(fileName)) IsHiHatClose = true;
+            //if (BeatCell.HiHatOpenFileNames.Contains(fileName)) IsHiHatOpen = true;
+            //else if (BeatCell.HiHatClosedFileNames.Contains(fileName)) IsHiHatClose = true;
 
             chunkSizeOverflow = 1280 * WaveFormat.BlockAlign;
         }
@@ -201,68 +203,68 @@ namespace Pronome
             {
                 //if (intervalMultiplyCued)
                 //{
-                    BeatCollection.ConvertBpmValues();
+                BeatCollection.ConvertBpmValues();
 
                 double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
 
                 double div = ByteInterval / BlockAlignment;
+                div *= intervalMultiplyFactor;
+                Layer.Remainder *= intervalMultiplyFactor; // multiply remainder as well
+                Layer.Remainder += div - (int)div;
+                ByteInterval = (int)div * BlockAlignment;
+                
+                if (Layer.Remainder >= 1)
+                {
+                    ByteInterval += (int)Layer.Remainder * BlockAlignment;
+                    Layer.Remainder -= (int)Layer.Remainder;
+                }
+
+                // multiply the offset aswell
+                if (hasOffset)
+                {
+                    div = totalOffset / BlockAlignment;
                     div *= intervalMultiplyFactor;
-                    Layer.Remainder *= intervalMultiplyFactor; // multiply remainder as well
-                    Layer.Remainder += div - (int)div;
-                    ByteInterval = (int)div * BlockAlignment;
-                    
-                    if (Layer.Remainder >= 1)
-                    {
-                        ByteInterval += (int)Layer.Remainder * BlockAlignment;
-                        Layer.Remainder -= (int)Layer.Remainder;
-                    }
+                    offsetRemainder *= intervalMultiplyFactor;
+                    offsetRemainder += div - (int)div;
+                    totalOffset = (int)div * BlockAlignment;
+                }
+                if (initialOffset > 0)
+                {
+                    initialOffset *= intervalMultiplyFactor;
+                }
+                
+                // multiply the silent interval
+                if (Metronome.GetInstance().IsSilentInterval)
+                {
+                    double sid = currentSlntIntvl / BlockAlignment;
+                    sid *= intervalMultiplyFactor;
+                    SilentIntervalRemainder *= intervalMultiplyFactor;
+                    SilentIntervalRemainder += sid - (int)sid;
+                    currentSlntIntvl = (int)sid * BlockAlignment;
+                    SilentInterval *= intervalMultiplyFactor;
+                    AudibleInterval *= intervalMultiplyFactor;
+                }
 
-                    // multiply the offset aswell
-                    if (hasOffset)
-                    {
-                        div = totalOffset / BlockAlignment;
-                        div *= intervalMultiplyFactor;
-                        offsetRemainder *= intervalMultiplyFactor;
-                        offsetRemainder += div - (int)div;
-                        totalOffset = (int)div * BlockAlignment;
-                    }
-                    if (initialOffset > 0)
-                    {
-                        initialOffset *= intervalMultiplyFactor;
-                    }
-                    
-                    // multiply the silent interval
-                    if (Metronome.GetInstance().IsSilentInterval)
-                    {
-                        double sid = currentSlntIntvl / BlockAlignment;
-                        sid *= intervalMultiplyFactor;
-                        SilentIntervalRemainder *= intervalMultiplyFactor;
-                        SilentIntervalRemainder += sid - (int)sid;
-                        currentSlntIntvl = (int)sid * BlockAlignment;
-                        SilentInterval *= intervalMultiplyFactor;
-                        AudibleInterval *= intervalMultiplyFactor;
-                    }
+                //// do the hihat cutoff interval
+                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration != 0)
+                {
+                    div = CurrentHiHatDuration / BlockAlignment;
+                    CurrentHiHatDuration = (int)(div * intervalMultiplyFactor) * BlockAlignment;
+                }
 
-                    //// do the hihat cutoff interval
-                    if (IsHiHatOpen && CurrentHiHatDuration != 0)
-                    {
-                        div = CurrentHiHatDuration / BlockAlignment;
-                        CurrentHiHatDuration = (int)(div * intervalMultiplyFactor) * BlockAlignment;
-                    }
+                // recalculate the hihat count and byte to cutoff values
+                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && Layer.HasHiHatClosed)
+                {
+                    int cycleSize = 640 * BlockAlignment;
+                    long countDiff = HiHatCycleToMute - cycle;
+                    long totalBytes = countDiff * cycleSize + HiHatByteToMute;
+                    totalBytes = (long)(totalBytes * intervalMultiplyFactor);
+                    HiHatCycleToMute = cycle + totalBytes / cycleSize;
+                    HiHatByteToMute = totalBytes % cycleSize;
+                    HiHatByteToMute -= HiHatByteToMute % BlockAlignment; // align
+                }
 
-                    // recalculate the hihat count and byte to cutoff values
-                    if (IsHiHatOpen && Layer.HasHiHatClosed)
-                    {
-                        int cycleSize = 640 * BlockAlignment;
-                        long countDiff = HiHatCycleToMute - cycle;
-                        long totalBytes = countDiff * cycleSize + HiHatByteToMute;
-                        totalBytes = (long)(totalBytes * intervalMultiplyFactor);
-                        HiHatCycleToMute = cycle + totalBytes / cycleSize;
-                        HiHatByteToMute = totalBytes % cycleSize;
-                        HiHatByteToMute -= HiHatByteToMute % BlockAlignment; // align
-                    }
-
-                    intervalMultiplyCued = false;
+                intervalMultiplyCued = false;
                 //}
             }
         }
@@ -297,7 +299,8 @@ namespace Pronome
                     silentIntvlSilent = IsSilentIntervalSilent();
 
                 // if this is a hihat down, pass it's time position to all hihat opens in this layer
-                if (IsHiHatClose && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
+                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed 
+                    && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
                 {
                     int cycleSize = 640 * BlockAlignment;
                     int total = totalOffset;
@@ -305,7 +308,7 @@ namespace Pronome
                     int bytes = total % cycleSize;
 
                     // assign the hihat cutoff to all open hihat sounds.
-                    IEnumerable hhos = Layer.AudioSources.Values.Where(x => !x.IsPitch && ((WavFileStream)x).IsHiHatOpen);
+                    IEnumerable hhos = Layer.AudioSources.Values.Where(x => !x.SoundSource.IsPitch && ((WavFileStream)x).SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open);
                     foreach (WavFileStream hho in hhos)
                     {
                         hho.HiHatByteToMute = bytes;
@@ -405,8 +408,8 @@ namespace Pronome
         protected long currentSlntIntvl;
         protected bool silentIntvlSilent = false;
         protected double SilentIntervalRemainder; // fractional portion
-        protected bool IsHiHatOpen = false; // is this an open hihat sound?
-        protected bool IsHiHatClose = false; // is this a close hihat sound?
+        //protected bool IsHiHatOpen = false; // is this an open hihat sound?
+        //protected bool IsHiHatClose = false; // is this a close hihat sound?
         protected bool HiHatOpenIsMuted = false; // an open hihat sound was muted so currenthihatduration should not be increased by closed sounds being muted.
 
         public void SetSilentInterval(double audible, double silent)
@@ -455,7 +458,7 @@ namespace Pronome
             //}
             
             // set the upcoming hihat close time for hihat open sounds
-            if (!hasOffset && IsHiHatOpen && cycle == HiHatCycleToMute - 1)
+            if (!hasOffset && SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && cycle == HiHatCycleToMute - 1)
             {
                 CurrentHiHatDuration = HiHatByteToMute + count;
             }
@@ -482,7 +485,7 @@ namespace Pronome
                 {
                     if (!silentIntvlSilent && !currentlyMuted)
                     {
-                        if (IsHiHatOpen)
+                        if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open)
                         {
                             HiHatOpenIsMuted = false;
                         }
@@ -492,14 +495,14 @@ namespace Pronome
                     ByteInterval = GetNextInterval();
 
                     // if this is a hihat down, pass it's time position to all hihat opens in this layer
-                    if (IsHiHatClose && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted)
+                    if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted)
                     {
                         long total = bytesCopied + ByteInterval + offset;
                         long cycles = total / count + cycle;
                         long bytes = total % count;
                         
                         // assign the hihat cutoff to all open hihat sounds.
-                        IEnumerable hhos = Layer.AudioSources.Where(x => BeatCell.HiHatOpenFileNames.Contains(x.Key)).Select(x => x.Value);
+                        IEnumerable hhos = Layer.AudioSources.Select(x => x.Value).Where(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open);
                         foreach (WavFileStream hho in hhos)
                         {
                             hho.HiHatByteToMute = bytes;
@@ -511,7 +514,7 @@ namespace Pronome
                 int chunkSize = (int)new long[] { ByteInterval, count - bytesCopied }.Min();
 
                 // if this is a hihat open sound, determine when it should be stopped by a hihat close sound.
-                if (IsHiHatOpen && CurrentHiHatDuration > 0)
+                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration > 0)
                 {
                     if (chunkSize >= CurrentHiHatDuration)
                     {
@@ -532,7 +535,7 @@ namespace Pronome
                 {
                     bool use2 = result2 > 0; // true if the sourcestream was progressed silently.
                     // if hihat closing happens while hihat open sound is in silence
-                    if (IsHiHatOpen && Layer.HasHiHatClosed && CurrentHiHatDuration > 0)
+                    if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && Layer.HasHiHatClosed && CurrentHiHatDuration > 0)
                     {
                         CurrentHiHatDuration -= use2 ? result2 : chunkSize;
                         if (CurrentHiHatDuration < 0)
@@ -546,7 +549,7 @@ namespace Pronome
                 }
                 else
                 {
-                    if (IsHiHatOpen && CurrentHiHatDuration == chunkSize)
+                    if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration == chunkSize)
                     {
                         HiHatOpenIsMuted = true;
                         CurrentHiHatDuration = 0;

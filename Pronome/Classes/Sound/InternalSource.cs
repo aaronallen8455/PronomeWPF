@@ -6,7 +6,7 @@ using System.Linq;
 namespace Pronome
 {
     /// <summary>
-    /// A class for enumerating the internal sound sources
+    /// A class for enumerating and describing the internal sound sources
     /// </summary>
     public class InternalSource : ISoundSource
     {
@@ -20,7 +20,7 @@ namespace Pronome
 
         public HiHatStatuses HiHatStatus { get; }
 
-        public bool IsPitch { get => false; }
+        public bool IsPitch { get; set; }
 
         public InternalSource(int index, string uri, string label = "", HiHatStatuses hhStatus = HiHatStatuses.None)
         {
@@ -36,11 +36,50 @@ namespace Pronome
         /// <returns></returns>
         public override string ToString()
         {
+            if (Label == "Pitch")
+            {
+                return "Pitch";
+            }
             return (Index.ToString() + '.').PadRight(4) + Label;
+        }
+
+        /// <summary>
+        /// Used for a default value or if a source cannot be found.
+        /// </summary>
+        /// <returns></returns>
+        static public InternalSource GetDefault()
+        {
+            return new InternalSource(-1, "A4") { IsPitch = true };
+        }
+
+        /// <summary>
+        /// Create a pitch stub
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <returns></returns>
+        static public InternalSource GetPitch(string uri)
+        {
+            return new InternalSource(-1, uri) { IsPitch = true };
+        }
+
+        static public ISoundSource GetFromUri(string uri)
+        {
+            if (PitchStream.IsPitchSourceName(uri))
+            {
+                return GetPitch(uri);
+            }
+            if (uri.IndexOf("Pronome") == 0)
+            {
+                // internal wav
+                return Library.Find(x => x.Uri == uri);
+            }
+            var custom = UserSource.Library.Where(x => x.Uri == uri).FirstOrDefault();
+            return custom == null ? GetDefault() : (ISoundSource)custom;
         }
 
         public static List<InternalSource> Library = new List<InternalSource>()
         {
+            //new InternalSource(-1, "A4", "Pitch") { IsPitch = true },
             new InternalSource(0, WavFileStream.SilentSourceName, "Silent"),
             new InternalSource(1, "Pronome.wav.crash1_edge_v5.wav", "Crash Edge V1"),
             new InternalSource(2, "Pronome.wav.crash1_edge_v8.wav", "Crash Edge V2"),

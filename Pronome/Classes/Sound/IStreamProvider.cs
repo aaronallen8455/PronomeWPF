@@ -4,7 +4,11 @@ namespace Pronome
 {
     public interface IStreamProvider
     {
-        bool IsPitch { get; }
+        //bool IsPitch { get; }
+        /// <summary>
+        /// Contains info about the source.
+        /// </summary>
+        ISoundSource SoundSource { get; set; }
 
         long GetNextInterval();
 

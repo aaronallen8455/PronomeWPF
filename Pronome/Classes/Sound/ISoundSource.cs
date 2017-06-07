@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Pronome
 {
+    /// <summary>
+    /// Provides information about a sound source.
+    /// </summary>
     public interface ISoundSource
     {
         /// <summary>

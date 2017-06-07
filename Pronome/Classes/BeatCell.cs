@@ -15,8 +15,8 @@ namespace Pronome
         /**<summary>The time length in quarter notes</summary>*/
         public double Bpm; // value expressed in BPM time.
 
-        /**<summary>The name of the audio source. Could be a wav file or a pitch.</summary>*/
-        public string SourceName;
+        ///**<summary>Holds info about the sound source.</summary>*/
+        public ISoundSource SoundSource;
 
         /**<summary>The layer that this cell belongs to.</summary>*/
         public Layer Layer;
@@ -57,43 +57,48 @@ namespace Pronome
          * <param name="beat">The numeric expression to be parsed.</param>
          * <param name="sourceName">The name of the audio source used by this cell.</param>
          */
-        public BeatCell(string beat, string sourceName = "")
+        public BeatCell(string beat, Layer layer, ISoundSource source = null)
         {
-            SourceName = sourceName;
+            Layer = layer;
+
+            SoundSource = source;
             Bpm = Parse(beat);
 
-            // is it a hihat closed or open sound?
-            if (HiHatOpenFileNames.Contains(sourceName))
+            // is it a hihat closed or open sound? use layer source if null
+            if (source == null)
             {
-                IsHiHatOpen = true;
+                IsHiHatOpen = Layer.BaseAudioSource.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open;
+                IsHiHatClosed = Layer.BaseAudioSource.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed;
             }
-            else if (HiHatClosedFileNames.Contains(sourceName))
+            else
             {
-                IsHiHatClosed = true;
+                IsHiHatOpen = source.HiHatStatus == InternalSource.HiHatStatuses.Open;
+                IsHiHatClosed = source.HiHatStatus == InternalSource.HiHatStatuses.Closed;
             }
+            
         }
 
-        /**<summary>A list of the HiHat open sound file names.</summary>*/
-        static public string[] HiHatOpenFileNames = new string[]
-        {
-            "Pronome.wav.hihat_half_center_v4.wav",
-            "Pronome.wav.hihat_half_center_v7.wav",
-            "Pronome.wav.hihat_half_center_v10.wav",
-            "Pronome.wav.hihat_half_edge_v7.wav",
-            "Pronome.wav.hihat_half_edge_v10.wav",
-            "Pronome.wav.hihat_open_center_v4.wav",
-            "Pronome.wav.hihat_open_center_v7.wav",
-            "Pronome.wav.hihat_open_center_v10.wav",
-            "Pronome.wav.hihat_open_edge_v7.wav",
-            "Pronome.wav.hihat_open_edge_v10.wav"
-        };
+        ///**<summary>A list of the HiHat open sound file names.</summary>*/
+        //static public string[] HiHatOpenFileNames = new string[]
+        //{
+        //    "Pronome.wav.hihat_half_center_v4.wav",
+        //    "Pronome.wav.hihat_half_center_v7.wav",
+        //    "Pronome.wav.hihat_half_center_v10.wav",
+        //    "Pronome.wav.hihat_half_edge_v7.wav",
+        //    "Pronome.wav.hihat_half_edge_v10.wav",
+        //    "Pronome.wav.hihat_open_center_v4.wav",
+        //    "Pronome.wav.hihat_open_center_v7.wav",
+        //    "Pronome.wav.hihat_open_center_v10.wav",
+        //    "Pronome.wav.hihat_open_edge_v7.wav",
+        //    "Pronome.wav.hihat_open_edge_v10.wav"
+        //};
 
-        /**<summary>A list of the HiHat closed sound file names.</summary>*/
-        static public string[] HiHatClosedFileNames = new string[]
-        {
-            "Pronome.wav.hihat_pedal_v3.wav",
-            "Pronome.wav.hihat_pedal_v5.wav"
-        };
+        ///**<summary>A list of the HiHat closed sound file names.</summary>*/
+        //static public string[] HiHatClosedFileNames = new string[]
+        //{
+        //    "Pronome.wav.hihat_pedal_v3.wav",
+        //    "Pronome.wav.hihat_pedal_v5.wav"
+        //};
 
         /**<summary>Parse a math expression string.</summary>
          * <param name="str">String to parse.</param>

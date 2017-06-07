@@ -247,27 +247,29 @@ namespace Pronome
                 
                     await window.Dispatcher.InvokeAsync(() =>
                     {
-                        Layer.NewBaseSource(pitchInput.Text);
+                        Layer.NewBaseSource(InternalSource.GetPitch(pitchInput.Text));
                     });
                     window.playButton.IsEnabled = true;
                 }
                 else
                 {
-                    string newSource = string.Empty;
-                    bool custom = sourceName.First() == 'u';
+                    //bool custom = sourceName.First() == 'u';
                     sourceName = sourceName.Substring(sourceName.IndexOf('.') + 1).TrimStart();
-                    // is it a user defined source?
-                    if (custom)
-                    {
-                        newSource = UserSource.Library.Where(x => x.Label == sourceName).First().Uri;
-                    }
-                    else
-                    {
-                        newSource = WavFileStream.GetFileByName(sourceName);
-                    }
+
+                    ISoundSource newSource = InternalSource.GetFromUri(sourceName);
+                    //// is it a user defined source?
+                    //if (custom)
+                    //{
+                    //    newSource = UserSource.Library.Where(x => x.Label == sourceName).First().Uri;
+                    //}
+                    //else
+                    //{
+                    //    newSource = WavFileStream.GetFileByName(sourceName);
+                    //}
+
 
                     // set new base source
-                    if (newSource != Layer.BaseSourceName)
+                    if (newSource != Layer.BaseAudioSource.SoundSource)
                     {
                         (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
 
@@ -293,7 +295,7 @@ namespace Pronome
                 {
                     src += '4';
                 }
-                Layer.NewBaseSource(src);
+                Layer.NewBaseSource(InternalSource.GetPitch(src));
             }
         }
 

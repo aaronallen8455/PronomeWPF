@@ -294,8 +294,8 @@
                     <Label Target="{Binding ElementName=sourceSelector}">Source</Label>
                     <self:ComboBoxFiltered x:Name="sourceSelector" 
                               SelectionChanged="sourceSelector_SelectionChanged"
+                              ItemsSource="{Binding Source={StaticResource completeSourceLibrary}}"
                               IsEnabled="{DynamicResource cellSelected}"/>
-                              <!--ItemsSource="{Binding Source={StaticResource completeSourceLibrary}}"-->
                 </StackPanel>
                 <StackPanel Name="pitchInputPanel">
                     <Label Target="{Binding ElementName=pitchInput}">Pitch</Label>

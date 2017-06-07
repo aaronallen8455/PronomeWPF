@@ -105,14 +105,14 @@ namespace Pronome
          * <param name="offset">Amount of offset</param>
          * <param name="pan">Set the pan</param>
          * <param name="volume">Set the volume</param> */
-        public Layer(string beat, string baseSourceName = null, string offset = "", float pan = 0f, float volume = 1f)
+        public Layer(string beat, ISoundSource baseSource = null, string offset = "", float pan = 0f, float volume = 1f)
         {
-            if (baseSourceName == null) // auto generate a pitch if no source is specified
+            if (baseSource == null) // auto generate a pitch if no source is specified
             {
-                SetBaseSource(GetAutoPitch());
+                SetBaseSource(InternalSource.GetPitch(GetAutoPitch()));
             }
             else
-                SetBaseSource(baseSourceName);
+                SetBaseSource(baseSource);
 
             if (offset != "")
                 SetOffset(offset);
@@ -237,14 +237,14 @@ namespace Pronome
                     if (Regex.IsMatch(source, @"^[a-gA-GpP]"))
                     {
                         // is a pitch reference
-                        return new BeatCell(match.Groups[1].Value, source);
+                        return new BeatCell(match.Groups[1].Value, this, new InternalSource(-1, source) { IsPitch = true });
                     }
                     else if (Regex.IsMatch(source, @"^u\d+$"))
                     {
                         // it's a custom source
                         int id = int.Parse(source.Substring(1));
                         var s = UserSource.Library.SkipWhile(src => src.Index < id);
-                        return new BeatCell(match.Groups[1].Value, s.Any() ? s.First().Uri : "A4");
+                        return new BeatCell(match.Groups[1].Value, this, s.Any() ? s.First() as ISoundSource : InternalSource.GetDefault());
                     }
                     else // ref is a plain number (wav source) or "" base source.
                     {
@@ -254,7 +254,7 @@ namespace Pronome
                             int id = int.Parse(source);
                             src = InternalSource.Library.ElementAtOrDefault(id);
                         }
-                        return new BeatCell(match.Groups[1].Value, source != "" ? (src == null ? "A4" : src.Uri) : "");
+                        return new BeatCell(match.Groups[1].Value, this, source != "" ? (src == null ? InternalSource.GetDefault() : src) : null);
 
                         //return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
                     }
@@ -354,7 +354,7 @@ namespace Pronome
         }
 
         /**<summary>Apply a new base source to the layer.</summary>*/
-        public void NewBaseSource(string baseSourceName)
+        public void NewBaseSource(ISoundSource baseSource)
         {
             if (BaseAudioSource != null && Beat != null)
             {
@@ -372,19 +372,19 @@ namespace Pronome
 
                 var met = Metronome.GetInstance();
                 // is new source a pitch or a wav?
-                if (PitchStream.IsPitchSourceName(baseSourceName))
+                if (baseSource.IsPitch)
                 {
                     // Pitch
                     
-                    PitchStream newSource = new PitchStream()
+                    PitchStream newSource = new PitchStream(baseSource)
                     {
-                        BaseFrequency = PitchStream.ConvertFromSymbol(baseSourceName),
+                        //BaseFrequency = PitchStream.ConvertFromSymbol(baseSource.Uri),
                         Layer = this,
                         Volume = Volume * met.Volume,
                         Pan = Pan
                     };
 
-                    if (IsPitch)
+                    if (BaseAudioSource.SoundSource.IsPitch)
                     {
                         // we can resuse the old beat collection
                         BaseAudioSource.BeatCollection.isWav = false;
@@ -392,10 +392,19 @@ namespace Pronome
 
                         foreach (BeatCell bc in Beat.Where(x => x.AudioSource == BaseAudioSource))
                         {
-                            if (bc.SourceName == "")
-                                newSource.AddFrequency(baseSourceName, bc);
+                            if (bc.SoundSource == null)
+                            {
+                                newSource.AddFrequency(BaseAudioSource.SoundSource.Uri, bc);
+                            }
                             else
-                                newSource.AddFrequency(bc.SourceName, bc);
+                            {
+                                newSource.AddFrequency(baseSource.Uri, bc);
+                            }
+                            //newSource.AddFrequency(bc.SoundSource.Uri, bc);
+                            //if (bc.SourceName == "")
+                            //    newSource.AddFrequency(baseSourceName, bc);
+                            //else
+                            //    newSource.AddFrequency(bc.SourceName, bc);
 
                             bc.AudioSource = newSource;
                         }
@@ -405,7 +414,7 @@ namespace Pronome
                         // old base was a wav, we need to rebuild the beatcollection
                         List<double> beats = new List<double>();
                         double accumulator = 0;
-                        int indexOfFirst = Beat.FindIndex(x => x.AudioSource.IsPitch || x.SourceName == "");
+                        int indexOfFirst = Beat.FindIndex(x => x.AudioSource.SoundSource.IsPitch || x.SoundSource == null);
                         
                         if (indexOfFirst > -1)
                         {
@@ -413,10 +422,11 @@ namespace Pronome
                             {
                                 int index = indexOfFirst + i;
                                 if (index >= Beat.Count) index -= Beat.Count;
-                                if (Beat[index].AudioSource.IsPitch || Beat[index].SourceName == "")
+                                if (Beat[index].AudioSource.SoundSource.IsPitch || Beat[index].SoundSource == null)
                                 {
                                     Beat[index].AudioSource = newSource;
-                                    newSource.AddFrequency(Beat[index].SourceName == "" ? baseSourceName : Beat[index].SourceName, Beat[index]);
+                                    newSource.AddFrequency(Beat[index].SoundSource == null ? baseSource.Uri : Beat[index].SoundSource.Uri, Beat[index]);
+                                    //newSource.AddFrequency(Beat[index].SourceName == "" ? baseSourceName : Beat[index].SourceName, Beat[index]);
                                     if (i > 0)
                                     {
                                         beats.Add(accumulator);
@@ -439,30 +449,30 @@ namespace Pronome
                 else
                 {
                     // Wav
-                    WavFileStream newSource = new WavFileStream(baseSourceName)
+                    WavFileStream newSource = new WavFileStream(baseSource)
                     {
                         Layer = this,
                         Volume = Volume * met.Volume,
                         Pan = Pan
                     };
 
-                    foreach (BeatCell bc in Beat.Where(x => x.SourceName == ""))
+                    foreach (BeatCell bc in Beat.Where(x => x.SoundSource == null))
                     {
                         bc.AudioSource = newSource;
                     }
                     // if this was formerly a pitch layer, we'll need to rebuild the pitch source, freq enumerator and beatCollection
                     // this is because of cells that have a pitch modifier - not using base pitch
-                    if (IsPitch && Beat.Where(x => x.SourceName != "").Any(x => !char.IsNumber(x.SourceName[0])))
+                    if (IsPitch && Beat.Where(x => x.SoundSource != null).Any(x => !char.IsNumber(x.SoundSource.Uri[0])))
                     {
                         // see if we need to make a new pitch source
-                        int indexOfFirstPitch = Beat.FindIndex(x => x.AudioSource.IsPitch);
+                        int indexOfFirstPitch = Beat.FindIndex(x => x.AudioSource.SoundSource.IsPitch);
                         List<double> beats = new List<double>();
                         double accumulator = 0;
 
                         if (indexOfFirstPitch > -1)
                         {
                             // build the new pitch source
-                            var newPitchSource = new PitchStream()
+                            var newPitchSource = new PitchStream(InternalSource.GetDefault())
                             {
                                 Layer = this,
                                 Volume = Volume * met.Volume,
@@ -474,10 +484,10 @@ namespace Pronome
                             {
                                 int index = indexOfFirstPitch + i;
                                 if (index >= Beat.Count) index -= Beat.Count;
-                                if (Beat[index].AudioSource.IsPitch)
+                                if (Beat[index].AudioSource.SoundSource.IsPitch)
                                 {
                                     Beat[index].AudioSource = newPitchSource;
-                                    newPitchSource.AddFrequency(Beat[index].SourceName, Beat[index]);
+                                    newPitchSource.AddFrequency(Beat[index].SoundSource.Uri, Beat[index]);
                                     if (i > 0)
                                     {
                                         beats.Add(accumulator);
@@ -500,14 +510,14 @@ namespace Pronome
                         // build the beatcollection for the new wav base source.
                         beats.Clear();
                         accumulator = 0;
-                        int indexOfFirst = Beat.FindIndex(x => x.SourceName == "");
+                        int indexOfFirst = Beat.FindIndex(x => x.SoundSource == null);
                         if (indexOfFirst > -1)
                         {
                             for (int i=0; i<Beat.Count; i++)
                             {
                                 int index = indexOfFirst + i;
                                 if (index >= Beat.Count) index -= Beat.Count;
-                                if (Beat[index].SourceName == "" && i > 0)
+                                if (Beat[index].SoundSource == null && i > 0)
                                 {
                                     beats.Add(accumulator);
                                     accumulator = 0;
@@ -538,15 +548,18 @@ namespace Pronome
                 newBaseSource.BeatCollection.isWav = !IsPitch;
 
                 // update hihat statuses
-                HasHiHatClosed = Beat.Where(x => BeatCell.HiHatClosedFileNames.Contains(x.SourceName)).Any();
-                HasHiHatOpen = Beat.Where(x => BeatCell.HiHatOpenFileNames.Contains(x.SourceName)).Any();
+                HasHiHatClosed = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed).Any();
+                if (!HasHiHatClosed)
+                    HasHiHatOpen = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
+                //HasHiHatClosed = Beat.Where(x => BeatCell.HiHatClosedFileNames.Contains(x.SourceName)).Any();
+                //HasHiHatOpen = Beat.Where(x => BeatCell.HiHatOpenFileNames.Contains(x.SourceName)).Any();
                 // do initial muting
                 foreach (IStreamProvider src in AudioSources.Values)
                 {
                     src.SetInitialMuting();
                 }
 
-                BaseSourceName = baseSourceName;
+                BaseSourceName = baseSource.Uri;
 
                 BaseAudioSource = null;
                 BaseAudioSource = newBaseSource;
@@ -555,11 +568,11 @@ namespace Pronome
                 double offset;
                 if (!IsPitch)
                 {
-                    offset = Beat.TakeWhile(x => x.SourceName != "").Select(x => x.Bpm).Sum() + Offset;
+                    offset = Beat.TakeWhile(x => x.SoundSource != null).Select(x => x.Bpm).Sum() + Offset;
                 }
                 else
                 {
-                    offset = Beat.TakeWhile(x => x.SourceName == WavFileStream.SilentSourceName).Select(x => x.Bpm).Sum() + Offset;
+                    offset = Beat.TakeWhile(x => x.SoundSource == InternalSource.Library[0]).Select(x => x.Bpm).Sum() + Offset;
                 }
                 offset = BeatCell.ConvertFromBpm(offset, BaseAudioSource);
                 BaseAudioSource.SetOffset(offset);
@@ -574,25 +587,16 @@ namespace Pronome
 
         /** <summary>Set the base source. Will also set Base pitch if a pitch.</summary>
          * <param name="baseSourceName">Name of source to use.</param> */
-        public void SetBaseSource(string baseSourceName)
+        public void SetBaseSource(ISoundSource baseSource)
         {
-            // remove base source from AudioSources if exists
-            //if (!IsPitch && BaseSourceName != null)
-            //{
-            //    // remove the old base wav source from mixer
-            //    Metronome.GetInstance().RemoveAudioSource(BaseAudioSource);
-            //    AudioSources.Remove(BaseSourceName); // for pitch layers, base source is not in AudioSources.
-            //    BaseAudioSource.Dispose();
-            //} 
 
             // is sample or pitch source?
-            if (Regex.IsMatch(baseSourceName, @"^[A-Ga-g][#b]?\d+$|^[pP][\d.]+$"))
+            if (baseSource.IsPitch)
             {
                 if (BasePitchSource == default(PitchStream))
                 {
-                    BasePitchSource = new PitchStream()
+                    BasePitchSource = new PitchStream(baseSource)
                     {
-                        BaseFrequency = PitchStream.ConvertFromSymbol(baseSourceName),
                         Layer = this,
                         Volume = Volume
                     };
@@ -607,14 +611,6 @@ namespace Pronome
             }
             else
             {
-                // remove pitch source if this was formerly a pitch based layer
-                //if (IsPitch)
-                //{
-                //    // remove from mixer
-                //    Metronome.GetInstance().RemoveAudioSource(BasePitchSource);
-                //    BasePitchSource.Dispose();
-                //    BasePitchSource = null;
-                //}
 
                 if (AudioSources.ContainsKey(""))
                 {
@@ -622,7 +618,7 @@ namespace Pronome
                     AudioSources.Remove("");
                 }
 
-                BaseAudioSource = new WavFileStream(baseSourceName)
+                BaseAudioSource = new WavFileStream(baseSource)
                 {
                     Layer = this,
                     Volume = Volume
@@ -631,11 +627,14 @@ namespace Pronome
                 AudioSources.Add("", BaseAudioSource);
                 IsPitch = false;
 
-                if (BeatCell.HiHatOpenFileNames.Contains(baseSourceName)) HasHiHatOpen = true;
-                else if (BeatCell.HiHatClosedFileNames.Contains(baseSourceName)) HasHiHatClosed = true;
+                HasHiHatClosed = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed).Any();
+                if (!HasHiHatClosed)
+                    HasHiHatOpen = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
+                //if (BeatCell.HiHatOpenFileNames.Contains(baseSourceName)) HasHiHatOpen = true;a
+                //else if (BeatCell.HiHatClosedFileNames.Contains(baseSourceName)) HasHiHatClosed = true;
             }
 
-            BaseSourceName = baseSourceName;
+            BaseSourceName = baseSource.Uri;
 
             // reassign source to existing cells that use the base source. base source beats will have an empty string
             if (Beat != null)
@@ -703,7 +702,7 @@ namespace Pronome
                 if (IsPitch) // need to rebuild the pitch source
                 {
                     BasePitchSource?.Frequencies.Clear();
-                    BasePitchSource.BaseFrequency = PitchStream.ConvertFromSymbol(BaseSourceName);
+                    //BasePitchSource.BaseFrequency = PitchStream.ConvertFromSymbol(BaseSourceName);
                 }
                 else
                 {
@@ -719,45 +718,51 @@ namespace Pronome
             }
 
             // refresh the hashihatxxx bools
-            if (BeatCell.HiHatOpenFileNames.Contains(BaseSourceName)) HasHiHatOpen = true;
-            else if (BeatCell.HiHatClosedFileNames.Contains(BaseSourceName)) HasHiHatClosed = true;
+            HasHiHatOpen = BaseAudioSource.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open;
+            if (!HasHiHatOpen)
+                HasHiHatClosed = BaseAudioSource.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed;
+            //if (BeatCell.HiHatOpenFileNames.Contains(BaseSourceName)) HasHiHatOpen = true;
+            //else if (BeatCell.HiHatClosedFileNames.Contains(BaseSourceName)) HasHiHatClosed = true;
 
             for (int i = 0; i < beat.Count(); i++)
             {
                 beat[i].Layer = this;
-                if (beat[i].SourceName != string.Empty && !PitchStream.IsPitchSourceName(beat[i].SourceName))// !Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[Pp][\d.]+$"))
+                if (beat[i].SoundSource != null && !beat[i].SoundSource.IsPitch)// !Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[Pp][\d.]+$"))
                 {
+                    // Wavs
                     // should cells of the same source use the same audiosource instead of creating new source each time? Yes
-                    if (!AudioSources.ContainsKey(beat[i].SourceName))
+                    if (!AudioSources.ContainsKey(beat[i].SoundSource.Uri))
                     {
-                        var wavStream = new WavFileStream(beat[i].SourceName)
+                        var wavStream = new WavFileStream(beat[i].SoundSource)
                         {
                             Layer = this
                         };
-                        AudioSources.Add(beat[i].SourceName, wavStream);
+                        AudioSources.Add(beat[i].SoundSource.Uri, wavStream);
                     }
-                    beat[i].AudioSource = AudioSources[beat[i].SourceName];
-
-                    if (BeatCell.HiHatOpenFileNames.Contains(beat[i].SourceName)) HasHiHatOpen = true;
-                    else if (BeatCell.HiHatClosedFileNames.Contains(beat[i].SourceName)) HasHiHatClosed = true;
+                    beat[i].AudioSource = AudioSources[beat[i].SoundSource.Uri];
+                    // set hihat status for beat sources
+                    HasHiHatClosed = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed).Any();
+                    if (!HasHiHatClosed)
+                        HasHiHatOpen = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
+                    //if (BeatCell.HiHatOpenFileNames.Contains(beat[i].SourceName)) HasHiHatOpen = true;
+                    //else if (BeatCell.HiHatClosedFileNames.Contains(beat[i].SourceName)) HasHiHatClosed = true;
                 }
                 else
                 {
-                    if (beat[i].SourceName != string.Empty)
+                    if (beat[i].SoundSource != null)
                     {
                         // beat has a defined pitch
                         // check if basepitch source exists
                         if (BasePitchSource == default(PitchStream))
                         {
-                            BasePitchSource = new PitchStream()
+                            BasePitchSource = new PitchStream(beat[i].SoundSource)
                             {
                                 Layer = this,
                                 Volume = Volume,
-                                BaseFrequency = PitchStream.ConvertFromSymbol(beat[i].SourceName)
+                                //BaseFrequency = PitchStream.ConvertFromSymbol(beat[i].SourceName)
                             };
-                            BasePitchSource.AddFrequency(beat[i].SourceName, beat[i]);
                         }
-                        else BasePitchSource.AddFrequency(beat[i].SourceName, beat[i]);
+                        BasePitchSource.AddFrequency(beat[i].SoundSource.Uri, beat[i]);
                         beat[i].AudioSource = BasePitchSource;
                     }
                     else
@@ -765,12 +770,12 @@ namespace Pronome
                         if (IsPitch)
                         {
                             // no pitch defined, use base pitch
-                            BasePitchSource.AddFrequency(BasePitchSource.BaseFrequency.ToString(), beat[i]);
+                            BasePitchSource.AddFrequency(BasePitchSource.SoundSource.Uri, beat[i]);
                         }
                         beat[i].AudioSource = BaseAudioSource;
                         // is hihat sound?
-                        if (BeatCell.HiHatClosedFileNames.Contains(BaseSourceName)) beat[i].IsHiHatClosed = true;
-                        else if (BeatCell.HiHatOpenFileNames.Contains(BaseSourceName)) beat[i].IsHiHatOpen = true;
+                        //if (BeatCell.HiHatClosedFileNames.Contains(BaseSourceName)) beat[i].IsHiHatClosed = true;
+                        //else if (BeatCell.HiHatOpenFileNames.Contains(BaseSourceName)) beat[i].IsHiHatOpen = true;
                     }
                 }
                 // set beat's value based on tempo and bytes/sec
@@ -867,6 +872,7 @@ namespace Pronome
 
             ushort[] intervals = { 3, 4, 5, 7, 8, 9 };
 
+            int cycles = 0;
             do
             {
                 // determine the octave
@@ -875,7 +881,7 @@ namespace Pronome
                 if (Metronome.GetInstance().Layers.Exists(x => x.IsPitch) && Metronome.GetRandomNum() < 80)
                 {
                     var last = Metronome.GetInstance().Layers.Last(x => x.IsPitch);
-                    int index = Array.IndexOf(noteNames, last.BaseSourceName.TakeWhile(x => !char.IsNumber(x)));
+                    int index = Array.IndexOf(noteNames, last.BaseAudioSource.SoundSource.Uri.TakeWhile(x => !char.IsNumber(x)));
                     index += intervals[(int)(Metronome.GetRandomNum() / 16.6667)];
                     if (index > 11) index -= 12;
                     note = noteNames[index];
@@ -885,8 +891,9 @@ namespace Pronome
                     // randomly pick note
                     note = noteNames[(int)(Metronome.GetRandomNum() / 8.3333)];
                 }
+                cycles++;
             }
-            while (Metronome.GetInstance().Layers.Where(x => x.IsPitch).Any(x => x.BaseSourceName == note + octave));
+            while (cycles < 24 && Metronome.GetInstance().Layers.Where(x => x.IsPitch).Any(x => x.BaseAudioSource.SoundSource.Uri == note + octave));
 
             return note + octave;
         }
@@ -941,7 +948,8 @@ namespace Pronome
         public void Deserialize()
         {
             AudioSources = new Dictionary<string, IStreamProvider>();
-            SetBaseSource(BaseSourceName);
+            var source = InternalSource.GetFromUri(BaseSourceName);
+            SetBaseSource(source);
             Parse(ParsedString);
             if (ParsedOffset != string.Empty)
                 SetOffset(BeatCell.Parse(ParsedOffset));

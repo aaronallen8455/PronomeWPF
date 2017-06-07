@@ -21,7 +21,7 @@ namespace Pronome
             ConvertBpmValues();
             //Beats = beats.Select((x) => BeatCell.ConvertFromBpm(x, src)).ToArray();
             Enumerator = Beats.Length == 1 && Beats[0] == 0 ? null : GetEnumerator();
-            isWav = !src.IsPitch;
+            isWav = !src.SoundSource.IsPitch;
         }
 
         public IEnumerator<long> GetEnumerator()

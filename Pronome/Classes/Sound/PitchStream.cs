@@ -48,15 +48,19 @@ namespace Pronome
         /**<summary>Used in sine wave generation.</summary>*/
         private float nSample;
 
+        public ISoundSource SoundSource { get; set; }
+
         /**<summary>Constructor</summary>
          * <param name="channel">Number of channels</param>
          * <param name="sampleRate">Samples per second</param>
          */
-        public PitchStream(int sampleRate = 16000, int channel = 2)
+        public PitchStream(ISoundSource source, int sampleRate = 16000, int channel = 2)
         {
+            SoundSource = source;
             waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channel);
             // Default
-            Frequency = BaseFrequency = 440.0;
+            Frequency = 440.0;
+            //Frequency = BaseFrequency = 440.0;
             Pan = 0;
             BytesPerSec = waveFormat.AverageBytesPerSecond / 8;
             freqEnum = Frequencies.Values.GetEnumerator();
@@ -177,8 +181,8 @@ namespace Pronome
         /**<summary>The current frequency in hertz.</summary>*/
         public double Frequency { get; set; }
 
-        /**<summary>The frequency used if cell doesn't specify a pitch directly.</summary>*/
-        public double BaseFrequency { get; set; }
+        ///**<summary>The frequency used if cell doesn't specify a pitch directly.</summary>*/
+        //public double BaseFrequency { get; set; }
 
         /**<summary>Used to create the fade out of the beep sound. Resets to the value of Volume on interval completetion.</summary>*/
         protected double Gain { get; set; }
