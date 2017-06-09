@@ -110,27 +110,37 @@ namespace Pronome
             baseSourceSelector = resources["sourceSelector"] as ComboBoxFiltered;
             MakeLabel("Source", baseSourceSelector);
             // get array of sources
-            List<string> sources = InternalSource.Library.Select(x => x.ToString()).ToList();
-            //List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
-            //    .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
-            //    .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
-            sources[0] = "Pitch"; // replace Silentbeat with Pitch
-            sources.AddRange(UserSource.Library.OrderBy(x => x.Label).Select(x => x.ToString())); // add custom sources
-            baseSourceSelector.ItemsSource = sources;
+            //List<string> sources = InternalSource.Library.Select(x => x.ToString()).ToList();
+            ////List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
+            ////    .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
+            ////    .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
+            //sources[0] = "Pitch"; // replace Silentbeat with Pitch
+            //sources.AddRange(UserSource.Library.OrderBy(x => x.Label).Select(x => x.ToString())); // add custom sources
+            //baseSourceSelector.ItemsSource = sources;
 
-            if (!PitchStream.IsPitchSourceName(Layer.BaseSourceName)) // if wav source get the the selector name from file name
-            {
-                string selector = WavFileStream.GetSelectorNameByFile(Layer.BaseSourceName);
-                if (sources.Contains(selector))
+            //if (!PitchStream.IsPitchSourceName(Layer.BaseSourceName)) // if wav source get the the selector name from file name
+            //{
+                var src = Layer.BaseAudioSource.SoundSource;
+                if (src.IsPitch)
                 {
-                    baseSourceSelector.SelectedIndex = sources.IndexOf(selector);
+                    // Pitch is the first item in the collection
+                    baseSourceSelector.SelectedIndex = 0;
                 }
-                else baseSourceSelector.SelectedIndex = 0;
-            }
-            else
-            {
-                baseSourceSelector.SelectedIndex = 0; // pitch source
-            }
+                else
+                {
+                    baseSourceSelector.SelectedItem = src;
+                }
+                //string selector = WavFileStream.GetSelectorNameByFile(Layer.BaseSourceName);
+                //if (sources.Contains(selector))
+                //{
+                //    baseSourceSelector.SelectedIndex = sources.IndexOf(selector);
+                //}
+                //else baseSourceSelector.SelectedIndex = 0;
+            //}
+            //else
+            //{
+            //    baseSourceSelector.SelectedIndex = 0; // pitch source
+            //}
             baseSourceSelector.SelectionChanged += new SelectionChangedEventHandler(baseSourceSelector_SelectionChanged);
 
             // pitch field (used if source is a pitch)
@@ -234,9 +244,9 @@ namespace Pronome
             {
                 MainWindow window = Application.Current.MainWindow as MainWindow;
 
-                string sourceName = baseSourceSelector.SelectedItem as string;
+                ISoundSource source = baseSourceSelector.SelectedItem as ISoundSource;
 
-                if (sourceName == "Pitch")
+                if (source.IsPitch)
                 {
                     (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
                     // use contents of pitch field as source
@@ -247,36 +257,25 @@ namespace Pronome
                 
                     await window.Dispatcher.InvokeAsync(() =>
                     {
-                        Layer.NewBaseSource(InternalSource.GetPitch(pitchInput.Text));
+                        Layer.NewBaseSource(InternalSource.GetFromPitch(pitchInput.Text));
                     });
                     window.playButton.IsEnabled = true;
                 }
                 else
                 {
-                    //bool custom = sourceName.First() == 'u';
-                    sourceName = sourceName.Substring(sourceName.IndexOf('.') + 1).TrimStart();
+                    //sourceName = sourceName.Substring(sourceName.IndexOf('.') + 1).TrimStart();
 
-                    ISoundSource newSource = InternalSource.GetFromUri(sourceName);
-                    //// is it a user defined source?
-                    //if (custom)
-                    //{
-                    //    newSource = UserSource.Library.Where(x => x.Label == sourceName).First().Uri;
-                    //}
-                    //else
-                    //{
-                    //    newSource = WavFileStream.GetFileByName(sourceName);
-                    //}
-
+                    //ISoundSource newSource = InternalSource.GetWavFromLabel(sourceName);
 
                     // set new base source
-                    if (newSource != Layer.BaseAudioSource.SoundSource)
+                    if (source != Layer.BaseAudioSource.SoundSource)
                     {
                         (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
 
                         window.playButton.IsEnabled = false;
                         await window.Dispatcher.InvokeAsync(() =>
                         {
-                            Layer.NewBaseSource(newSource);
+                            Layer.NewBaseSource(source);
                         });
                         window.playButton.IsEnabled = true;
                     }
@@ -295,7 +294,7 @@ namespace Pronome
                 {
                     src += '4';
                 }
-                Layer.NewBaseSource(InternalSource.GetPitch(src));
+                Layer.NewBaseSource(InternalSource.GetFromPitch(src));
             }
         }
 

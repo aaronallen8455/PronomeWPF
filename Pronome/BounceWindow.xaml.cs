@@ -413,9 +413,9 @@ namespace Pronome
                 {
                     if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
-                    if (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                    if (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                     {
-                        while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                        while (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                         {
                             accumulator += Layer.Beat[beatIndex].Bpm;
                             beatIndex++;
@@ -448,9 +448,9 @@ namespace Pronome
 
                     beatIndex++;
                     if (beatIndex == Layer.Beat.Count) beatIndex = 0;
-                    if (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                    if (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                     {
-                        while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                        while (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                         {
                             accumulator += Layer.Beat[beatIndex].Bpm;
                             beatIndex++;
@@ -525,7 +525,7 @@ namespace Pronome
                         beatIndex++;
                         if (beatIndex == Layer.Beat.Count) beatIndex = 0;
                     }
-                    while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName);
+                    while (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName);
                 }
             }
             /// <summary>
@@ -542,7 +542,7 @@ namespace Pronome
 
                 // sync up to elapsed
                 double bpm = 0;
-                while (bpm <= elapsedBpm || Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                while (bpm <= elapsedBpm || Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                 {
                     bpm += Layer.Beat[beatIndex].Bpm;
                     beatIndex++;
@@ -757,7 +757,7 @@ namespace Pronome
             {
                 double bpm = 0;
 
-                while (Layer.Beat[Index].SourceName == WavFileStream.SilentSourceName)
+                while (Layer.Beat[Index].SoundSource.Uri == WavFileStream.SilentSourceName)
                 {
                     bpm += Layer.Beat[Index].Bpm;
                     Index++;
@@ -789,10 +789,10 @@ namespace Pronome
 
                 // catch up with elapsed bpm
                 //if (Index == Layer.Beat.Count) Index = 0;
-                while (bpm <= elapsedBpm || Layer.Beat[Index].SourceName == WavFileStream.SilentSourceName)
+                while (bpm <= elapsedBpm || Layer.Beat[Index].SoundSource.Uri == WavFileStream.SilentSourceName)
                 {
 
-                    if (Layer.Beat[Index].SourceName == WavFileStream.SilentSourceName)
+                    if (Layer.Beat[Index].SoundSource.Uri == WavFileStream.SilentSourceName)
                     {
                         curIntv += Layer.Beat[Index].Bpm; // count consecutive silences as one interval
                     }

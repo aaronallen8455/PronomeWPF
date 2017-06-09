@@ -196,7 +196,7 @@ namespace Pronome
                 {
                     durationInput.IsEnabled = true;
                     sourceSelector.IsEnabled = true;
-                    string source = null;
+                    ISoundSource source = null;
 
                     if (Cell.SelectedCells.Cells.Count == 1)
                     {
@@ -204,17 +204,17 @@ namespace Pronome
 
                         durationInput.Text = cell.Value;
 
-                        source = string.IsNullOrEmpty(cell.Source) ? cell.Row.Layer.BaseSourceName : cell.Source;
+                        source = cell.Source == null ? cell.Row.Layer.BaseAudioSource.SoundSource : cell.Source;
                         
                     }
                     else
                     {
                         // check if all selected cells have the same source
-                        if (Cell.SelectedCells.Cells.All(x => string.Equals(x.Source, Cell.SelectedCells.Cells[0].Source)))
+                        if (Cell.SelectedCells.Cells.All(x => x.Source.Equals(Cell.SelectedCells.Cells[0].Source)))
                         {
-                            source = string.IsNullOrEmpty(
-                                Cell.SelectedCells.Cells[0].Source) 
-                                ? Cell.SelectedCells.Cells[0].Row.Layer.BaseSourceName 
+                            source = 
+                                Cell.SelectedCells.Cells[0].Source == null
+                                ? Cell.SelectedCells.Cells[0].Row.Layer.BaseAudioSource.SoundSource
                                 : Cell.SelectedCells.Cells[0].Source;
                         }
                         else
@@ -231,15 +231,13 @@ namespace Pronome
                             // if all cells are pitches, show a blank pitch input, otherwise hide it
                             if (Cell.SelectedCells.Cells.All(x =>
                                 {
-                                    if (string.IsNullOrEmpty(x.Source))
+                                    if (x.Source == null)
                                     {
-                                        return !PitchStream.IsPitchSourceName(x.Row.Layer.BaseSourceName);
-                                        //return x.Row.Layer.BaseSourceName.Contains(".wav");
+                                        return !x.Row.Layer.BaseAudioSource.SoundSource.IsPitch;
                                     }
                                     else
                                     {
-                                        return !PitchStream.IsPitchSourceName(x.Source);
-                                        //return x.Source.Contains(".wav");
+                                        return !x.Source.IsPitch;
                                     }
                                 })
                             )
@@ -249,37 +247,42 @@ namespace Pronome
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(source))
+                    if (source != null)
                     {
                         // is the source a pitch or a wav?
-                        if (!PitchStream.IsPitchSourceName(source))
+                        if (!source.IsPitch)
                         {
-                            pitchInputPanel.Visibility = Visibility.Collapsed;
-                            string name = WavFileStream.GetSelectorNameByFile(source);
-                            if (string.IsNullOrEmpty(name))
-                            {
-                                // check custom sources
-                                var src = UserSource.Library.Where(x => x.Uri == source).FirstOrDefault();
-                                if (src != default(UserSource))
-                                {
-                                    name = src.ToString();
-                                }
-                            }
-                            sourceSelector.SelectedItem = name;
-                        }
-                        else if (source == "0")
-                        {
-                            // silent
-                            pitchInputPanel.Visibility = Visibility.Collapsed;
-                            sourceSelector.SelectedItem = "Silent";
+                            //pitchInputPanel.Visibility = Visibility.Collapsed;
+                            //string name = WavFileStream.GetSelectorNameByFile(source);
+                            //if (string.IsNullOrEmpty(name))
+                            //{
+                            //    // check custom sources
+                            //    var src = UserSource.Library.Where(x => x.Uri == source).FirstOrDefault();
+                            //    if (src != default(UserSource))
+                            //    {
+                            //        name = src.ToString();
+                            //    }
+                            //}
+                            sourceSelector.SelectedItem = source;//name;
                         }
                         else
                         {
-                            // pitch
-                            pitchInputPanel.Visibility = Visibility.Visible;
-                            pitchInput.Text = source.TrimStart('p');
-                            sourceSelector.SelectedItem = "Pitch";
+                            // select the Pitch item
+                            sourceSelector.SelectedIndex = 0;
                         }
+                        //else if (source == "0")
+                        //{
+                        //    // silent
+                        //    pitchInputPanel.Visibility = Visibility.Collapsed;
+                        //    sourceSelector.SelectedItem = "Silent";
+                        //}
+                        //else
+                        //{
+                        //    // pitch
+                        //    pitchInputPanel.Visibility = Visibility.Visible;
+                        //    pitchInput.Text = source.TrimStart('p');
+                        //    sourceSelector.SelectedItem = "Pitch";
+                        //}
                     }
                 }
 
@@ -456,50 +459,51 @@ namespace Pronome
 
             if (e.AddedItems.Count == 1 && !ignoreSourceChange)
             {
-                string value = (sender as ComboBox).SelectedValue.ToString();
-                string source = "";
+                //string value = (sender as ComboBox).SelectedValue.ToString();
+                //string source = "";
+                ISoundSource source = (sender as ComboBox).SelectedItem as ISoundSource;
 
-                if (value == "Pitch")
-                {
-                    string pitchValue = pitchInput.Text;
-
-                    // validate pitch input
-                    if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d+$|^\d+\.?\d*"))
-                    {
-                        source = pitchValue;
-                        // add 'p' if it's a numeric pitch
-                        if (char.IsNumber(pitchValue[0]))
-                        {
-                            source = 'p' + source;
-                        }
-                    }
-                }
-                else if (value == "Silent")
-                {
-                    source = "0";
-                }
-                else
-                {
-                    if (value[0] == 'u')
-                    {
-                        // user source
-                        int id = int.Parse(Regex.Match(value.Substring(1), @"[0-9]+").Value);
-                        source = UserSource.Library.SkipWhile(x => x.Index < id).First().Uri;
-                    }
-                    else
-                    {
-                        value = Regex.Replace(value, @"^\d+\.\s*", "");
-                        // get wav source index
-                        source = WavFileStream.GetFileByName(value);
-                    }
-                }
+                //if (value == "Pitch")
+                //{
+                //    string pitchValue = pitchInput.Text;
+                //
+                //    // validate pitch input
+                //    if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d+$|^\d+\.?\d*"))
+                //    {
+                //        source = pitchValue;
+                //        // add 'p' if it's a numeric pitch
+                //        if (char.IsNumber(pitchValue[0]))
+                //        {
+                //            source = 'p' + source;
+                //        }
+                //    }
+                //}
+                //else if (value == "Silent")
+                //{
+                //    source = "0";
+                //}
+                //else
+                //{
+                //    if (value[0] == 'u')
+                //    {
+                //        // user source
+                //        int id = int.Parse(Regex.Match(value.Substring(1), @"[0-9]+").Value);
+                //        source = UserSource.Library.SkipWhile(x => x.Index < id).First().Uri;
+                //    }
+                //    else
+                //    {
+                //        value = Regex.Replace(value, @"^\d+\.\s*", "");
+                //        // get wav source index
+                //        source = WavFileStream.GetFileByName(value);
+                //    }
+                //}
 
                 bool wasChanged = false;
                 // set new source on selected cells
                 foreach (Cell c in Cell.SelectedCells.Cells)
                 {
-                    string old = c.Source == null ? c.Row.Layer.BaseSourceName : c.Source;
-                    if (old != source) wasChanged = true;
+                    ISoundSource old = c.Source == null ? c.Row.Layer.BaseAudioSource.SoundSource : c.Source;
+                    if (!old.Equals(source)) wasChanged = true;
                     c.Source = source;
                 }
 
@@ -532,7 +536,7 @@ namespace Pronome
                 // assign to cells
                 foreach (Cell c in Cell.SelectedCells.Cells)
                 {
-                    c.Source = pitchValue;
+                    c.Source = InternalSource.GetFromPitch(pitchValue);
                 }
 
                 if (Cell.SelectedCells.Cells.Any())

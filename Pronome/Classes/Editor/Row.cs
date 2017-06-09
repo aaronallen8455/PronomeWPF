@@ -214,26 +214,10 @@ namespace Pronome.Editor
                 {
                     while (chunk.Contains('{'))
                     {
-                        //// find the factor for this mult group
-                        //int openG = 0;
-                        //int i = 0;
-                        //foreach (char c in beat.Substring(match.Index + multInd))
-                        //{
-                        //    if (c == '{') openG++;
-                        //    else if (c == '}') openG--;
-                        //    if (openG == 0)
-                        //    {
-                        //        break;
-                        //    }
-                        //    i++;
-                        //}
-                        //string factor = Regex.Match(beat.Substring(match.Index + multInd + i), @"(?<=^})[\d.+\-/*]+").Value;
-
                         OpenMultGroups.Push(new MultGroup() { Row = this });//, FactorValue = factor, Factor = BeatCell.Parse(factor) });
                         cell.MultGroups = new LinkedList<MultGroup>(OpenMultGroups);
                         OpenMultGroups.Peek().Cells.AddLast(cell);
                         OpenMultGroups.Peek().Position = cell.Position;
-                        //MultGroups.AddLast(OpenMultGroups.Peek());
 
                         chunk = chunk.Remove(multInd, 1);
                     }
@@ -253,7 +237,6 @@ namespace Pronome.Editor
                         cell.RepeatGroups = new LinkedList<RepeatGroup>(OpenRepeatGroups);
                         OpenRepeatGroups.Peek().Cells.AddLast(cell);
                         OpenRepeatGroups.Peek().Position = cell.Position;
-                        //RepeatGroups.AddLast(OpenRepeatGroups.Peek());
 
                         chunk = chunk.Remove(chunk.IndexOf('['), 1);
                     }
@@ -333,35 +316,38 @@ namespace Pronome.Editor
                 // check for source modifier
                 if (chunk.IndexOf('@') > -1)
                 {
-                    string source = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|u?\d+|[a-gA-G][b#]?\d+)").Value;
-                    if (char.IsNumber(source[0]) && source != "0")
-                    {
-                        int id = int.Parse(source);
-                        var s = InternalSource.Library.ElementAtOrDefault(id);
-                        if (s == null)
-                        {
-                            source = "A4";
-                        }
-                        else
-                        {
-                            source = s.Uri;
-                        }
-                        //source = WavFileStream.FileNameIndex[int.Parse(source), 0];
-                    }
-                    else if (source[0] == 'u')
-                    {
-                        // user source
-                        int id = int.Parse(source.Substring(1));
-                        var s = UserSource.Library.SkipWhile(x => x.Index < id);
-                        if (s.Any())
-                        {
-                            source = s.First().Uri;
-                        }
-                        else
-                        {
-                            source = "A4";
-                        }
-                    }
+                    string sourceCode = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|u?\d+|[a-gA-G][b#]?\d+)").Value;
+
+                    ISoundSource source = InternalSource.GetFromUri(sourceCode);
+
+                    //if (!source.IsPitch && source.Uri != WavFileStream.SilentSourceName)
+                    //{
+                    //    int id = int.Parse(source);
+                    //    var s = InternalSource.Library.ElementAtOrDefault(id);
+                    //    if (s == null)
+                    //    {
+                    //        source = "A4";
+                    //    }
+                    //    else
+                    //    {
+                    //        source = s.Uri;
+                    //    }
+                    //    //source = WavFileStream.FileNameIndex[int.Parse(source), 0];
+                    //}
+                    //else if (source[0] == 'u')
+                    //{
+                    //    // user source
+                    //    int id = int.Parse(source.Substring(1));
+                    //    var s = UserSource.Library.SkipWhile(x => x.Index < id);
+                    //    if (s.Any())
+                    //    {
+                    //        source = s.First().Uri;
+                    //    }
+                    //    else
+                    //    {
+                    //        source = "A4";
+                    //    }
+                    //}
                     cell.Source = source;
                 }
 
@@ -639,25 +625,29 @@ namespace Pronome.Editor
                     result.Append($"${cell.Reference}");
                 }
                 // check for source modifier
-                if (!string.IsNullOrEmpty(cell.Source) && cell.Source != Layer.BaseSourceName)
+                if (cell.Source != null && cell.Source.Uri != Layer.BaseSourceName)
                 {
                     string source;
                     // is pitch or wav?
-                    if (PitchStream.IsPitchSourceName(cell.Source))
+                    if (cell.Source.IsPitch)
                     {
-                        source = cell.Source;
+                        source = cell.Source.Uri;
                     }
                     else
                     {
-                        source = WavFileStream.GetIndexByName(cell.Source).ToString();
-                        if (source == "-1")
+                        if (cell.Source.Uri.IndexOf("Pronome") != 0)
                         {
                             // check user sources
-                            var src = UserSource.Library.Where(x => x.Uri == cell.Source).FirstOrDefault();
-                            if (src != default(UserSource))
-                            {
-                                source = 'u' + src.Index.ToString();
-                            }
+                            //var src = UserSource.Library.Where(x => x.Uri == cell.Source).FirstOrDefault();
+                            //if (src != default(UserSource))
+                            //{
+                            //    source = 'u' + src.Index.ToString();
+                            //}
+                            source = (cell.Source as UserSource).Index.ToString();
+                        }
+                        else
+                        {
+                            source = (cell.Source as InternalSource).Index.ToString();
                         }
                     }
                     result.Append($"@{source}");

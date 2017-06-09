@@ -100,11 +100,15 @@
             Padding="3,0"
             PreviewKeyDown="TextEditor_PreviewKeyDown"/>
         
+        <!--Item source for drop down selectors-->
+        <local:CompleteSourceLibrary x:Key="completeSourceLibrary"/>
+
         <!--Source selector dropdown-->
         <local:ComboBoxFiltered
             Width="Auto"
             x:Key="sourceSelector"
             x:Shared="False"
+            ItemsSource="{Binding Source={StaticResource completeSourceLibrary}}"
             DataContext="{DynamicResource disableDuringPlay}"
             IsEnabled="{Binding Path=IsEnabled}"/>
         

@@ -69,6 +69,13 @@ namespace Pronome
             HiHatStatus = hhStatus;
         }
 
+        public bool Equals(ISoundSource obj)
+        {
+            if (obj == null) return false;
+
+            return Uri == obj.Uri;
+        }
+
         static UserSource()
         {
             Window options = Application.Current.MainWindow.Resources["optionsWindow"] as Window;
@@ -85,42 +92,11 @@ namespace Pronome
         /// <param name="e"></param>
         public static void LibraryCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            // apply changes to the source selectors in the layer UIs.
-            List<string> sources = null;
-            foreach (LayerUI ui in LayerUI.Items)
-            {
-                ComboBox sourceSelector = ui.baseSourceSelector;
-                string current = (string)ui.baseSourceSelector.SelectedValue;
+            var sourceLibrary = Application.Current.Resources["completeSourceLibrary"] as CompleteSourceLibrary;
 
-                if (sources == null)
-                {
-                    sources = new List<string>();
-
-                    foreach (string s in sourceSelector.ItemsSource)
-                    {
-                        if (s.First() != 'u') // don't add any prexisting custom sources
-                        {
-                            sources.Add(s);
-                        }
-                    }
-
-                    sources.AddRange(Library.OrderBy(x => x.Label).Select(x => x.ToString()));
-                }
-
-                sourceSelector.ItemsSource = sources;
-
-                // if current source was removed, switch back to pitch
-                if (!sources.Contains(current))
-                {
-                    sourceSelector.SelectedValue = "Pitch";
-                }
-            }
-
-            // apply changes to editor
-            if (sources != null && EditorWindow.Instance != default(EditorWindow))
-            {
-                EditorWindow.Instance.sourceSelector.ItemsSource = sources;
-            }
+            sourceLibrary.OnNotifyCollectionChanged(
+                new System.Collections.Specialized.NotifyCollectionChangedEventArgs( 
+                    System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
         }
 
         /// <summary>

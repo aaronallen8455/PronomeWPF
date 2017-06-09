@@ -93,7 +93,7 @@ namespace Pronome.Bounce
         {
             double bpm = 0;
 
-            while (Layer.Beat[Index].SourceName == WavFileStream.SilentSourceName)
+            while (Layer.Beat[Index].SoundSource.Uri == WavFileStream.SilentSourceName)
             {
                 bpm += Layer.Beat[Index].Bpm;
                 Index++;
@@ -120,10 +120,10 @@ namespace Pronome.Bounce
 
             // catch up with elapsed bpm
             //if (Index == Layer.Beat.Count) Index = 0;
-            while (bpm <= elapsedBpm || Layer.Beat[Index].SourceName == WavFileStream.SilentSourceName)
+            while (bpm <= elapsedBpm || Layer.Beat[Index].SoundSource.Uri == WavFileStream.SilentSourceName)
             {
 
-                if (Layer.Beat[Index].SourceName == WavFileStream.SilentSourceName)
+                if (Layer.Beat[Index].SoundSource.Uri == WavFileStream.SilentSourceName)
                 {
                     curIntv += Layer.Beat[Index].Bpm; // count consecutive silences as one interval
                 }

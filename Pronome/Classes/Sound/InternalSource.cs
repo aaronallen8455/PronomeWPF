@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
-
+using System.Collections.Specialized;
 
 namespace Pronome
 {
@@ -14,7 +14,7 @@ namespace Pronome
 
         public string Uri { get; }
 
-        public string Label;
+        public string Label { get; }
 
         public enum HiHatStatuses { None, Open, Closed };
 
@@ -43,13 +43,20 @@ namespace Pronome
             return (Index.ToString() + '.').PadRight(4) + Label;
         }
 
+        public bool Equals(ISoundSource obj)
+        {
+            if (obj == null) return false;
+            // Sources are equal if they have the same address
+            return Uri == (obj as ISoundSource).Uri;
+        }
+
         /// <summary>
         /// Used for a default value or if a source cannot be found.
         /// </summary>
         /// <returns></returns>
         static public InternalSource GetDefault()
         {
-            return new InternalSource(-1, "A4") { IsPitch = true };
+            return new InternalSource(-1, "A4", "Pitch") { IsPitch = true };
         }
 
         /// <summary>
@@ -57,16 +64,23 @@ namespace Pronome
         /// </summary>
         /// <param name="uri"></param>
         /// <returns></returns>
-        static public InternalSource GetPitch(string uri)
+        static public InternalSource GetFromPitch(string uri)
         {
             return new InternalSource(-1, uri) { IsPitch = true };
+        }
+
+        static public ISoundSource GetWavFromLabel(string label)
+        {
+            var ss = CompleteSourceLibrary.GetAllSources().FirstOrDefault(x => x.Label == label);
+
+            return ss == null ? GetDefault() : ss;
         }
 
         static public ISoundSource GetFromUri(string uri)
         {
             if (PitchStream.IsPitchSourceName(uri))
             {
-                return GetPitch(uri);
+                return GetFromPitch(uri);
             }
             if (uri.IndexOf("Pronome") == 0)
             {
@@ -79,7 +93,6 @@ namespace Pronome
 
         public static List<InternalSource> Library = new List<InternalSource>()
         {
-            //new InternalSource(-1, "A4", "Pitch") { IsPitch = true },
             new InternalSource(0, WavFileStream.SilentSourceName, "Silent"),
             new InternalSource(1, "Pronome.wav.crash1_edge_v5.wav", "Crash Edge V1"),
             new InternalSource(2, "Pronome.wav.crash1_edge_v8.wav", "Crash Edge V2"),
@@ -135,8 +148,15 @@ namespace Pronome
         };
     }
 
-    public class CompleteSourceLibrary : IEnumerable<ISoundSource>
+    public class CompleteSourceLibrary : IEnumerable<ISoundSource>, INotifyCollectionChanged
     {
+        public event NotifyCollectionChangedEventHandler CollectionChanged;
+
+        public void OnNotifyCollectionChanged(NotifyCollectionChangedEventArgs args)
+        {
+            CollectionChanged?.Invoke(this, args);
+        }
+
         public IEnumerator<ISoundSource> GetEnumerator()
         {
             return GetAllSources().GetEnumerator();
@@ -147,11 +167,14 @@ namespace Pronome
             return GetEnumerator();
         }
 
-        public IEnumerable<ISoundSource> GetAllSources()
+        public static IEnumerable<ISoundSource> GetAllSources()
         {
-            return InternalSource.Library
-                .Select(x => (ISoundSource)x)
-                .Concat(UserSource.Library.Select(x => (ISoundSource)x));
+            // Add the pitch item as first in list of all sound sources.
+            return 
+                new InternalSource[] { InternalSource.GetDefault() }.Concat(
+                    InternalSource.Library
+                    .Select(x => (ISoundSource)x)
+                    .Concat(UserSource.Library.Select(x => (ISoundSource)x)));
         }
     }
 }

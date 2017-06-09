@@ -15,7 +15,6 @@
         <sys:Boolean x:Key="changesApplied">False</sys:Boolean>
         <sys:Boolean x:Key="cellSelected">False</sys:Boolean>
 
-        <self:CompleteSourceLibrary x:Key="completeSourceLibrary"/>
         <!--The base element for the rows.-->
         <Grid x:Key="rowBaseElement" 
               x:Shared="False"

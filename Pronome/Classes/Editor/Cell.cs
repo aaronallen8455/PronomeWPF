@@ -63,8 +63,6 @@ namespace Pronome.Editor
                 }
                 // resize sizer
                 Row.ChangeSizerWidthByAmount(diff);
-                //// reevaluate the actual duration
-                //_actualDuration = -1;
             }
         }
 
@@ -75,19 +73,6 @@ namespace Pronome.Editor
         public double ActualDuration
         {
             get => Duration;
-            //{
-            //    if (_actualDuration == -1)
-            //    {
-            //        _actualDuration = Duration;
-            //        // apply mult group transformation and cache the result
-            //        if (MultGroups.Any())
-            //        {
-            //            _actualDuration *= MultGroups.Select(x => x.Factor).Aggregate((a, b) => a * b);
-            //        }
-            //    }
-            //
-            //    return _actualDuration;
-            //}
         }
 
         protected string _value;
@@ -143,11 +128,18 @@ namespace Pronome.Editor
         /// <summary>
         /// The audio source for this cell.
         /// </summary>
-        public string Source = null;
+        public ISoundSource Source = null;
+
+        /// <summary>
+        /// Multiplication groups that this cell is a part of
+        /// </summary>
         public LinkedList<MultGroup> MultGroups = new LinkedList<MultGroup>();
+
+        /// <summary>
+        /// Repeat groups that this cell is part of
+        /// </summary>
         public LinkedList<RepeatGroup> RepeatGroups = new LinkedList<RepeatGroup>();
-        //public MultGroup MultGroup;
-        //public RepeatGroup RepeatGroup;
+
         /// <summary>
         /// Is this cell part of a reference. Should not be manipulable if so
         /// </summary>

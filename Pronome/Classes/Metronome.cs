@@ -151,7 +151,7 @@ namespace Pronome
          */
         public void AddAudioSource(IStreamProvider src)
         {
-            if (src.IsPitch)
+            if (src.SoundSource.IsPitch)
             {
                 SampleDictionary.Add(src, (PitchStream)src);
                 Mixer.AddMixerInput(SampleDictionary[src]);
@@ -492,7 +492,7 @@ namespace Pronome
                 select n.AudioSources.Values
                 into s
                 from aud in s
-                where !aud.IsPitch
+                where !aud.SoundSource.IsPitch
                 select aud;
 
             foreach (WavFileStream wfs in WavLayers)

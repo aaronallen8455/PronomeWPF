@@ -66,9 +66,9 @@ namespace Pronome.Bounce
             {
                 if (beatIndex == Layer.Beat.Count) beatIndex = 0;
 
-                if (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                if (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                 {
-                    while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                    while (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                     {
                         accumulator += Layer.Beat[beatIndex].Bpm;
                         beatIndex++;
@@ -97,9 +97,9 @@ namespace Pronome.Bounce
 
                 beatIndex++;
                 if (beatIndex == Layer.Beat.Count) beatIndex = 0;
-                if (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                if (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                 {
-                    while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+                    while (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
                     {
                         accumulator += Layer.Beat[beatIndex].Bpm;
                         beatIndex++;
@@ -168,7 +168,7 @@ namespace Pronome.Bounce
                     beatIndex++;
                     if (beatIndex == Layer.Beat.Count) beatIndex = 0;
                 }
-                while (Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName);
+                while (Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName);
             }
         }
         /// <summary>
@@ -185,7 +185,7 @@ namespace Pronome.Bounce
 
             // sync up to elapsed
             double bpm = 0;
-            while (bpm <= elapsedBpm || Layer.Beat[beatIndex].SourceName == WavFileStream.SilentSourceName)
+            while (bpm <= elapsedBpm || Layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
             {
                 bpm += Layer.Beat[beatIndex].Bpm;
                 beatIndex++;

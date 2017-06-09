@@ -9,7 +9,7 @@ namespace Pronome
     /// <summary>
     /// Provides information about a sound source.
     /// </summary>
-    public interface ISoundSource
+    public interface ISoundSource : IEquatable<ISoundSource>
     {
         /// <summary>
         /// Used to signify the source material. could be an audio file or a pitch symbol.
@@ -25,5 +25,7 @@ namespace Pronome
         /// True if this source is a pitch and the Uri will be a note symbol
         /// </summary>
         bool IsPitch { get; }
+
+        string Label { get; }
     }
 }

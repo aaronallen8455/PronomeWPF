@@ -109,7 +109,7 @@ namespace Pronome
         {
             if (baseSource == null) // auto generate a pitch if no source is specified
             {
-                SetBaseSource(InternalSource.GetPitch(GetAutoPitch()));
+                SetBaseSource(InternalSource.GetFromPitch(GetAutoPitch()));
             }
             else
                 SetBaseSource(baseSource);
@@ -549,8 +549,7 @@ namespace Pronome
 
                 // update hihat statuses
                 HasHiHatClosed = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed).Any();
-                if (!HasHiHatClosed)
-                    HasHiHatOpen = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
+                HasHiHatOpen = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
                 //HasHiHatClosed = Beat.Where(x => BeatCell.HiHatClosedFileNames.Contains(x.SourceName)).Any();
                 //HasHiHatOpen = Beat.Where(x => BeatCell.HiHatOpenFileNames.Contains(x.SourceName)).Any();
                 // do initial muting
@@ -627,9 +626,8 @@ namespace Pronome
                 AudioSources.Add("", BaseAudioSource);
                 IsPitch = false;
 
-                HasHiHatClosed = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed).Any();
-                if (!HasHiHatClosed)
-                    HasHiHatOpen = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
+                HasHiHatClosed = baseSource.HiHatStatus == InternalSource.HiHatStatuses.Closed;
+                HasHiHatOpen = baseSource.HiHatStatus == InternalSource.HiHatStatuses.Open;
                 //if (BeatCell.HiHatOpenFileNames.Contains(baseSourceName)) HasHiHatOpen = true;a
                 //else if (BeatCell.HiHatClosedFileNames.Contains(baseSourceName)) HasHiHatClosed = true;
             }
@@ -741,9 +739,8 @@ namespace Pronome
                     }
                     beat[i].AudioSource = AudioSources[beat[i].SoundSource.Uri];
                     // set hihat status for beat sources
-                    HasHiHatClosed = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed).Any();
-                    if (!HasHiHatClosed)
-                        HasHiHatOpen = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
+                    if (beat[i].SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed) HasHiHatClosed = true;
+                    else if (beat[i].SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open) HasHiHatOpen = true;
                     //if (BeatCell.HiHatOpenFileNames.Contains(beat[i].SourceName)) HasHiHatOpen = true;
                     //else if (BeatCell.HiHatClosedFileNames.Contains(beat[i].SourceName)) HasHiHatClosed = true;
                 }
