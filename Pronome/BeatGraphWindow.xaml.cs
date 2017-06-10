@@ -394,7 +394,7 @@ namespace Pronome
 
             protected void addSilent()
             {
-                while (layer.Beat[beatIndex].SoundSource.Uri == WavFileStream.SilentSourceName)
+                while (layer.Beat[beatIndex].SoundSource?.Uri == WavFileStream.SilentSourceName)
                 {
                     addNext();
                 }

@@ -401,6 +401,21 @@ namespace Pronome
                 e.CanExecute = listBox.SelectedItems.Count > 0;
             }
         }
+
+        private void persistSessionCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            UserSettings.PersistSessionStatic = true;
+        }
+
+        private void persistSessionCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UserSettings.PersistSessionStatic = false;
+        }
+
+        private void persistSessionCheckBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            (sender as CheckBox).IsChecked = UserSettings.PersistSessionStatic;
+        }
     }
 
 }

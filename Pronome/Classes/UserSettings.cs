@@ -3,6 +3,8 @@ using System.Windows;
 using System.IO;
 using System.IO.IsolatedStorage;
 using System.Xml;
+using System.Text;
+using System.Collections.Generic;
 
 namespace Pronome
 {
@@ -79,6 +81,23 @@ namespace Pronome
         public UserSourceLibrary UserSourceLibrary;
 
         /// <summary>
+        /// Whether to load the previous session on startup
+        /// </summary>
+        [DataMember(IsRequired = false)]
+        public bool PersistSession = true;
+
+        /// <summary>
+        /// Holds the current state of the persist session toggle
+        /// </summary>
+        public static bool PersistSessionStatic = true;
+
+        /// <summary>
+        /// The serialized beat from the previous session.
+        /// </summary>
+        [DataMember(IsRequired = false)]
+        public string PersistedSession;
+
+        /// <summary>
         /// Store the settings
         /// </summary>
         public void SaveToStorage()
@@ -114,10 +133,39 @@ namespace Pronome
             BounceWindow.widthPad = BounceWidthPad;
             PitchStream.DecayLength = PitchDecayLength;
             UserSourceLibrary s = (mainWindow.Resources["optionsWindow"] as Window).Resources["userSourceLibrary"] as UserSourceLibrary;
+            PersistSessionStatic = PersistSession;
+
             //s.Add(new UserSource("test", "test"));
             foreach (UserSource source in UserSourceLibrary)
             {
                 s.Add(source);
+            }
+
+            // deserialize the peristed session beat if enabled
+            if (PersistSession && PersistedSession != string.Empty)
+            {
+                DataContractSerializer ds = new DataContractSerializer(typeof(Metronome));
+                byte[] bin = Encoding.UTF8.GetBytes(PersistedSession);
+                using (var stream = new MemoryStream(bin))
+                {
+                    using (var reader = XmlDictionaryReader.CreateTextReader(stream, XmlDictionaryReaderQuotas.Max))
+                    {
+                        //try
+                        {
+                            ds.ReadObject(reader);
+                        
+                            // need to initiate these values
+                            Metronome.GetInstance().TempoChangeCued = false;
+                            Metronome.GetInstance().TempoChangedSet = new HashSet<IStreamProvider>();
+                        }
+                        //catch (SerializationException)
+                        //{
+                        //    new TaskDialogWrapper(Application.Current.MainWindow).Show(
+                        //        "Session Persistence Failed", "An error occured while attempting to load the beat from your last session, sorry about that.",
+                        //        "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
+                        //}
+                    }
+                }
             }
         }
 
@@ -156,6 +204,24 @@ namespace Pronome
         {
             Window mainWindow = MainWindow.Instance;
 
+            bool persistSession = PersistSessionStatic;
+
+            string serializedBeat = "";
+
+            // stringify the current beat if it is to be persisted.
+            if (persistSession)
+            {
+                var ds = new DataContractSerializer(typeof(Metronome));
+                using (var stream = new MemoryStream())
+                {
+                    using (var writer = XmlDictionaryWriter.CreateTextWriter(stream, new UTF8Encoding(false)))
+                    {
+                        ds.WriteObject(writer, Metronome.GetInstance());
+                    }
+                    serializedBeat = Encoding.UTF8.GetString(stream.ToArray());
+                }
+            }
+
             return new UserSettings()
             {
                 WinX = mainWindow.Left,
@@ -168,7 +234,9 @@ namespace Pronome
                 BounceDivision = BounceWindow.divisionPoint,
                 BounceWidthPad = BounceWindow.widthPad,
                 PitchDecayLength = PitchStream.DecayLength,
-                UserSourceLibrary = UserSource.Library
+                UserSourceLibrary = UserSource.Library,
+                PersistSession = persistSession,
+                PersistedSession = serializedBeat
             };
         }
     }

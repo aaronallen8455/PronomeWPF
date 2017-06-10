@@ -30,7 +30,7 @@
         
         <!--Used for the font size of the beat code input-->
         <sys:Double x:Key="textBoxFontSize">16</sys:Double>
-        
+
         <!--Margin for action buttons in dialogs-->
         <Thickness x:Key="dialogButtonMargin" Left="4" Right="0" Top="5" Bottom="5"/>
 

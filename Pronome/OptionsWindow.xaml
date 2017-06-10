@@ -270,6 +270,15 @@
             </Expander>
             <Expander Header="Additional Settings">
                 <StackPanel>
+                    <WrapPanel Orientation="Horizontal">
+                        <CheckBox Name="persistSessionCheckBox" 
+                                  Checked="persistSessionCheckBox_Checked" 
+                                  Unchecked="persistSessionCheckBox_Unchecked"
+                                  Loaded="persistSessionCheckBox_Loaded"
+                                  VerticalAlignment="Center"/>
+                        <Label Target="{Binding ElementName=persistSessionCheckBox}">Load the beat from previous session on start up.</Label>
+                    </WrapPanel>
+                    <Separator/>
                     <TextBlock>
                         Sets the duration of pitch tones in seconds.
                     </TextBlock>

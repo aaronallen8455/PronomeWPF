@@ -38,10 +38,22 @@ namespace Pronome
                 HighlightingManager.Instance.RegisterHighlighting("Pronome", new[] { ".cs" },
                     HighlightingLoader.Load(reader, HighlightingManager.Instance));
 
-            Metronome.GetInstance().Tempo = 120f;
-            tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
+            // if a previous session's beat is persisted we will open that
+            if (UserSettings.PersistSessionStatic && Metronome.GetInstance().Layers.Any())
+            {
+                foreach (Layer layer in Metronome.GetInstance().Layers)
+                {
+                    new LayerUI(LayerStack, layer);
+                }
+            }
+            else
+            {
+                // load default starting beat
+                Metronome.GetInstance().Tempo = 120f;
 
-            new LayerUI(layerStack);
+                new LayerUI(layerStack);
+            }
+            tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
 
             Instance = this;
         }
@@ -62,7 +74,7 @@ namespace Pronome
         private void windowCloseButton_Click(object sender, RoutedEventArgs e)
         {
             Metronome.GetInstance().Stop();
-            Metronome.GetInstance().Dispose();
+            //Metronome.GetInstance().Dispose();
 
             Close();
         }

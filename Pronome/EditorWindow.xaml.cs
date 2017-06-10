@@ -101,17 +101,6 @@ namespace Pronome
 
             LayerPanel = layerPanel;
 
-            // add items to source selector
-            //List<string> sources = InternalSource.Library.Select(x => x.ToString()).ToList();
-            ////List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
-            ////    .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
-            ////    .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
-            ////sources[0] = "Silent";
-            //sources.Insert(0, "Pitch");
-            //sources.AddRange(UserSource.Library.OrderBy(x => x.Label).Select(x => x.ToString()));
-            ////sources[0] = "Pitch"; // replace Silentbeat with Pitch
-            //sourceSelector.ItemsSource = sources;
-
             // init grid UI elements
             GridSizer = Resources["gridSizer"] as Rectangle;
             GridTick = Resources["gridTick"] as Rectangle;
@@ -162,8 +151,6 @@ namespace Pronome
 
             Metronome.AfterBeatParsed -= BuildUI;
             Metronome.AfterBeatParsed += BuildUI;
-            //Metronome.AfterBeatParsed -= UpdateUiForSelectedCell;
-            //Metronome.AfterBeatParsed += UpdateUiForSelectedCell;
 
             // remove any undo /redo actions from old state
             UndoStack.Clear();
@@ -252,17 +239,6 @@ namespace Pronome
                         // is the source a pitch or a wav?
                         if (!source.IsPitch)
                         {
-                            //pitchInputPanel.Visibility = Visibility.Collapsed;
-                            //string name = WavFileStream.GetSelectorNameByFile(source);
-                            //if (string.IsNullOrEmpty(name))
-                            //{
-                            //    // check custom sources
-                            //    var src = UserSource.Library.Where(x => x.Uri == source).FirstOrDefault();
-                            //    if (src != default(UserSource))
-                            //    {
-                            //        name = src.ToString();
-                            //    }
-                            //}
                             sourceSelector.SelectedItem = source;//name;
                         }
                         else
@@ -270,19 +246,6 @@ namespace Pronome
                             // select the Pitch item
                             sourceSelector.SelectedIndex = 0;
                         }
-                        //else if (source == "0")
-                        //{
-                        //    // silent
-                        //    pitchInputPanel.Visibility = Visibility.Collapsed;
-                        //    sourceSelector.SelectedItem = "Silent";
-                        //}
-                        //else
-                        //{
-                        //    // pitch
-                        //    pitchInputPanel.Visibility = Visibility.Visible;
-                        //    pitchInput.Text = source.TrimStart('p');
-                        //    sourceSelector.SelectedItem = "Pitch";
-                        //}
                     }
                 }
 

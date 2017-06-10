@@ -146,7 +146,7 @@ namespace Pronome
             // pitch field (used if source is a pitch)
             pitchInput = resources["pitchInput"] as TextBox;
             MakeLabel("Note", pitchInput);
-            if (baseSourceSelector.SelectedItem as string == "Pitch")
+            if ((baseSourceSelector.SelectedItem as ISoundSource).IsPitch)
             {
                 pitchInput.Text = Layer.BaseSourceName;
             }

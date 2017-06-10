@@ -581,7 +581,10 @@ namespace Pronome
                 catch (SerializationException e)
                 {
                     string name = Path.GetFileName(fileName);
-                    MessageBox.Show($"'{name}' could not be used because it is not a valid beat file.", "Invalid Beat File", MessageBoxButton.OK, MessageBoxImage.Error);
+                    new TaskDialogWrapper(Application.Current.MainWindow).Show(
+                        "Invalid Beat File", $"'{name}' could not be used because it is not a valid beat file.", 
+                        "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
+                    //MessageBox.Show($"'{name}' could not be used because it is not a valid beat file.", "Invalid Beat File", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
                 foreach (Layer layer in GetInstance().Layers)

@@ -60,7 +60,7 @@ namespace Pronome
             // convert beatcells to degrees. Silent beats are a negative value
             double[] angles = layer.Beat.Select(x => {
                 double result = x.Bpm / cycleLength * twoPi;
-                if (x.SoundSource.Uri == WavFileStream.SilentSourceName)
+                if (x.SoundSource != null && x.SoundSource.Uri == WavFileStream.SilentSourceName)
                 {
                     return result * -1;
                 }
