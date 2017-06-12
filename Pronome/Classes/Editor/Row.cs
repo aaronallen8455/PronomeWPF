@@ -318,36 +318,8 @@ namespace Pronome.Editor
                 {
                     string sourceCode = Regex.Match(chunk, @"(?<=@)([pP]\d*\.?\d*|u?\d+|[a-gA-G][b#]?\d+)").Value;
 
-                    ISoundSource source = InternalSource.GetFromUri(sourceCode);
+                    ISoundSource source = InternalSource.GetFromModifier(sourceCode);
 
-                    //if (!source.IsPitch && source.Uri != WavFileStream.SilentSourceName)
-                    //{
-                    //    int id = int.Parse(source);
-                    //    var s = InternalSource.Library.ElementAtOrDefault(id);
-                    //    if (s == null)
-                    //    {
-                    //        source = "A4";
-                    //    }
-                    //    else
-                    //    {
-                    //        source = s.Uri;
-                    //    }
-                    //    //source = WavFileStream.FileNameIndex[int.Parse(source), 0];
-                    //}
-                    //else if (source[0] == 'u')
-                    //{
-                    //    // user source
-                    //    int id = int.Parse(source.Substring(1));
-                    //    var s = UserSource.Library.SkipWhile(x => x.Index < id);
-                    //    if (s.Any())
-                    //    {
-                    //        source = s.First().Uri;
-                    //    }
-                    //    else
-                    //    {
-                    //        source = "A4";
-                    //    }
-                    //}
                     cell.Source = source;
                 }
 

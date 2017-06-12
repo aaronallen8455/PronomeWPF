@@ -193,45 +193,48 @@ namespace Pronome
 
                         source = cell.Source == null ? cell.Row.Layer.BaseAudioSource.SoundSource : cell.Source;
                         
+                        if (source.IsPitch)
+                        {
+                            pitchInput.Text = source.Uri;
+                        }
                     }
                     else
                     {
                         // check if all selected cells have the same source
-                        if (Cell.SelectedCells.Cells.All(x => x.Source.Equals(Cell.SelectedCells.Cells[0].Source)))
+                        if (Cell.SelectedCells.Cells.All(x => x.Source?.Uri == Cell.SelectedCells.Cells[0].Source?.Uri))
                         {
                             source = 
                                 Cell.SelectedCells.Cells[0].Source == null
                                 ? Cell.SelectedCells.Cells[0].Row.Layer.BaseAudioSource.SoundSource
                                 : Cell.SelectedCells.Cells[0].Source;
+
+                            if (source.IsPitch)
+                            {
+                                //pitchInputPanel.Visibility = Visibility.Visible;
+                                pitchInput.Text = source.Uri;
+                            }
                         }
                         else
                         {
                             // sources are not the same
-                            durationInput.Text = string.Empty;
                             
                             pitchInput.Text = string.Empty;
-
                             sourceSelector.AllowNull = true;
                             sourceSelector.SelectedIndex = -1;
                             sourceSelector.AllowNull = false;
-
-                            // if all cells are pitches, show a blank pitch input, otherwise hide it
-                            if (Cell.SelectedCells.Cells.All(x =>
-                                {
-                                    if (x.Source == null)
-                                    {
-                                        return !x.Row.Layer.BaseAudioSource.SoundSource.IsPitch;
-                                    }
-                                    else
-                                    {
-                                        return !x.Source.IsPitch;
-                                    }
-                                })
-                            )
-                            {
-                                pitchInputPanel.Visibility = Visibility.Collapsed;
-                            }
                         }
+                        // don't allow duration values to get muddled
+                        durationInput.Text = string.Empty;
+                    }
+
+                    // if all cells are pitches, show a blank pitch input, otherwise hide it
+                    if (Cell.SelectedCells.Cells.All(x => x.Source?.IsPitch ?? x.Row.Layer.BaseAudioSource.SoundSource.IsPitch))
+                    {
+                        pitchInputPanel.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        pitchInputPanel.Visibility = Visibility.Collapsed;
                     }
 
                     if (source != null)
@@ -239,7 +242,7 @@ namespace Pronome
                         // is the source a pitch or a wav?
                         if (!source.IsPitch)
                         {
-                            sourceSelector.SelectedItem = source;//name;
+                            sourceSelector.SelectedItem = source;
                         }
                         else
                         {

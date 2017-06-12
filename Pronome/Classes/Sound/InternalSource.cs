@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Linq;
 using System.Collections.Specialized;
+using System.Text.RegularExpressions;
 
 namespace Pronome
 {
@@ -89,6 +90,37 @@ namespace Pronome
             }
             var custom = UserSource.Library.Where(x => x.Uri == uri).FirstOrDefault();
             return custom == null ? GetDefault() : (ISoundSource)custom;
+        }
+
+        /// <summary>
+        /// Get the source stub from a modifier value, i.e. the 5 in '@5'
+        /// </summary>
+        /// <param name="modifier"></param>
+        /// <returns></returns>
+        static public ISoundSource GetFromModifier(string modifier)
+        {
+            if (Regex.IsMatch(modifier, @"^[a-gA-GpP]"))
+            {
+                // is a pitch reference
+                return GetFromPitch(modifier);
+            }
+            else if (Regex.IsMatch(modifier, @"^u\d+$"))
+            {
+                // it's a custom source
+                int id = int.Parse(modifier.Substring(1));
+                var s = UserSource.Library.FirstOrDefault(x => x.Index == id);
+                return s ?? (ISoundSource)GetDefault();
+            }
+            else // ref is a plain number (wav source) or "" base source.
+            {
+                InternalSource src = null;
+                int id;
+                if (modifier != "" && int.TryParse(modifier, out id))
+                {
+                    src = Library.ElementAtOrDefault(id);
+                }
+                return src ?? (ISoundSource)GetDefault();
+            }
         }
 
         public static List<InternalSource> Library = new List<InternalSource>()

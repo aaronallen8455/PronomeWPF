@@ -636,6 +636,43 @@
                 </ListItem>
                 <ListItem>
                     <Paragraph>
+                        <Bold>Custom Sound Library</Bold>
+                        <LineBreak/>
+                        This where you can add your audio files to ProNome to use alongside the built-in samples. 
+                        To add a new sound, click the 'Add' button. Unless your file is a 16khz wav encoding, you 
+                        will be prompted to save a version of the file in the correct format.
+                    </Paragraph>
+                    <Paragraph>
+                        There will now be a new item added to the list. By selecting it you can do the following:
+                    </Paragraph>
+                    <List MarkerStyle="None">
+                        <ListItem>
+                            <Paragraph>
+                                Change the label something other than the filename.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                Set the HiHat status to None, Open, or Down. This is used if you want your sound to 
+                                behave like a HiHat, i.e. an open HiHat sound will be cut-off by a HiHat down sound. 
+                                Leave this set to None if your sound does not involve the HiHat.
+                            </Paragraph>
+                        </ListItem>
+                    </List>
+                    <Paragraph>
+                        Once you have imported a file, you can select it from a layer's sound sources drop-down, or
+                        assign it to a cell using '@' like you would with the built-in sounds, except that the ID 
+                        number is prefixed with a 'u' (the ID is the number to the left of the label in the drop-down menu).
+                    </Paragraph>
+                    <Paragraph>
+                        If you change the location of the audio file on your computer then ProNome won't be able to find 
+                        it and you'll have to remove the old item from the library and re-add it from the new location. 
+                        Because of this, you should put the audio files you intend to use in a place where they won't 
+                        be moved around.
+                    </Paragraph>
+                </ListItem>
+                <ListItem>
+                    <Paragraph>
                         <Bold>Wav File Creation</Bold>
                         <LineBreak/>
                         There's two ways to export your beat to a Wav audio file:
@@ -691,11 +728,15 @@
                     <Paragraph>
                         <Bold>Additional Settings</Bold>
                         <LineBreak/>
+                        Turn on/off the persistent sessions option, which causes ProNome to open with the beat 
+                        from your last session. Turn this option off if you want to start from a blank slate 
+                        instead. It is on by default.
+                        <LineBreak/>
                         The 'Pitch Decay' field allows you to set how fast the beep sound lasts in seconds. 
                         The default value is '.04'.
                         <LineBreak/>
                         The last option lets you set the font size for the beat code inputs. The default 
-                        value is 16.
+                        value is 20.
                     </Paragraph>
                 </ListItem>
             </List>

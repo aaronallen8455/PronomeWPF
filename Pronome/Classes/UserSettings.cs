@@ -135,7 +135,6 @@ namespace Pronome
             UserSourceLibrary s = (mainWindow.Resources["optionsWindow"] as Window).Resources["userSourceLibrary"] as UserSourceLibrary;
             PersistSessionStatic = PersistSession;
 
-            //s.Add(new UserSource("test", "test"));
             foreach (UserSource source in UserSourceLibrary)
             {
                 s.Add(source);
@@ -150,7 +149,7 @@ namespace Pronome
                 {
                     using (var reader = XmlDictionaryReader.CreateTextReader(stream, XmlDictionaryReaderQuotas.Max))
                     {
-                        //try
+                        try
                         {
                             ds.ReadObject(reader);
                         
@@ -158,12 +157,12 @@ namespace Pronome
                             Metronome.GetInstance().TempoChangeCued = false;
                             Metronome.GetInstance().TempoChangedSet = new HashSet<IStreamProvider>();
                         }
-                        //catch (SerializationException)
-                        //{
-                        //    new TaskDialogWrapper(Application.Current.MainWindow).Show(
-                        //        "Session Persistence Failed", "An error occured while attempting to load the beat from your last session, sorry about that.",
-                        //        "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
-                        //}
+                        catch (SerializationException)
+                        {
+                            new TaskDialogWrapper(Application.Current.MainWindow).Show(
+                                "Session Persistence Failed", "An error occured while attempting to load the beat from your last session, sorry about that!",
+                                "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
+                        }
                     }
                 }
             }

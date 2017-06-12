@@ -233,31 +233,35 @@ namespace Pronome
                     var match = Regex.Match(x, @"([\d.+\-/*]+)@?(.*)");
                     string source = match.Groups[2].Value;
 
-                    //if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}$|^[pP][\d.]+$"))
-                    if (Regex.IsMatch(source, @"^[a-gA-GpP]"))
-                    {
-                        // is a pitch reference
-                        return new BeatCell(match.Groups[1].Value, this, new InternalSource(-1, source) { IsPitch = true });
-                    }
-                    else if (Regex.IsMatch(source, @"^u\d+$"))
-                    {
-                        // it's a custom source
-                        int id = int.Parse(source.Substring(1));
-                        var s = UserSource.Library.SkipWhile(src => src.Index < id);
-                        return new BeatCell(match.Groups[1].Value, this, s.Any() ? s.First() as ISoundSource : InternalSource.GetDefault());
-                    }
-                    else // ref is a plain number (wav source) or "" base source.
-                    {
-                        InternalSource src = null;
-                        if (source != "")
-                        {
-                            int id = int.Parse(source);
-                            src = InternalSource.Library.ElementAtOrDefault(id);
-                        }
-                        return new BeatCell(match.Groups[1].Value, this, source != "" ? (src == null ? InternalSource.GetDefault() : src) : null);
+                    // get the correct sound source stub
+                    ISoundSource src = InternalSource.GetFromModifier(source);
 
-                        //return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
-                    }
+                    return new BeatCell(match.Groups[1].Value, this, src);
+                    ////if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}$|^[pP][\d.]+$"))
+                    //if (Regex.IsMatch(source, @"^[a-gA-GpP]"))
+                    //{
+                    //    // is a pitch reference
+                    //    return new BeatCell(match.Groups[1].Value, this, InternalSource.GetFromPitch(source));
+                    //}
+                    //else if (Regex.IsMatch(source, @"^u\d+$"))
+                    //{
+                    //    // it's a custom source
+                    //    int id = int.Parse(source.Substring(1));
+                    //    var s = UserSource.Library.SkipWhile(src => src.Index < id);
+                    //    return new BeatCell(match.Groups[1].Value, this, s.Any() ? s.First() as ISoundSource : InternalSource.GetDefault());
+                    //}
+                    //else // ref is a plain number (wav source) or "" base source.
+                    //{
+                    //    InternalSource src = null;
+                    //    if (source != "")
+                    //    {
+                    //        int id = int.Parse(source);
+                    //        src = InternalSource.Library.ElementAtOrDefault(id);
+                    //    }
+                    //    return new BeatCell(match.Groups[1].Value, this, source != "" ? (src == null ? InternalSource.GetDefault() : src) : null);
+                    //
+                    //    //return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
+                    //}
 
                 }).ToArray();
 
