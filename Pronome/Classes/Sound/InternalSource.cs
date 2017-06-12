@@ -119,7 +119,7 @@ namespace Pronome
                 {
                     src = Library.ElementAtOrDefault(id);
                 }
-                return src ?? (ISoundSource)GetDefault();
+                return src; // will return null for a base source mirror
             }
         }
 
