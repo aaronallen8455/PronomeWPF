@@ -398,11 +398,11 @@ namespace Pronome
                         {
                             if (bc.SoundSource == null)
                             {
-                                newSource.AddFrequency(BaseAudioSource.SoundSource.Uri, bc);
+                                newSource.AddFrequency(baseSource.Uri, bc);
                             }
                             else
                             {
-                                newSource.AddFrequency(baseSource.Uri, bc);
+                                newSource.AddFrequency(bc.SoundSource.Uri, bc);
                             }
                             //newSource.AddFrequency(bc.SoundSource.Uri, bc);
                             //if (bc.SourceName == "")
