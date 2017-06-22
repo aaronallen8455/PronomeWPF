@@ -421,48 +421,9 @@ namespace Pronome
         private bool ignoreSourceChange = false;
         private void sourceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            //if ((sender as ComboBox).SelectedValue == null) return;
-
             if (e.AddedItems.Count == 1 && !ignoreSourceChange)
             {
-                //string value = (sender as ComboBox).SelectedValue.ToString();
-                //string source = "";
                 ISoundSource source = (sender as ComboBox).SelectedItem as ISoundSource;
-
-                //if (value == "Pitch")
-                //{
-                //    string pitchValue = pitchInput.Text;
-                //
-                //    // validate pitch input
-                //    if (Regex.IsMatch(pitchValue, @"^[a-gA-G][#b]?\d+$|^\d+\.?\d*"))
-                //    {
-                //        source = pitchValue;
-                //        // add 'p' if it's a numeric pitch
-                //        if (char.IsNumber(pitchValue[0]))
-                //        {
-                //            source = 'p' + source;
-                //        }
-                //    }
-                //}
-                //else if (value == "Silent")
-                //{
-                //    source = "0";
-                //}
-                //else
-                //{
-                //    if (value[0] == 'u')
-                //    {
-                //        // user source
-                //        int id = int.Parse(Regex.Match(value.Substring(1), @"[0-9]+").Value);
-                //        source = UserSource.Library.SkipWhile(x => x.Index < id).First().Uri;
-                //    }
-                //    else
-                //    {
-                //        value = Regex.Replace(value, @"^\d+\.\s*", "");
-                //        // get wav source index
-                //        source = WavFileStream.GetFileByName(value);
-                //    }
-                //}
 
                 bool wasChanged = false;
                 // set new source on selected cells
@@ -470,14 +431,19 @@ namespace Pronome
                 {
                     ISoundSource old = c.Source == null ? c.Row.Layer.BaseAudioSource.SoundSource : c.Source;
                     if (!old.Equals(source)) wasChanged = true;
-                    c.Source = source;
+                    //c.Source = source;
                 }
 
                 if (Cell.SelectedCells.Cells.Any() && wasChanged)
                 {
-                    Cell.SelectedCells.Cells[0].Row.BeatCodeIsCurrent = false;
-                    SetChangesApplied(false);
-                    UpdateUiForSelectedCell();
+                    // create the action
+                    CellSource cellSourceAction = new CellSource(Cell.SelectedCells, source);
+                    cellSourceAction.Redo();
+                    AddUndoAction(cellSourceAction);
+
+                    //Cell.SelectedCells.Cells[0].Row.BeatCodeIsCurrent = false;
+                    //SetChangesApplied(false);
+                    //UpdateUiForSelectedCell();
                 }
             }
         }

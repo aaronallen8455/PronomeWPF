@@ -49,7 +49,8 @@ namespace Pronome
         {
             if (ItemsSource != null)
             {
-                ICollectionView view = CollectionViewSource.GetDefaultView(ItemsSource);
+                var view = CollectionViewSource.GetDefaultView(ItemsSource);
+
                 view.Refresh();
             }
         }
@@ -82,7 +83,7 @@ namespace Pronome
                 ICollectionView view = CollectionViewSource.GetDefaultView(newValue);
                 view.Filter += FilterPredicate;
             }
-
+            
             if (oldValue != null)
             {
                 ICollectionView view = CollectionViewSource.GetDefaultView(oldValue);

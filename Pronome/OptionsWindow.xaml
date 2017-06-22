@@ -10,13 +10,6 @@
     <Window.Resources>
         <!--Define the data source for the user source library-->
         <local:UserSourceLibrary x:Key="userSourceLibrary"/>
-        <!--<CollectionViewSource x:Key="userSourceLibrarySorted" 
-                              Source="{Binding Source={StaticResource userSourceLibrary}}"
-                              xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase">
-            <CollectionViewSource.SortDescriptions>
-                <scm:SortDescription PropertyName="Index"/>
-            </CollectionViewSource.SortDescriptions>
-        </CollectionViewSource>-->
 
         <local:HiHatStatusConverter x:Key="hihatStatusConverter"/>
         <local:NullToBooleanConverter x:Key="nullToBoolConverter"/>
@@ -190,13 +183,13 @@
                         </StackPanel>
 
                         <ListBox Name="customSoundListBox" 
-                                 ItemsSource="{Binding Source={StaticResource userSourceLibrary}}" 
+                                 ItemsSource="{Binding Source={StaticResource userSourceLibrary}}"
                                  HorizontalAlignment="Stretch"
                                  Height="110"
                                  SelectionMode="Single">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding}"/>
+                                    <TextBlock>u<Run Text="{Binding Path=Index}"/>. <Run Text="{Binding Path=Label}"/></TextBlock>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>

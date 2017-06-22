@@ -184,10 +184,29 @@ namespace Pronome
     {
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
-        public void OnNotifyCollectionChanged(NotifyCollectionChangedEventArgs args)
+        private static LinkedList<CompleteSourceLibrary> Instances = new LinkedList<CompleteSourceLibrary>();
+
+        public CompleteSourceLibrary()
         {
-            CollectionChanged?.Invoke(this, args);
+            Instances.AddLast(this);
         }
+
+        public static void ResetAllInstances()
+        {
+            foreach (CompleteSourceLibrary lib in Instances)
+            {
+                //lib.OnNotifyCollectionChanged(
+                //    new NotifyCollectionChangedEventArgs(
+                //        NotifyCollectionChangedAction.Reset));
+                lib.CollectionChanged?.Invoke(lib, new NotifyCollectionChangedEventArgs(
+                        NotifyCollectionChangedAction.Reset));
+            }
+        }
+
+        //private void OnNotifyCollectionChanged(NotifyCollectionChangedEventArgs args)
+        //{
+        //    CollectionChanged?.Invoke(this, args);
+        //}
 
         public IEnumerator<ISoundSource> GetEnumerator()
         {

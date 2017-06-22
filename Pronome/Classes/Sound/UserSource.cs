@@ -28,7 +28,8 @@ namespace Pronome
         /// </summary>
         [DataMember]
         protected string _label;
-        public string Label {
+        public string Label
+        {
             get => _label;
             set
             {
@@ -92,11 +93,13 @@ namespace Pronome
         /// <param name="e"></param>
         public static void LibraryCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            var sourceLibrary = Application.Current.Resources["completeSourceLibrary"] as CompleteSourceLibrary;
-
-            sourceLibrary.OnNotifyCollectionChanged(
-                new System.Collections.Specialized.NotifyCollectionChangedEventArgs( 
-                    System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+            // update the collection used by the source selectors
+            //var sourceLibrary = Application.Current.Resources["completeSourceLibrary"] as CompleteSourceLibrary;
+            //
+            //sourceLibrary.OnNotifyCollectionChanged(
+            //    new System.Collections.Specialized.NotifyCollectionChangedEventArgs( 
+            //        System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+            CompleteSourceLibrary.ResetAllInstances();
         }
 
         /// <summary>

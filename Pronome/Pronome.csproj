@@ -105,6 +105,7 @@
     <Compile Include="Classes\Editor\Action\CellDuration.cs" />
     <Compile Include="Classes\Editor\Action\EditRepeatGroup.cs" />
     <Compile Include="Classes\Editor\Action\EditMultGroup.cs" />
+    <Compile Include="Classes\Editor\Action\CellSource.cs" />
     <Compile Include="Classes\Editor\ConfirmCloseDialog.xaml.cs">
       <DependentUpon>ConfirmCloseDialog.xaml</DependentUpon>
     </Compile>
@@ -117,6 +118,7 @@
       <DependentUpon>MultGroupDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Classes\Editor\Action\RemoveMultGroup.cs" />
+    <Compile Include="Classes\Editor\Action\PasteCells.cs" />
     <Compile Include="Classes\Editor\ReferenceDialog.xaml.cs">
       <DependentUpon>ReferenceDialog.xaml</DependentUpon>
     </Compile>

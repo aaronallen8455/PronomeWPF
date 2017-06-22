@@ -6,7 +6,7 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="User Guide" Height="800" Width="1100">
+        Title="ProNome User Guide" Height="800" Width="1100">
 
     <Window.Resources>
         <Style TargetType="FlowDocument">
@@ -639,11 +639,11 @@
                         <Bold>Custom Sound Library</Bold>
                         <LineBreak/>
                         This where you can add your audio files to ProNome to use alongside the built-in samples. 
-                        To add a new sound, click the 'Add' button. Unless your file is a 16khz wav encoding, you 
-                        will be prompted to save a version of the file in the correct format.
+                        To add a new sound, click the 'Add' button. Unless your file is a 16khz Wav encoding, you 
+                        will be prompted to save a version of the file in this format.
                     </Paragraph>
                     <Paragraph>
-                        There will now be a new item added to the list. By selecting it you can do the following:
+                        There will now be a new item added to the list and by selecting it you can do the following:
                     </Paragraph>
                     <List MarkerStyle="None">
                         <ListItem>
@@ -728,16 +728,29 @@
                     <Paragraph>
                         <Bold>Additional Settings</Bold>
                         <LineBreak/>
-                        Turn on/off the persistent sessions option, which causes ProNome to open with the beat 
-                        from your last session. Turn this option off if you want to start from a blank slate 
-                        instead. It is on by default.
-                        <LineBreak/>
-                        The 'Pitch Decay' field allows you to set how fast the beep sound lasts in seconds. 
-                        The default value is '.04'.
-                        <LineBreak/>
-                        The last option lets you set the font size for the beat code inputs. The default 
-                        value is 20.
+                        This section contains the following miscellaneous settings:
                     </Paragraph>
+                    <List MarkerStyle="None">
+                        <ListItem>
+                            <Paragraph>
+                                Turn on/off the persistent sessions option, which causes ProNome to open with the beat 
+                                from your last session. Turn this option off if you want to start from a blank slate 
+                                instead. It is on by default.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                The 'Pitch Decay' field allows you to set how fast the beep sound lasts in seconds. 
+                                The default value is '.04'.
+                            </Paragraph>
+                        </ListItem>
+                        <ListItem>
+                            <Paragraph>
+                                The last option lets you set the font size for the beat code inputs. The default 
+                                value is 20.
+                            </Paragraph>
+                        </ListItem>
+                    </List>
                 </ListItem>
             </List>
         </FlowDocument>
@@ -746,14 +759,14 @@
     <DockPanel>
         
         <DockPanel DockPanel.Dock="Left">
-            <Border DockPanel.Dock="Top" BorderBrush="SkyBlue" BorderThickness="1">
-               <TextBlock Padding="5" FontSize="17" Background="LightCyan">Topics</TextBlock>
+            <Border DockPanel.Dock="Top">
+               <TextBlock Padding="5" FontSize="17" Background="#FF006DF0" Foreground="White">Topics</TextBlock>
             </Border>
             <ListBox
-                 Name="tableOfContents" 
-                 SelectionMode="Single" 
-                 SelectionChanged="tableOfContents_SelectionChanged"
-                 BorderBrush="SkyBlue"
+                Name="tableOfContents" 
+                SelectionMode="Single" 
+                SelectionChanged="tableOfContents_SelectionChanged"
+                BorderBrush="Gray"
                 Background="#FFFBFBFB">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">

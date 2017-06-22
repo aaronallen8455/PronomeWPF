@@ -237,31 +237,6 @@ namespace Pronome
                     ISoundSource src = InternalSource.GetFromModifier(source);
 
                     return new BeatCell(match.Groups[1].Value, this, src);
-                    ////if (Regex.IsMatch(source, @"^[a-gA-G][#b]?\d{1,2}$|^[pP][\d.]+$"))
-                    //if (Regex.IsMatch(source, @"^[a-gA-GpP]"))
-                    //{
-                    //    // is a pitch reference
-                    //    return new BeatCell(match.Groups[1].Value, this, InternalSource.GetFromPitch(source));
-                    //}
-                    //else if (Regex.IsMatch(source, @"^u\d+$"))
-                    //{
-                    //    // it's a custom source
-                    //    int id = int.Parse(source.Substring(1));
-                    //    var s = UserSource.Library.SkipWhile(src => src.Index < id);
-                    //    return new BeatCell(match.Groups[1].Value, this, s.Any() ? s.First() as ISoundSource : InternalSource.GetDefault());
-                    //}
-                    //else // ref is a plain number (wav source) or "" base source.
-                    //{
-                    //    InternalSource src = null;
-                    //    if (source != "")
-                    //    {
-                    //        int id = int.Parse(source);
-                    //        src = InternalSource.Library.ElementAtOrDefault(id);
-                    //    }
-                    //    return new BeatCell(match.Groups[1].Value, this, source != "" ? (src == null ? InternalSource.GetDefault() : src) : null);
-                    //
-                    //    //return new BeatCell(match.Groups[1].Value, source != "" ? WavFileStream.FileNameIndex[int.Parse(source), 0] : "");
-                    //}
 
                 }).ToArray();
 
@@ -309,8 +284,6 @@ namespace Pronome
             refString = Regex.Replace(refString, @"!.*?!", "");
             // remove whitespace
             refString = Regex.Replace(refString, @"\s", "");
-            // remove source modifiers if not @0
-            //refString = Regex.Replace(refString, @"@[a-gA-G]?[#b]?[pP]?[1-9.]+", "");
             // prep single cell repeats
             refString = Regex.Replace(refString, @"(\$[\ds]+)(\(\d\))", "[$1]$2");
 
@@ -326,7 +299,6 @@ namespace Pronome
                 }
                 // clean out empty cells
                 refString = Regex.Replace(refString, @",,", ",");
-                //refBeat = Regex.Replace(refBeat, @",$", "");
                 refString = refString.Trim(',');
             }
             else
@@ -404,11 +376,6 @@ namespace Pronome
                             {
                                 newSource.AddFrequency(bc.SoundSource.Uri, bc);
                             }
-                            //newSource.AddFrequency(bc.SoundSource.Uri, bc);
-                            //if (bc.SourceName == "")
-                            //    newSource.AddFrequency(baseSourceName, bc);
-                            //else
-                            //    newSource.AddFrequency(bc.SourceName, bc);
 
                             bc.AudioSource = newSource;
                         }
@@ -723,8 +690,6 @@ namespace Pronome
             HasHiHatOpen = BaseAudioSource.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open;
             if (!HasHiHatOpen)
                 HasHiHatClosed = BaseAudioSource.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed;
-            //if (BeatCell.HiHatOpenFileNames.Contains(BaseSourceName)) HasHiHatOpen = true;
-            //else if (BeatCell.HiHatClosedFileNames.Contains(BaseSourceName)) HasHiHatClosed = true;
 
             for (int i = 0; i < beat.Count(); i++)
             {
@@ -745,8 +710,6 @@ namespace Pronome
                     // set hihat status for beat sources
                     if (beat[i].SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed) HasHiHatClosed = true;
                     else if (beat[i].SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open) HasHiHatOpen = true;
-                    //if (BeatCell.HiHatOpenFileNames.Contains(beat[i].SourceName)) HasHiHatOpen = true;
-                    //else if (BeatCell.HiHatClosedFileNames.Contains(beat[i].SourceName)) HasHiHatClosed = true;
                 }
                 else
                 {
@@ -774,13 +737,8 @@ namespace Pronome
                             BasePitchSource.AddFrequency(BasePitchSource.SoundSource.Uri, beat[i]);
                         }
                         beat[i].AudioSource = BaseAudioSource;
-                        // is hihat sound?
-                        //if (BeatCell.HiHatClosedFileNames.Contains(BaseSourceName)) beat[i].IsHiHatClosed = true;
-                        //else if (BeatCell.HiHatOpenFileNames.Contains(BaseSourceName)) beat[i].IsHiHatOpen = true;
                     }
                 }
-                // set beat's value based on tempo and bytes/sec
-                //beat[i].SetBeatValue();
             }
 
             Beat = beat.ToList();

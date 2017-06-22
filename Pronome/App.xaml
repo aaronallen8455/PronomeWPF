@@ -101,7 +101,7 @@
             PreviewKeyDown="TextEditor_PreviewKeyDown"/>
         
         <!--Item source for drop down selectors-->
-        <local:CompleteSourceLibrary x:Key="completeSourceLibrary"/>
+        <local:CompleteSourceLibrary x:Key="completeSourceLibrary" x:Shared="False"/>
 
         <!--Source selector dropdown-->
         <local:ComboBoxFiltered

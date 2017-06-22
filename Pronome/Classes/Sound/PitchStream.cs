@@ -482,7 +482,7 @@ namespace Pronome
                             //nSample += .5f; // seems to help
                         }
                         else nSample = 0;
-                        freqChanged = true;
+                        freqChanged = curFreq != Frequency;
                         Gain = Volume;
                         if (gainStep != newGainStep) // set new gainstep if volume was changed
                             gainStep = newGainStep;
