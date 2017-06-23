@@ -109,38 +109,18 @@ namespace Pronome
             // source selector control
             baseSourceSelector = resources["sourceSelector"] as ComboBoxFiltered;
             MakeLabel("Source", baseSourceSelector);
-            // get array of sources
-            //List<string> sources = InternalSource.Library.Select(x => x.ToString()).ToList();
-            ////List<string> sources = WavFileStream.FileNameIndex.Cast<string>()
-            ////    .Where((n, i) => i % 2 == 1) // get the pretty names from the odd numbered indexes
-            ////    .Select((x, i) => (i.ToString() + ".").PadRight(4) + x).ToList(); // add index numbers
-            //sources[0] = "Pitch"; // replace Silentbeat with Pitch
-            //sources.AddRange(UserSource.Library.OrderBy(x => x.Label).Select(x => x.ToString())); // add custom sources
-            //baseSourceSelector.ItemsSource = sources;
 
-            //if (!PitchStream.IsPitchSourceName(Layer.BaseSourceName)) // if wav source get the the selector name from file name
-            //{
-                var src = Layer.BaseAudioSource.SoundSource;
-                if (src.IsPitch)
-                {
-                    // Pitch is the first item in the collection
-                    baseSourceSelector.SelectedIndex = 0;
-                }
-                else
-                {
-                    baseSourceSelector.SelectedItem = src;
-                }
-                //string selector = WavFileStream.GetSelectorNameByFile(Layer.BaseSourceName);
-                //if (sources.Contains(selector))
-                //{
-                //    baseSourceSelector.SelectedIndex = sources.IndexOf(selector);
-                //}
-                //else baseSourceSelector.SelectedIndex = 0;
-            //}
-            //else
-            //{
-            //    baseSourceSelector.SelectedIndex = 0; // pitch source
-            //}
+            var src = Layer.BaseAudioSource.SoundSource;
+            if (src.IsPitch)
+            {
+                // Pitch is the first item in the collection
+                baseSourceSelector.SelectedIndex = 0;
+            }
+            else
+            {
+                baseSourceSelector.SelectedItem = src;
+            }
+
             baseSourceSelector.SelectionChanged += new SelectionChangedEventHandler(baseSourceSelector_SelectionChanged);
 
             // pitch field (used if source is a pitch)

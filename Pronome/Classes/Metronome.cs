@@ -74,6 +74,13 @@ namespace Pronome
         /**<summary>Used to hold a reference to the ISampleProvider so we can easily remove it from the mixer when needed.</summary>*/
         protected Dictionary<IStreamProvider, ISampleProvider> SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
 
+        /// <summary>
+        /// Used to sync up layers in cases such as a layer being modified during playback.
+        /// </summary>
+        static public ManualResetEventSlim LayerSyncGate = new ManualResetEventSlim(true);
+
+
+
         /** <summary>Add all the audio sources from each layer.</summary>
          * <param name="layer">Layer to add sources from.</param> */
         public void AddSourcesFromLayer(Layer layer)
@@ -81,23 +88,27 @@ namespace Pronome
             // add sources to mixer
             foreach (IStreamProvider src in layer.AudioSources.Values)
             {
-                if (src.BeatCollection.Enumerator == null) continue; // don't add sources with no beat value.
-
-                if (!SampleDictionary.Keys.Contains(src))
-                {
-                    SampleDictionary.Add(src,
-                        ((WavFileStream)src).VolumeProvider
-                    );
-
-                    Mixer.AddMixerInput(SampleDictionary[src]);
-                }
+                //if (src.BeatCollection.Enumerator == null) continue; // don't add sources with no beat value.
+                //
+                //if (!SampleDictionary.Keys.Contains(src))
+                //{
+                //    SampleDictionary.Add(src,
+                //        ((WavFileStream)src).VolumeProvider
+                //    );
+                //
+                //    Mixer.AddMixerInput(SampleDictionary[src]);
+                //}
+                AddAudioSource(src);
             }
 
-            if (layer.BasePitchSource != null && !SampleDictionary.Values.Contains(layer.BasePitchSource)) // if base source is a pitch stream.
-            {
-                Mixer.AddMixerInput(layer.BasePitchSource);
-                SampleDictionary.Add(layer.BasePitchSource, layer.BasePitchSource);
-            }
+            AddAudioSource(layer.BaseAudioSource);
+            AddAudioSource(layer.BasePitchSource);
+
+            //if (layer.BasePitchSource != null && !SampleDictionary.Values.Contains(layer.BasePitchSource)) // if base source is a pitch stream.
+            //{
+            //    Mixer.AddMixerInput(layer.BasePitchSource);
+            //    SampleDictionary.Add(layer.BasePitchSource, layer.BasePitchSource);
+            //}
 
             // transfer silent interval if exists
             if (IsSilentInterval)
@@ -107,7 +118,9 @@ namespace Pronome
                     src.SetSilentInterval(AudibleInterval, SilentInterval);
                 }
 
-                if (layer.BasePitchSource != default(PitchStream))
+                layer.BaseAudioSource.SetSilentInterval(AudibleInterval, SilentInterval);
+
+                if (layer.BasePitchSource != default(PitchStream) && !layer.IsPitch)
                     layer.BasePitchSource.SetSilentInterval(AudibleInterval, SilentInterval);
             }
 
@@ -147,22 +160,26 @@ namespace Pronome
         }
 
         /**<summary>Add an audiosource to the mixer</summary>
-         * <param name="src">The IStreamProvider from the layer's AudioSources dictionary</param>
+         * <param name="src">The IStreamProvider from the layer's AudioSources</param>
          */
         public void AddAudioSource(IStreamProvider src)
         {
-            if (src.SoundSource.IsPitch)
+            // don't add empty sources or sources that are already added
+            if (src != null && !SampleDictionary.ContainsKey(src) && src.BeatCollection.Enumerator != null)
             {
-                SampleDictionary.Add(src, (PitchStream)src);
-                Mixer.AddMixerInput(SampleDictionary[src]);
-            }
-            else
-            {
-                SampleDictionary.Add(
-                    src, 
-                    ((WavFileStream)src).VolumeProvider
-                );
-                Mixer.AddMixerInput(SampleDictionary[src]);
+                if (src.SoundSource.IsPitch)
+                {
+                    SampleDictionary.Add(src, (PitchStream)src);
+                    Mixer.AddMixerInput(SampleDictionary[src]);
+                }
+                else
+                {
+                    SampleDictionary.Add(
+                        src, 
+                        ((WavFileStream)src).VolumeProvider
+                    );
+                    Mixer.AddMixerInput(SampleDictionary[src]);
+                }
             }
         }
 
@@ -231,9 +248,9 @@ namespace Pronome
             if (PlayState == State.Playing)
             {
                 Player.Pause();
-
+                
                 PlayState = State.Paused;
-
+                
                 UpdateElapsedQuarters(); // flush the elapsed beat timer
             }
         }

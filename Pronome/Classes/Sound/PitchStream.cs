@@ -428,6 +428,13 @@ namespace Pronome
 
             int outIndex = offset;
 
+            // check if layers need to be synced
+            if (!Metronome.LayerSyncGate.IsSet)
+            {
+
+                Metronome.LayerSyncGate.Wait();
+            }
+
             // perform cued interval multiplication
             if (offset == 0 && Metronome.GetInstance().TempoChangeCued && !Metronome.GetInstance().TempoChangedSet.Contains(this))//intervalMultiplyCued)
             {
