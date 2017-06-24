@@ -74,12 +74,49 @@ namespace Pronome
         /**<summary>Used to hold a reference to the ISampleProvider so we can easily remove it from the mixer when needed.</summary>*/
         protected Dictionary<IStreamProvider, ISampleProvider> SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
 
-        /// <summary>
-        /// Used to sync up layers in cases such as a layer being modified during playback.
-        /// </summary>
-        static public ManualResetEventSlim LayerSyncGate = new ManualResetEventSlim(true);
+        static public bool NeedToInsertStream = false;
 
+        static public LinkedList<IStreamProvider> StreamsToInsert = new LinkedList<IStreamProvider>();
+        static public uint CycleToInsertTo
+        {
+            set
+            {
+                lock (StreamsToInsert)
+                {
+                    if (StreamsToInsert.Any())
+                    {
+                        Instance.Pause();
+                        // open the gate
+                        NeedToInsertStream = false;
+                        foreach (IStreamProvider stream in StreamsToInsert)
+                        {
+                        
+                            // fast-forward to the given cycle count
+                            if (stream.SoundSource.IsPitch)
+                            {
+                                PitchStream strm = stream as PitchStream;
+                                for (uint i=strm.Cycle; i<=value; i++)
+                                {
+                                    strm.Read(new float[1280], 0, 1280);
+                                }
+                            }
+                            else
+                            {
+                                VolumeSampleProvider strm = (stream as WavFileStream).VolumeProvider;
+                                float[] arr = new float[1280 * strm.WaveFormat.BlockAlign];
+                                for (int i=1; i<=value; i++)
+                                {
+                                    strm.Read(arr, 0, 1280 * strm.WaveFormat.BlockAlign);
+                                }
+                            }
+                        }
+                        Instance.Play();
 
+                        StreamsToInsert.Clear();
+                    }
+                }
+            }
+        }
 
         /** <summary>Add all the audio sources from each layer.</summary>
          * <param name="layer">Layer to add sources from.</param> */
@@ -88,27 +125,11 @@ namespace Pronome
             // add sources to mixer
             foreach (IStreamProvider src in layer.AudioSources.Values)
             {
-                //if (src.BeatCollection.Enumerator == null) continue; // don't add sources with no beat value.
-                //
-                //if (!SampleDictionary.Keys.Contains(src))
-                //{
-                //    SampleDictionary.Add(src,
-                //        ((WavFileStream)src).VolumeProvider
-                //    );
-                //
-                //    Mixer.AddMixerInput(SampleDictionary[src]);
-                //}
                 AddAudioSource(src);
             }
 
             AddAudioSource(layer.BaseAudioSource);
             AddAudioSource(layer.BasePitchSource);
-
-            //if (layer.BasePitchSource != null && !SampleDictionary.Values.Contains(layer.BasePitchSource)) // if base source is a pitch stream.
-            //{
-            //    Mixer.AddMixerInput(layer.BasePitchSource);
-            //    SampleDictionary.Add(layer.BasePitchSource, layer.BasePitchSource);
-            //}
 
             // transfer silent interval if exists
             if (IsSilentInterval)
@@ -141,10 +162,13 @@ namespace Pronome
             {
                 RemoveAudioSource(src);
             }
-            if (layer.BasePitchSource != default(PitchStream))
-            {
-                RemoveAudioSource(layer.BasePitchSource);
-            }
+            RemoveAudioSource(layer.BaseAudioSource);
+            RemoveAudioSource(layer.BasePitchSource);
+
+            //if (layer.BasePitchSource != default(PitchStream))
+            //{
+            //    RemoveAudioSource(layer.BasePitchSource);
+            //}
         }
 
         /**<summary>Remove an audiosource from the mixer</summary>
@@ -152,7 +176,7 @@ namespace Pronome
          */
         public void RemoveAudioSource(IStreamProvider src)
         {
-            if (SampleDictionary.ContainsKey(src))
+            if (src != null && SampleDictionary.ContainsKey(src))
             {
                 Mixer.RemoveMixerInput(SampleDictionary[src]);
                 SampleDictionary.Remove(src);
@@ -595,7 +619,7 @@ namespace Pronome
                     GetInstance().TempoChangedSet = new HashSet<IStreamProvider>();
                     //GetInstance().TempoChangeCounter = 0;
                 }
-                catch (SerializationException e)
+                catch (SerializationException)
                 {
                     string name = Path.GetFileName(fileName);
                     new TaskDialogWrapper(Application.Current.MainWindow).Show(

@@ -678,6 +678,29 @@ namespace Pronome
                 }
                 AudioSources.Clear();
                 BaseAudioSource.SetOffset(0);
+
+                // if altering beat while playing, we should rebuild ALL sources
+                if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+                {
+                    Metronome.GetInstance().RemoveAudioSource(BaseAudioSource);
+                    if (IsPitch)
+                    {
+                        BasePitchSource = new PitchStream(BasePitchSource.SoundSource)
+                        {
+                            Layer = this,
+                            Volume = Volume
+                        };
+                        BaseAudioSource = BasePitchSource;
+                    }
+                    else
+                    {
+                        BaseAudioSource = new WavFileStream(BaseAudioSource.SoundSource)
+                        {
+                            Layer = this,
+                            Volume = Volume
+                        };
+                    }
+                }
             
                 if (IsPitch) // need to rebuild the pitch source
                 {
@@ -827,13 +850,15 @@ namespace Pronome
                 source.SetInitialMuting();
             }
 
+
+            Metronome.GetInstance().AddSourcesFromLayer(this);
+
             // if the beat is being changed during playback, we need to sync up the layers
             if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
             {
-
+                Metronome.StreamsToInsert = new LinkedList<IStreamProvider>(completed);
+                Metronome.NeedToInsertStream = true;
             }
-
-            Metronome.GetInstance().AddSourcesFromLayer(this);
         }
 
         /**<summary>Get a random pitch based on existing pitch layers</summary>*/

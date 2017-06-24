@@ -59,7 +59,7 @@ namespace Pronome
             SoundSource = source;
             waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channel);
             // Default
-            Frequency = 440.0;
+            Frequency = 0;
             //Frequency = BaseFrequency = 440.0;
             Pan = 0;
             BytesPerSec = waveFormat.AverageBytesPerSecond / 8;
@@ -404,6 +404,11 @@ namespace Pronome
             return totalOffset + OffsetRemainder;
         }
 
+        public uint Cycle
+        {
+            get => cycle;
+        }
+
         protected double initialOffset = 0; // the offset value to reset to.
         protected long totalOffset = 0; // time to wait before reading source.
         protected double OffsetRemainder = 0;
@@ -429,10 +434,9 @@ namespace Pronome
             int outIndex = offset;
 
             // check if layers need to be synced
-            if (!Metronome.LayerSyncGate.IsSet)
+            if (offset == 0 && Metronome.NeedToInsertStream && cycle != 0)
             {
-
-                Metronome.LayerSyncGate.Wait();
+                Metronome.CycleToInsertTo = cycle;
             }
 
             // perform cued interval multiplication
