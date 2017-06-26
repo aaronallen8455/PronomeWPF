@@ -199,10 +199,21 @@ namespace Pronome
 
                     if (errorMsg == string.Empty)
                     {
-                        Layer.Parse(textEditor.Text);
+                        // if the beat is being changed during playback then the parsing will occur when the cycle count occurs
+                        if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+                        {
+                            Metronome.LayerToChangeAndSync = Tuple.Create(Layer, textEditor.Text);
+                            Metronome.NeedToInsertStream = true;
+                        }
+                        else
+                        {
+                            // parse immediately
+                            Layer.Parse(textEditor.Text);
 
-                        // redraw beat graph if necessary
-                        Metronome.GetInstance().TriggerAfterBeatParsed();
+                            // redraw beat graph if necessary
+                            Metronome.GetInstance().TriggerAfterBeatParsed();
+                        }
+
                     }
                     else throw new BeatSyntaxException(errorMsg);
                 }

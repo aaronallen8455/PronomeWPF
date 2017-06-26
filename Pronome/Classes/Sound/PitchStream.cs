@@ -54,7 +54,7 @@ namespace Pronome
          * <param name="channel">Number of channels</param>
          * <param name="sampleRate">Samples per second</param>
          */
-        public PitchStream(ISoundSource source, int sampleRate = 16000, int channel = 2)
+        public PitchStream(ISoundSource source, int sampleRate = 44100, int channel = 2)
         {
             SoundSource = source;
             waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channel);
@@ -68,6 +68,8 @@ namespace Pronome
             // set audible/silent interval if already exists
             if (Metronome.GetInstance().IsSilentInterval)
                 SetSilentInterval(Metronome.GetInstance().AudibleInterval, Metronome.GetInstance().SilentInterval);
+
+            gainStep = 1 / (WaveFormat.SampleRate / DecayLength);
         }
 
         /**<summary>Add a frequency to the frequency enumerator que.</summary>
@@ -186,7 +188,7 @@ namespace Pronome
 
         /**<summary>Used to create the fade out of the beep sound. Resets to the value of Volume on interval completetion.</summary>*/
         protected double Gain { get; set; }
-        double gainStep = 1 / (16000 / DecayLength); // the amount that gain is subtracted by for each byte to produce fade.
+        double gainStep; // the amount that gain is subtracted by for each byte to produce fade.
         double newGainStep; // set when Volume changes and takes effect when byte interval resets.
 
         /**<summary>If a multiply is cued, perform operation on all relevant members at the start of a stream read.</summary>*/
@@ -264,7 +266,7 @@ namespace Pronome
             set
             {
                 _volume = value;
-                newGainStep = value / (16000 * DecayLength); //DecayFactor;
+                newGainStep = value / (WaveFormat.SampleRate * DecayLength); //DecayFactor;
                 // 16000 BPS
             }
         }
@@ -429,14 +431,14 @@ namespace Pronome
          */
         public int Read(float[] buffer, int offset, int count)
         {
-            if (count == 2560) { return count; } // account for the occasional blip at start up.
+            if (count == 7040) { return count; } // account for the occasional blip at start up.
 
             int outIndex = offset;
 
             // check if layers need to be synced
             if (offset == 0 && Metronome.NeedToInsertStream && cycle != 0)
             {
-                Metronome.CycleToInsertTo = cycle;
+                Metronome.CycleToInsertTo(cycle);
             }
 
             // perform cued interval multiplication

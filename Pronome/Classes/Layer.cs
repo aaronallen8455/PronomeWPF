@@ -853,12 +853,12 @@ namespace Pronome
 
             Metronome.GetInstance().AddSourcesFromLayer(this);
 
-            // if the beat is being changed during playback, we need to sync up the layers
-            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
-            {
-                Metronome.StreamsToInsert = new LinkedList<IStreamProvider>(completed);
-                Metronome.NeedToInsertStream = true;
-            }
+            //// if the beat is being changed during playback, we need to sync up the layers
+            //if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+            //{
+            //    Metronome.StreamsToInsert = new LinkedList<IStreamProvider>(completed);
+            //    Metronome.NeedToInsertStream = true;
+            //}
         }
 
         /**<summary>Get a random pitch based on existing pitch layers</summary>*/

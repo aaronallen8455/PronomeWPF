@@ -266,7 +266,6 @@
     <EmbeddedResource Include="wav\hihat_open_center_v10.wav" />
     <EmbeddedResource Include="wav\hihat_open_center_v4.wav" />
     <EmbeddedResource Include="wav\hihat_open_center_v7.wav" />
-    <EmbeddedResource Include="wav\hihat_open_center_v72.wav" />
     <EmbeddedResource Include="wav\hihat_open_edge_v10.wav" />
     <EmbeddedResource Include="wav\hihat_open_edge_v7.wav" />
     <EmbeddedResource Include="wav\hihat_pedal_v3.wav" />
