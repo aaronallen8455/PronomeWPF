@@ -27,9 +27,11 @@ namespace Pronome
 
         protected double GetFileSize(double seconds)
         {
-            double kB = seconds * 126;
-            int sub = (int)seconds;
-            kB -= (seconds - 1);
+            double kB = 44.1 * 2 * (16 / 8) * seconds;// / 1024;
+            //double kB = seconds * 172.5;
+            //int sub = (int)seconds;
+            //kB -= (seconds - 1);
+            //kB -= 19;
 
             return kB;
         }

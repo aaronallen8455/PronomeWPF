@@ -639,7 +639,7 @@
                         <Bold>Custom Sound Library</Bold>
                         <LineBreak/>
                         This where you can add your audio files to ProNome to use alongside the built-in samples. 
-                        To add a new sound, click the 'Add' button. Unless your file is a 16khz Wav encoding, you 
+                        To add a new sound, click the 'Add' button. Unless your file is a Wav encoding with 44.1khz sampling rate, you 
                         will be prompted to save a version of the file in this format.
                     </Paragraph>
                     <Paragraph>

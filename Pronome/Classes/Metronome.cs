@@ -17,7 +17,7 @@ namespace Pronome
     public class Metronome : IDisposable
     {
         /** <sumarry>Mix the output from all audio sources.</sumarry> */
-        protected MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 2));
+        protected MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateCustomFormat(WaveFormatEncoding.IeeeFloat, 44100, 2, 176400, 4, 16));
         /** <summary>Access the sound output device.</summary> */
         public DirectSoundOut Player = new DirectSoundOut();
 
@@ -144,37 +144,6 @@ namespace Pronome
                 {
                     Instance.Play();
                 }
-                //if (StreamsToInsert.Any())
-                //{
-                //    Instance.Pause();
-                //    // open the gate
-                //    NeedToInsertStream = false;
-                //    foreach (IStreamProvider stream in StreamsToInsert)
-                //    {
-                //    
-                //        // fast-forward to the given cycle count
-                //        if (stream.SoundSource.IsPitch)
-                //        {
-                //            PitchStream strm = stream as PitchStream;
-                //            for (uint i=strm.Cycle; i<=value; i++)
-                //            {
-                //                strm.Read(new float[1280], 0, 1280);
-                //            }
-                //        }
-                //        else
-                //        {
-                //            VolumeSampleProvider strm = (stream as WavFileStream).VolumeProvider;
-                //            float[] arr = new float[1280 * strm.WaveFormat.BlockAlign];
-                //            for (int i=1; i<=value; i++)
-                //            {
-                //                strm.Read(arr, 0, 1280 * strm.WaveFormat.BlockAlign);
-                //            }
-                //        }
-                //    }
-                //    Instance.Play();
-                //
-                //    StreamsToInsert.Clear();
-                //}
             }
         }
 
@@ -355,7 +324,7 @@ namespace Pronome
          */
         public void ExportAsWav(double seconds, string fileName)
         {
-            Writer = new WaveFileWriter(fileName, Mixer.WaveFormat);
+            Writer = new WaveFileWriter(fileName, new WaveFormat()); // use CD format
 
             // if no seconds param, use the complete cycle
             if (seconds == 0)
@@ -368,7 +337,8 @@ namespace Pronome
             bytesToRec -= bytesToRec % 4;
 
             int bytesRecorded = 0;
-            int cycleSize = 1280;
+            //FIX ME
+            int cycleSize = 3520; // 44100 sample rate
 
             while (bytesRecorded < bytesToRec)
             {

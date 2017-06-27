@@ -113,13 +113,13 @@ namespace Pronome
         /// <param name="inPath"></param>
         /// <param name="outPath"></param>
         /// <returns></returns>
-        static public bool ConvertToWave16(string inPath, string outPath)
+        static public bool ConvertToWave441k(string inPath, string outPath)
         {
             try
             {
                 using (AudioFileReader reader = new AudioFileReader(inPath))
                 {
-                    var resampler = new WdlResamplingSampleProvider(reader, 16000);
+                    var resampler = new WdlResamplingSampleProvider(reader, 44100);
 
                     WaveFileWriter.CreateWaveFile16(outPath, resampler);
                 }

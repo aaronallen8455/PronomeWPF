@@ -293,9 +293,9 @@ namespace Pronome
                 {
                     using (WaveFileReader reader = new WaveFileReader(openFileDialog.FileName))
                     {
-                        if (reader.WaveFormat.SampleRate != 16000)
+                        if (reader.WaveFormat.SampleRate != 44100)
                         {
-                            throw new Exception(); // must be 16000hz
+                            throw new Exception(); // must be 44100hz
                         }
 
                         fileName = openFileDialog.FileName;
@@ -306,7 +306,7 @@ namespace Pronome
                 {
                     var result = new TaskDialogWrapper(this).Show(
                         "Incorrect Format",
-                        $"The file, {openFileDialog.SafeFileName}, isn't in the correct format.",
+                        $"The file, {openFileDialog.SafeFileName}, isn't in the correct format (wav encoded, 44.1khz sampling rate).",
                         "Do you want to save a converted version to use instead?",
                         TaskDialogWrapper.TaskDialogButtons.Yes | TaskDialogWrapper.TaskDialogButtons.No,
                         TaskDialogWrapper.TaskDialogIcon.Warning
@@ -329,7 +329,7 @@ namespace Pronome
                                 openFileDialog.FileName += "x";
                                 overwrite = true;
                             }
-                            if (UserSource.ConvertToWave16(openFileDialog.FileName, saveFile.FileName))
+                            if (UserSource.ConvertToWave441k(openFileDialog.FileName, saveFile.FileName))
                             {
                                 // success
                                 fileName = saveFile.FileName;

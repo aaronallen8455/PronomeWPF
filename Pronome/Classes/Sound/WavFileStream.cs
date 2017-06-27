@@ -92,7 +92,7 @@ namespace Pronome
             //if (BeatCell.HiHatOpenFileNames.Contains(fileName)) IsHiHatOpen = true;
             //else if (BeatCell.HiHatClosedFileNames.Contains(fileName)) IsHiHatClose = true;
 
-            chunkSizeOverflow = 1280 * WaveFormat.BlockAlign;
+            chunkSizeOverflow = 3520 * WaveFormat.BlockAlign;
         }
 
         /**<summary>The volume for this sound source.</summary>*/
@@ -255,7 +255,7 @@ namespace Pronome
                 // recalculate the hihat count and byte to cutoff values
                 if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && Layer.HasHiHatClosed)
                 {
-                    int cycleSize = 640 * BlockAlignment;
+                    int cycleSize = 1760 * BlockAlignment;
                     long countDiff = HiHatCycleToMute - cycle;
                     long totalBytes = countDiff * cycleSize + HiHatByteToMute;
                     totalBytes = (long)(totalBytes * intervalMultiplyFactor);
@@ -302,7 +302,7 @@ namespace Pronome
                 if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed 
                     && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
                 {
-                    int cycleSize = 640 * BlockAlignment;
+                    int cycleSize = 1760 * BlockAlignment;
                     int total = totalOffset;
                     int cycles = total / cycleSize;
                     int bytes = total % cycleSize;
