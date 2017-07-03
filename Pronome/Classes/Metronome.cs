@@ -17,9 +17,9 @@ namespace Pronome
     public class Metronome : IDisposable
     {
         /** <sumarry>Mix the output from all audio sources.</sumarry> */
-        protected MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateCustomFormat(WaveFormatEncoding.IeeeFloat, 44100, 2, 176400, 4, 16));
+        protected MixingSampleProvider Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 2));//WaveFormat.CreateCustomFormat(WaveFormatEncoding.IeeeFloat, 44100, 2, 176400, 4, 16));
         /** <summary>Access the sound output device.</summary> */
-        public DirectSoundOut Player = new DirectSoundOut();
+        public WaveOut Player = new WaveOut();
 
         /** <summary>The singleton instance.</summary> */
         static Metronome Instance;
@@ -324,7 +324,7 @@ namespace Pronome
          */
         public void ExportAsWav(double seconds, string fileName)
         {
-            Writer = new WaveFileWriter(fileName, new WaveFormat()); // use CD format
+            Writer = new WaveFileWriter(fileName, Mixer.WaveFormat); // use CD format - or not... causes problems with pitch stream
 
             // if no seconds param, use the complete cycle
             if (seconds == 0)
@@ -700,7 +700,7 @@ namespace Pronome
             Instance = this;
             Mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 2));
             Recorder = new StreamToWavFile(Mixer);
-            Player = new DirectSoundOut();
+            Player = new WaveOut();
             Player.Init(Recorder);
             SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
         }

@@ -46,7 +46,7 @@ namespace Pronome
         public Layer Layer { get; set; }
 
         /**<summary>Used in sine wave generation.</summary>*/
-        private float nSample;
+        private int nSample;
 
         public ISoundSource SoundSource { get; set; }
 
@@ -152,7 +152,7 @@ namespace Pronome
             }
             BeatCollection.Enumerator = BeatCollection.GetEnumerator();
             ByteInterval = 0;
-            previousSample = 0;
+            sampleValue = 0;
             cycle = 0;
             Gain = Volume;
             if (Metronome.GetInstance().IsSilentInterval)
@@ -182,9 +182,6 @@ namespace Pronome
 
         /**<summary>The current frequency in hertz.</summary>*/
         public double Frequency { get; set; }
-
-        ///**<summary>The frequency used if cell doesn't specify a pitch directly.</summary>*/
-        //public double BaseFrequency { get; set; }
 
         /**<summary>Used to create the fade out of the beep sound. Resets to the value of Volume on interval completetion.</summary>*/
         protected double Gain { get; set; }
@@ -241,22 +238,7 @@ namespace Pronome
                 //}
             }
         }
-        ///**<summary>Cue a multiply operation to occur at the start of the next stream read.</summary>
-        // * <param name="factor">The number to multiply by</param>
-        // */
-        //public void MultiplyByteInterval(double factor)
-        //{
-        //    lock(_multLock)
-        //    {
-        //        if (!intervalMultiplyCued)
-        //        {
-        //            intervalMultiplyFactor = factor;
-        //            intervalMultiplyCued = true;
-        //        }
-        //    }
-        //}
-        //bool intervalMultiplyCued = false;
-        //double intervalMultiplyFactor;
+
         object _multLock = new object();
 
         /**<summary>The volume control for this stream.</summary>*/
@@ -271,6 +253,8 @@ namespace Pronome
             }
         }
         double _volume = 1;
+
+        public double GainStep { get => gainStep; }
 
         private volatile float pan;
         /**<summary>Gets/sets the pan value. -1 to 1.</summary>*/
@@ -287,6 +271,9 @@ namespace Pronome
         }
         private float left;
         private float right;
+
+        public float Left { get => left; }
+        public float Right { get => right; }
 
         /**<summary>Gets the next interval value and determines if it will be muted.</summary>*/
         public long GetNextInterval()
@@ -422,7 +409,9 @@ namespace Pronome
 
         double multiple; // used in sine wave calculation
 
-        double previousSample;
+        double sampleValue = 0;
+
+        double phaseShift = 0;
 
         uint cycle = 0; // cycle count, used to sync up all layers
 
@@ -435,11 +424,11 @@ namespace Pronome
 
             int outIndex = offset;
 
-            // check if layers need to be synced
-            if (offset == 0 && Metronome.NeedToInsertStream && cycle != 0)
-            {
-                Metronome.CycleToInsertTo(cycle);
-            }
+            //// check if layers need to be synced
+            //if (offset == 0 && Metronome.NeedToInsertStream && cycle != 0)
+            //{
+            //    Metronome.CycleToInsertTo(cycle);
+            //}
 
             // perform cued interval multiplication
             if (offset == 0 && Metronome.GetInstance().TempoChangeCued && !Metronome.GetInstance().TempoChangedSet.Contains(this))//intervalMultiplyCued)
@@ -455,9 +444,7 @@ namespace Pronome
                     MultiplyByteInterval();
                 }
             }
-
-            double sampleValue;
-
+            
             // Complete Buffer
             for (int sampleCount = 0; sampleCount < count / waveFormat.Channels; sampleCount++)
             {
@@ -465,10 +452,10 @@ namespace Pronome
                 if (hasOffset)
                 {
                     totalOffset -= 1;
-
+            
                     buffer[outIndex++] = 0;
                     buffer[outIndex++] = 0;
-
+            
                     if (totalOffset == 0)
                     {
                         hasOffset = false;
@@ -487,14 +474,19 @@ namespace Pronome
                     if (!silentIntvlSilent && !currentlyMuted && Frequency != 0)
                     {
                         // what should nsample be to create a smooth transition?
-                        if (previousSample != 0 && Gain != 0)
+                        if (sampleValue != 0 && Gain != 0)
                         {
                             if (Frequency != curFreq)
                                 multiple = TwoPi * Frequency / waveFormat.SampleRate;
-                            nSample = Convert.ToSingle(Math.Asin(previousSample / Volume) / multiple);
+                            //double oldWaveLength = waveFormat.SampleRate / curFreq;
+                            //double ratio = (nSample % oldWaveLength) / oldWaveLength;
+
+                            nSample = (int)(Math.Asin(sampleValue / Volume) / multiple) + 1;
+                            //if (ratio >= .25 && ratio < .5 || ratio >= .75) nSample += (int)(Frequency / waveFormat.SampleRate / 4);
                             //nSample += .5f; // seems to help
                         }
                         else nSample = 0;
+
                         freqChanged = curFreq != Frequency;
                         Gain = Volume;
                         if (gainStep != newGainStep) // set new gainstep if volume was changed
@@ -507,7 +499,7 @@ namespace Pronome
                         if (Gain == Volume) Gain = 0;
                     }
                 }
-
+            
                 if (Gain <= 0)
                 {
                     nSample = 0;
@@ -519,7 +511,7 @@ namespace Pronome
                     if (Layer.IsMuted || Layer.SoloGroupEngaged && !Layer.IsSoloed)
                     {
                         nSample = 0;
-                        previousSample = sampleValue = 0;
+                        sampleValue = 0;
                     }
                     else
                     {
@@ -530,11 +522,13 @@ namespace Pronome
                             freqChanged = false;
                         }
 
-                        sampleValue = previousSample = Gain * Math.Sin(nSample * multiple);
+                        sampleValue = Gain * Math.Sin(nSample * multiple);
+
+                        nSample++;
                     }
                     Gain -= gainStep;
+
                 }
-                nSample++;
 
                 // Set the pan amounts.
                 for (int i = 0; i < waveFormat.Channels; i++)
@@ -544,6 +538,7 @@ namespace Pronome
                     else
                         buffer[outIndex++] = (float)sampleValue * left;
                 }
+            
                 ByteInterval -= 1;
             }
 
@@ -553,5 +548,7 @@ namespace Pronome
         }
 
         public void Dispose() { }
+
     }
+
 }
