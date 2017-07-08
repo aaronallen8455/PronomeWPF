@@ -329,7 +329,7 @@ namespace Pronome
                                 openFileDialog.FileName += "x";
                                 overwrite = true;
                             }
-                            if (UserSource.ConvertToWave441k(openFileDialog.FileName, saveFile.FileName))
+                            if (UserSource.ConvertToWave(openFileDialog.FileName, saveFile.FileName))
                             {
                                 // success
                                 fileName = saveFile.FileName;

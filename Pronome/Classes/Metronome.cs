@@ -275,7 +275,7 @@ namespace Pronome
         {
             if (PlayState == State.Playing || PlayState == State.Paused)
             {
-                Player.Pause();
+                Player.Stop();
 
                 // reset components
                 foreach (Layer layer in Layers)

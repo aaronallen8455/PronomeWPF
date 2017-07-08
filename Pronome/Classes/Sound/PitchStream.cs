@@ -58,6 +58,7 @@ namespace Pronome
         {
             SoundSource = source;
             waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channel);
+            //waveFormat = WaveFormat.CreateCustomFormat(WaveFormatEncoding.IeeeFloat, sampleRate, channel, 176400, 4, 16);
             // Default
             Frequency = 0;
             //Frequency = BaseFrequency = 440.0;

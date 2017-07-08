@@ -113,7 +113,7 @@ namespace Pronome
         /// <param name="inPath"></param>
         /// <param name="outPath"></param>
         /// <returns></returns>
-        static public bool ConvertToWave441k(string inPath, string outPath)
+        static public bool ConvertToWave(string inPath, string outPath)
         {
             try
             {
