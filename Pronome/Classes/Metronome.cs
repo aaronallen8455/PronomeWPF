@@ -151,27 +151,19 @@ namespace Pronome
          * <param name="layer">Layer to add sources from.</param> */
         public void AddSourcesFromLayer(Layer layer)
         {
-            // add sources to mixer
-            foreach (IStreamProvider src in layer.AudioSources.Values)
+            // add sources to mixer. Add hiHat down sounds first.
+            foreach (IStreamProvider src in layer.GetAllSources().OrderBy(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed))
             {
                 AddAudioSource(src);
             }
 
-            AddAudioSource(layer.BaseAudioSource);
-            AddAudioSource(layer.BasePitchSource);
-
             // transfer silent interval if exists
             if (IsSilentInterval)
             {
-                foreach (IStreamProvider src in layer.AudioSources.Values)
+                foreach (IStreamProvider src in layer.GetAllSources())
                 {
                     src.SetSilentInterval(AudibleInterval, SilentInterval);
                 }
-
-                layer.BaseAudioSource.SetSilentInterval(AudibleInterval, SilentInterval);
-
-                if (layer.BasePitchSource != default(PitchStream) && !layer.IsPitch)
-                    layer.BasePitchSource.SetSilentInterval(AudibleInterval, SilentInterval);
             }
 
             // need to prime the playback so that there isn't a delay the first time playing.
@@ -187,12 +179,10 @@ namespace Pronome
         {
             Layers.Remove(layer);
 
-            foreach (IStreamProvider src in layer.AudioSources.Values)
+            foreach (IStreamProvider src in layer.GetAllSources())
             {
                 RemoveAudioSource(src);
             }
-            RemoveAudioSource(layer.BaseAudioSource);
-            RemoveAudioSource(layer.BasePitchSource);
 
             //if (layer.BasePitchSource != default(PitchStream))
             //{

@@ -299,22 +299,26 @@ namespace Pronome
                     silentIntvlSilent = IsSilentIntervalSilent();
 
                 // if this is a hihat down, pass it's time position to all hihat opens in this layer
-                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed 
-                    && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
-                {
-                    int cycleSize = 1760 * BlockAlignment;
-                    int total = totalOffset;
-                    int cycles = total / cycleSize;
-                    int bytes = total % cycleSize;
-
-                    // assign the hihat cutoff to all open hihat sounds.
-                    IEnumerable hhos = Layer.AudioSources.Values.Where(x => !x.SoundSource.IsPitch && ((WavFileStream)x).SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open);
-                    foreach (WavFileStream hho in hhos)
-                    {
-                        hho.HiHatByteToMute = bytes;
-                        hho.HiHatCycleToMute = cycles;
-                    }
-                }
+                //if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed 
+                //    && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
+                //{
+                //    int cycleSize = 13230; // 1760 * BlockAlignment; // 13230
+                //    //int total = totalOffset;
+                //    //int cycles = total / cycleSize;
+                //    //int bytes = total % cycleSize;
+                //
+                //    // assign the hihat cutoff to all open hihat sounds.
+                //    IEnumerable hhos = Layer.GetAllSources().Where(x => !x.SoundSource.IsPitch && ((WavFileStream)x).SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open);
+                //    foreach (WavFileStream hho in hhos)
+                //    {
+                //        int total = totalOffset;// - hho.totalOffset;
+                //        int cycles = total / cycleSize;
+                //        int bytes = total % cycleSize;
+                //
+                //        hho.HiHatByteToMute = bytes;
+                //        hho.HiHatCycleToMute = cycles;
+                //    }
+                //}
             }
         }
 
@@ -428,7 +432,7 @@ namespace Pronome
 
         public long HiHatCycleToMute;
         public long HiHatByteToMute;
-        long CurrentHiHatDuration = 0;
+        long CurrentHiHatDuration = -1;
         //bool HiHatMuteInitiated = false;
         uint cycle = 0;
 
@@ -451,16 +455,6 @@ namespace Pronome
                     Metronome.GetInstance().IncrementTempoChangeCounter();
                     MultiplyByteInterval();
                 }
-            }
-            //if (intervalMultiplyCued)
-            //{
-            //    MultiplyByteInterval();
-            //}
-            
-            // set the upcoming hihat close time for hihat open sounds
-            if (!hasOffset && SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && cycle == HiHatCycleToMute - 1)
-            {
-                CurrentHiHatDuration = HiHatByteToMute + count;
             }
 
             while (bytesCopied < count)
@@ -485,48 +479,37 @@ namespace Pronome
                 {
                     if (!silentIntvlSilent && !currentlyMuted)
                     {
-                        if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open)
-                        {
-                            HiHatOpenIsMuted = false;
-                        }
                         sourceStream.Position = 0;
+                        CurrentHiHatDuration = -1;
                     }
-                    
-                    ByteInterval = GetNextInterval();
 
-                    // if this is a hihat down, pass it's time position to all hihat opens in this layer
+                    // if this is a hihat closed sound, pass it's position to preceding open hihat sounds
                     if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted)
                     {
-                        long total = bytesCopied + ByteInterval + offset;
-                        long cycles = total / count + cycle;
-                        long bytes = total % count;
-                        
-                        // assign the hihat cutoff to all open hihat sounds.
-                        IEnumerable hhos = Layer.AudioSources.Select(x => x.Value).Where(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open);
-                        foreach (WavFileStream hho in hhos)
+                        foreach (WavFileStream hho in Layer.GetAllSources().Where(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open))
                         {
-                            hho.HiHatByteToMute = bytes;
-                            hho.HiHatCycleToMute = cycles;
+                            hho.CurrentHiHatDuration = bytesCopied;
                         }
                     }
+
+                    ByteInterval = GetNextInterval();
                 }
 
                 int chunkSize = (int)new long[] { ByteInterval, count - bytesCopied }.Min();
 
                 // if this is a hihat open sound, determine when it should be stopped by a hihat close sound.
-                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration > 0)
+                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && Layer.HasHiHatClosed && CurrentHiHatDuration > 0)
                 {
                     if (chunkSize >= CurrentHiHatDuration)
                     {
                         chunkSize = (int)CurrentHiHatDuration;
-
                     }
-                    else CurrentHiHatDuration -= chunkSize;
                 }
+
                 int result = 0;
                 int result2 = 0;
 
-                if (!Layer.IsMuted && !(Pronome.Layer.SoloGroupEngaged && !Layer.IsSoloed) && !HiHatOpenIsMuted)
+                if (!Layer.IsMuted && !(Pronome.Layer.SoloGroupEngaged && !Layer.IsSoloed) && !(SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration == 0))
                     result = sourceStream.Read(buffer, offset + bytesCopied, chunkSize);
                 else // progress stream silently
                     result2 = sourceStream.Read(new byte[buffer.Length], offset + bytesCopied, chunkSize);
@@ -534,13 +517,6 @@ namespace Pronome
                 if (result == 0) // silence
                 {
                     bool use2 = result2 > 0; // true if the sourcestream was progressed silently.
-                    // if hihat closing happens while hihat open sound is in silence
-                    if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && Layer.HasHiHatClosed && CurrentHiHatDuration > 0)
-                    {
-                        CurrentHiHatDuration -= use2 ? result2 : chunkSize;
-                        if (CurrentHiHatDuration < 0)
-                            CurrentHiHatDuration = 0;
-                    }
 
                     Array.Copy(new byte[chunkSize], 0, buffer, offset + bytesCopied, use2 ? result2 : chunkSize);
 
@@ -549,16 +525,16 @@ namespace Pronome
                 }
                 else
                 {
-                    if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration == chunkSize)
-                    {
-                        HiHatOpenIsMuted = true;
-                        CurrentHiHatDuration = 0;
-                    }
-
                     ByteInterval -= result;
                     bytesCopied += result;
                 }
-                
+
+                if (Layer.HasHiHatClosed && SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration > 0)
+                {
+                    // open sound will be cut off when this hits 0
+                    CurrentHiHatDuration -= result + result2;
+                }
+
             }
 
             cycle++;
@@ -566,107 +542,12 @@ namespace Pronome
             return count;
         }
 
-        /**<summary>Returns the file name of a sound from the pretty name.</summary>*/
-        static public string GetFileByName(string name)
-        {
-            int length = FileNameIndex.Length;
-            string[] flat = new string[length];
-            flat = FileNameIndex.Cast<string>().ToArray();
-            return flat[Array.IndexOf(flat, name) - 1];
-        }
-
-        static public string GetSelectorNameByFile(string fileName)
-        {
-            string[] flat = new string[FileNameIndex.Length];
-            flat = FileNameIndex.Cast<string>().ToArray();
-            int index = Array.IndexOf(flat, fileName);
-            if (index > -1)
-            {
-                string selector = flat[index + 1];
-                // append the index number
-                index -= 2; // silentbeat
-                index /= 2;
-                index += 1;
-                selector = (index + ".").PadRight(4) + selector;
-
-                return selector;
-            }
-
-            return string.Empty;
-        }
-
-        static public int GetIndexByName(string name)
-        {
-            string[] flat = new string[FileNameIndex.Length];
-            flat = FileNameIndex.Cast<string>().ToArray();
-            int index = Array.IndexOf(flat, name);
-            return index >= 0 ? index / 2 : -1;
-        }
-
         public const string SilentSourceName = "Pronome.wav.silence.wav";
-
-        static public string[,] FileNameIndex = new string[,]
-        {
-            { SilentSourceName, "silentbeat" },                                  //0
-            { "Pronome.wav.crash1_edge_v5.wav", "Crash Edge V1" },                        //1
-            { "Pronome.wav.crash1_edge_v8.wav", "Crash Edge V2" },                        //2
-            { "Pronome.wav.crash1_edge_v10.wav", "Crash Edge V3" },                       //3
-            { "Pronome.wav.floortom_v6.wav", "FloorTom V1" },                             //4
-            { "Pronome.wav.floortom_v11.wav", "FloorTom V2" },                            //5
-            { "Pronome.wav.floortom_v16.wav", "FloorTom V3" },                            //6
-            { "Pronome.wav.hihat_closed_center_v4.wav", "HiHat Closed Center V1" },       //7
-            { "Pronome.wav.hihat_closed_center_v7.wav", "HiHat Closed Center V2" },       //8
-            { "Pronome.wav.hihat_closed_center_v10.wav", "HiHat Closed Center V3" },      //9
-            { "Pronome.wav.hihat_closed_edge_v7.wav", "HiHat Closed Edge V1" },           //10
-            { "Pronome.wav.hihat_closed_edge_v10.wav", "HiHat Closed Edge V2" },          //11
-            { "Pronome.wav.hihat_half_center_v4.wav", "HiHat Half Center V1" },           //12
-            { "Pronome.wav.hihat_half_center_v7.wav", "HiHat Half Center V2" },           //13
-            { "Pronome.wav.hihat_half_center_v10.wav", "HiHat Half Center V3" },          //14
-            { "Pronome.wav.hihat_half_edge_v7.wav", "HiHat Half Edge V1" },               //15
-            { "Pronome.wav.hihat_half_edge_v10.wav", "HiHat Half Edge V2" },              //16
-            { "Pronome.wav.hihat_open_center_v4.wav", "HiHat Open Center V1" },           //17
-            { "Pronome.wav.hihat_open_center_v7.wav", "HiHat Open Center V2" },           //18
-            { "Pronome.wav.hihat_open_center_v10.wav", "HiHat Open Center V3" },          //19
-            { "Pronome.wav.hihat_open_edge_v7.wav", "HiHat Open Edge V1" },               //20
-            { "Pronome.wav.hihat_open_edge_v10.wav", "HiHat Open Edge V2" },              //21
-            { "Pronome.wav.hihat_pedal_v3.wav", "HiHat Pedal V1" },                       //22
-            { "Pronome.wav.hihat_pedal_v5.wav", "HiHat Pedal V2" },                       //23
-            { "Pronome.wav.kick_v7.wav", "Kick Drum V1" },                                //24
-            { "Pronome.wav.kick_v11.wav", "Kick Drum V2" },                               //25
-            { "Pronome.wav.kick_v16.wav", "Kick Drum V3" },                               //26
-            { "Pronome.wav.racktom_v6.wav", "RackTom V1" },                               //27
-            { "Pronome.wav.racktom_v11.wav", "RackTom V2" },                              //28
-            { "Pronome.wav.racktom_v16.wav", "RackTom V3" },                              //29
-            { "Pronome.wav.ride_bell_v5.wav", "Ride Bell V1" },                           //30
-            { "Pronome.wav.ride_bell_v8.wav", "Ride Bell V2" },                           //31
-            { "Pronome.wav.ride_bell_v10.wav", "Ride Bell V3" },                          //32
-            { "Pronome.wav.ride_center_v5.wav", "Ride Center V1" },                       //33
-            { "Pronome.wav.ride_center_v6.wav", "Ride Center V2" },                       //34
-            { "Pronome.wav.ride_center_v8.wav", "Ride Center V3" },                       //35
-            { "Pronome.wav.ride_center_v10.wav", "Ride Center V4" },                      //36
-            { "Pronome.wav.ride_edge_v4.wav", "Ride Edge V1" },                           //37
-            { "Pronome.wav.ride_edge_v7.wav", "Ride Edge V2" },                           //38
-            { "Pronome.wav.ride_edge_v10.wav", "Ride Edge V3" },                          //39
-            { "Pronome.wav.snare_center_v6.wav", "Snare Center V1" },                     //40
-            { "Pronome.wav.snare_center_v11.wav", "Snare Center V2" },                    //41
-            { "Pronome.wav.snare_center_v16.wav", "Snare Center V3" },                    //42
-            { "Pronome.wav.snare_edge_v6.wav", "Snare Edge V1" },                         //43
-            { "Pronome.wav.snare_edge_v11.wav", "Snare Edge V2" },                        //44
-            { "Pronome.wav.snare_edge_v16.wav", "Snare Edge V3" },                        //45
-            { "Pronome.wav.snare_rim_v6.wav", "Snare Rim V1" },                           //46
-            { "Pronome.wav.snare_rim_v11.wav", "Snare Rim V2" },                          //47
-            { "Pronome.wav.snare_rim_v16.wav", "Snare Rim V3" },                          //48
-            { "Pronome.wav.snare_xstick_v6.wav", "Snare XStick V1" },                     //49
-            { "Pronome.wav.snare_xstick_v11.wav", "Snare XStick V2" },                    //50
-            { "Pronome.wav.snare_xstick_v16.wav", "Snare XStick V3" },                    //51
-        };
 
         void IStreamProvider.Dispose()
         {
-            //memStream.Dispose();
             sourceStream.Dispose();
             rawStream?.Dispose();
-            //Channel.Dispose();
             Dispose();
         }
     }

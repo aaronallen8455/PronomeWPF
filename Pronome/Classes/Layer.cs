@@ -98,9 +98,7 @@ namespace Pronome
             set
             {
                 pan = value;
-                foreach (IStreamProvider src in AudioSources.Values) src.Pan = value;
-                BaseAudioSource.Pan = value;
-                if (BasePitchSource != null && !IsPitch) BasePitchSource.Pan = value;
+                foreach (IStreamProvider src in GetAllSources()) src.Pan = value;
             }
         }
 
@@ -480,7 +478,7 @@ namespace Pronome
                             double pOffset = Beat.TakeWhile(x => x.AudioSource != BasePitchSource).Select(x => x.Bpm).Sum() + Offset;
                             pOffset = BeatCell.ConvertFromBpm(pOffset, BasePitchSource);
                             BasePitchSource.SetOffset(pOffset);
-                            Metronome.GetInstance().AddAudioSource(BasePitchSource);
+                            //Metronome.GetInstance().AddAudioSource(BasePitchSource);
                         }
 
                         // build the beatcollection for the new wav base source.
@@ -523,20 +521,16 @@ namespace Pronome
                 newBaseSource.BeatCollection.ConvertBpmValues();
                 newBaseSource.BeatCollection.isWav = !IsPitch;
 
-                // update hihat statuses
-                HasHiHatClosed = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed).Any();
-                HasHiHatOpen = Beat.Where(x => x.SoundSource != null && x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
-                
-                // do initial muting
-                foreach (IStreamProvider src in AudioSources.Values)
-                {
-                    src.SetInitialMuting();
-                }
 
                 BaseSourceName = baseSource.Uri;
 
                 BaseAudioSource = null;
                 BaseAudioSource = newBaseSource;
+
+                // update hihat statuses
+                HasHiHatOpen = GetAllSources().Where(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open).Any();
+                HasHiHatClosed = GetAllSources().Where(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed).Any();
+                
 
                 // set initial offset
                 double offset;
@@ -551,10 +545,21 @@ namespace Pronome
                 offset = BeatCell.ConvertFromBpm(offset, BaseAudioSource);
                 BaseAudioSource.SetOffset(offset);
 
+                // do initial muting
+                foreach (IStreamProvider src in GetAllSources())
+                {
+                    src.SetInitialMuting();
+                }
+
                 // add new base to mixer
                 if (BaseAudioSource.BeatCollection.Enumerator != null)
                 {
-                    Metronome.GetInstance().AddAudioSource(BaseAudioSource);
+                    foreach (var src in GetAllSources())
+                    {
+                        Metronome.GetInstance().RemoveAudioSource(src);
+                    }
+
+                    Metronome.GetInstance().AddSourcesFromLayer(this);
                 }
             }
         }
@@ -590,25 +595,16 @@ namespace Pronome
                     Metronome.GetInstance().RemoveAudioSource(BaseAudioSource);
                 }
 
-                //if (AudioSources.ContainsKey(""))
-                //{
-                //    Metronome.GetInstance().RemoveAudioSource(AudioSources[""]);
-                //    AudioSources.Remove("");
-                //}
-
                 BaseAudioSource = new WavFileStream(baseSource)
                 {
                     Layer = this,
                     Volume = Volume
                 };
                 
-                //AudioSources.Add("", BaseAudioSource);
                 IsPitch = false;
 
                 HasHiHatClosed = baseSource.HiHatStatus == InternalSource.HiHatStatuses.Closed;
                 HasHiHatOpen = baseSource.HiHatStatus == InternalSource.HiHatStatuses.Open;
-                //if (BeatCell.HiHatOpenFileNames.Contains(baseSourceName)) HasHiHatOpen = true;a
-                //else if (BeatCell.HiHatClosedFileNames.Contains(baseSourceName)) HasHiHatClosed = true;
             }
 
             BaseSourceName = baseSource.Uri;
@@ -624,23 +620,11 @@ namespace Pronome
          * <param name="offset">Quarter notes to offset by.</param> */
         public void SetOffset(double offset)
         {
-            foreach (IStreamProvider src in AudioSources.Values)
+            foreach (IStreamProvider src in GetAllSources())
             {
                 double current = src.GetOffset();
                 double add = BeatCell.ConvertFromBpm(offset - Offset, src);
                 src.SetOffset(current + add);
-            }
-
-            //// set for pitch / base source
-            double current2 = BaseAudioSource.GetOffset();
-            double add2 = BeatCell.ConvertFromBpm(offset - Offset, BaseAudioSource);
-            BaseAudioSource.SetOffset(current2 + add2);
-            // if it's a wav source but with a secondary pitch source
-            if (BasePitchSource != default(PitchStream) && !IsPitch)
-            {
-                double current3 = BasePitchSource.GetOffset();
-                double add3 = BeatCell.ConvertFromBpm(offset - Offset, BasePitchSource);
-                BasePitchSource.SetOffset(current3 + add3);
             }
 
             Offset = offset;
@@ -910,14 +894,27 @@ namespace Pronome
         public void Reset()
         {
             Remainder = 0;
-            foreach (IStreamProvider src in AudioSources.Values.Concat(new IStreamProvider[] { BaseAudioSource }))
+            foreach (IStreamProvider src in GetAllSources())
             {
                 src.Reset();
                 src.SetInitialMuting();
             }
-            //BaseAudioSource.Reset();
-            if (BasePitchSource != default(PitchStream) && !IsPitch)
-                BasePitchSource.Reset();
+        }
+
+        /// <summary>
+        /// Gets all the audio sources for this layer.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<IStreamProvider> GetAllSources()
+        {
+            var sources = AudioSources.Values.Concat(new IStreamProvider[] { BaseAudioSource });
+
+            if (!IsPitch && BasePitchSource != default(PitchStream))
+            {
+                sources.Concat(new IStreamProvider[] { BasePitchSource });
+            }
+
+            return sources;
         }
 
         /** <summary>Mute or unmute this layer.</summary> */
@@ -967,13 +964,10 @@ namespace Pronome
 
             Metronome.GetInstance().RemoveLayer(this);
 
-            foreach (IStreamProvider src in AudioSources.Values.Concat(new IStreamProvider[] { BaseAudioSource }))
+            foreach (IStreamProvider src in GetAllSources())
             {
                 src.Dispose();
             }
-
-            if (BasePitchSource != null && !IsPitch)
-                BasePitchSource.Dispose();
         }
     }
 }
