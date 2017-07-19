@@ -834,6 +834,10 @@ namespace Pronome
                 source.SetInitialMuting();
             }
 
+            foreach (IStreamProvider strm in GetAllSources())
+            {
+                Metronome.GetInstance().RemoveAudioSource(strm);
+            }
 
             Metronome.GetInstance().AddSourcesFromLayer(this);
 

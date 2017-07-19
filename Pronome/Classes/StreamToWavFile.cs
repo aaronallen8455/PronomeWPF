@@ -59,6 +59,20 @@ namespace Pronome
             int result = 0;
             try
             {
+                // perform tempo changes here
+                if (Metronome.GetInstance().TempoChangeCued)
+                {
+                    foreach (Layer layer in Metronome.GetInstance().Layers)
+                    {
+                        foreach (IStreamProvider src in layer.GetAllSources())
+                        {
+                            src.MultiplyByteInterval();
+                        }
+                    }
+                
+                    Metronome.GetInstance().TempoChangeCued = false;
+                }
+
                 result = _mixer.Read(buffer, offset, count);
 
                 if (count > 0 && IsRecording)

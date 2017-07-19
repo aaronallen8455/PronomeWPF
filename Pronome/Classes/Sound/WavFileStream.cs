@@ -5,6 +5,7 @@ using System.Reflection;
 using System.IO;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using System.Collections.Generic;
 
 namespace Pronome
 {
@@ -124,7 +125,6 @@ namespace Pronome
             HiHatOpenIsMuted = false;
             //HiHatMuteInitiated = false;
             HiHatCycleToMute = 0;
-            cycle = 0;
 
 
             // set stream back to start.
@@ -199,74 +199,51 @@ namespace Pronome
         /**<summary>Perform a cued byte interval multiplication.</summary>*/
         public void MultiplyByteInterval()
         {
-            lock (_multLock)
+
+            BeatCollection.ConvertBpmValues();
+
+            double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
+
+            double div = ByteInterval / BlockAlignment;
+            div *= intervalMultiplyFactor;
+            Layer.Remainder *= intervalMultiplyFactor; // multiply remainder as well
+            Layer.Remainder += div - (int)div;
+            ByteInterval = (int)div * BlockAlignment;
+                
+            if (Layer.Remainder >= 1)
             {
-                //if (intervalMultiplyCued)
-                //{
-                BeatCollection.ConvertBpmValues();
-
-                double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
-
-                double div = ByteInterval / BlockAlignment;
-                div *= intervalMultiplyFactor;
-                Layer.Remainder *= intervalMultiplyFactor; // multiply remainder as well
-                Layer.Remainder += div - (int)div;
-                ByteInterval = (int)div * BlockAlignment;
-                
-                if (Layer.Remainder >= 1)
-                {
-                    ByteInterval += (int)Layer.Remainder * BlockAlignment;
-                    Layer.Remainder -= (int)Layer.Remainder;
-                }
-
-                // multiply the offset aswell
-                if (hasOffset)
-                {
-                    div = totalOffset / BlockAlignment;
-                    div *= intervalMultiplyFactor;
-                    offsetRemainder *= intervalMultiplyFactor;
-                    offsetRemainder += div - (int)div;
-                    totalOffset = (int)div * BlockAlignment;
-                }
-                if (initialOffset > 0)
-                {
-                    initialOffset *= intervalMultiplyFactor;
-                }
-                
-                // multiply the silent interval
-                if (Metronome.GetInstance().IsSilentInterval)
-                {
-                    double sid = currentSlntIntvl / BlockAlignment;
-                    sid *= intervalMultiplyFactor;
-                    SilentIntervalRemainder *= intervalMultiplyFactor;
-                    SilentIntervalRemainder += sid - (int)sid;
-                    currentSlntIntvl = (int)sid * BlockAlignment;
-                    SilentInterval *= intervalMultiplyFactor;
-                    AudibleInterval *= intervalMultiplyFactor;
-                }
-
-                //// do the hihat cutoff interval
-                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration != 0)
-                {
-                    div = CurrentHiHatDuration / BlockAlignment;
-                    CurrentHiHatDuration = (int)(div * intervalMultiplyFactor) * BlockAlignment;
-                }
-
-                // recalculate the hihat count and byte to cutoff values
-                if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && Layer.HasHiHatClosed)
-                {
-                    int cycleSize = 1760 * BlockAlignment;
-                    long countDiff = HiHatCycleToMute - cycle;
-                    long totalBytes = countDiff * cycleSize + HiHatByteToMute;
-                    totalBytes = (long)(totalBytes * intervalMultiplyFactor);
-                    HiHatCycleToMute = cycle + totalBytes / cycleSize;
-                    HiHatByteToMute = totalBytes % cycleSize;
-                    HiHatByteToMute -= HiHatByteToMute % BlockAlignment; // align
-                }
-
-                intervalMultiplyCued = false;
-                //}
+                ByteInterval += (int)Layer.Remainder * BlockAlignment;
+                Layer.Remainder -= (int)Layer.Remainder;
             }
+
+            // multiply the offset aswell
+            if (hasOffset)
+            {
+                div = totalOffset / BlockAlignment;
+                div *= intervalMultiplyFactor;
+                offsetRemainder *= intervalMultiplyFactor;
+                offsetRemainder += div - (int)div;
+                totalOffset = (int)div * BlockAlignment;
+            }
+            if (initialOffset > 0)
+            {
+                initialOffset *= intervalMultiplyFactor;
+            }
+                
+            // multiply the silent interval
+            if (Metronome.GetInstance().IsSilentInterval)
+            {
+                double sid = currentSlntIntvl / BlockAlignment;
+                sid *= intervalMultiplyFactor;
+                SilentIntervalRemainder *= intervalMultiplyFactor;
+                SilentIntervalRemainder += sid - (int)sid;
+                currentSlntIntvl = (int)sid * BlockAlignment;
+                SilentInterval *= intervalMultiplyFactor;
+                AudibleInterval *= intervalMultiplyFactor;
+            }
+
+            intervalMultiplyCued = false;
+
         }
         /**<summary>Cue a multiply byte interval operation to occur at next read cycle start.</summary>
          * <param name="factor">The value by which to multiply</param>
@@ -297,35 +274,12 @@ namespace Pronome
                     currentlyMuted = IsRandomMuted();
                 if (met.IsSilentInterval)
                     silentIntvlSilent = IsSilentIntervalSilent();
-
-                // if this is a hihat down, pass it's time position to all hihat opens in this layer
-                //if (SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed 
-                //    && Layer.HasHiHatOpen && !silentIntvlSilent && !currentlyMuted && hasOffset)
-                //{
-                //    int cycleSize = 13230; // 1760 * BlockAlignment; // 13230
-                //    //int total = totalOffset;
-                //    //int cycles = total / cycleSize;
-                //    //int bytes = total % cycleSize;
-                //
-                //    // assign the hihat cutoff to all open hihat sounds.
-                //    IEnumerable hhos = Layer.GetAllSources().Where(x => !x.SoundSource.IsPitch && ((WavFileStream)x).SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open);
-                //    foreach (WavFileStream hho in hhos)
-                //    {
-                //        int total = totalOffset;// - hho.totalOffset;
-                //        int cycles = total / cycleSize;
-                //        int bytes = total % cycleSize;
-                //
-                //        hho.HiHatByteToMute = bytes;
-                //        hho.HiHatCycleToMute = cycles;
-                //    }
-                //}
             }
         }
 
         protected bool IsSilentIntervalSilent() // check if silent interval is currently silent or audible. Perform timing shifts
         {
             if (!Metronome.GetInstance().IsSilentInterval) return false;
-            //currentSlntIntvl -= previousByteInterval;
             currentSlntIntvl -= previousByteInterval;
             if (currentSlntIntvl <= 0)
             {
@@ -432,9 +386,10 @@ namespace Pronome
 
         public long HiHatCycleToMute;
         public long HiHatByteToMute;
-        long CurrentHiHatDuration = -1;
+        int CurrentHiHatDuration = -1;
+        SortedSet<int> HiHatBytesToMute = new SortedSet<int>();
         //bool HiHatMuteInitiated = false;
-        uint cycle = 0;
+        //uint cycle = 0;
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -442,19 +397,10 @@ namespace Pronome
 
             int bytesCopied = 0;
 
-            // perform interval multiplication if cued
-            if (offset == 0 && Metronome.GetInstance().TempoChangeCued && !Metronome.GetInstance().TempoChangedSet.Contains(this))//intervalMultiplyCued)
+            // get the first queued hihat down time if this is an open sound
+            if (Layer.HasHiHatClosed && SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && HiHatBytesToMute.Any())
             {
-                if (Metronome.GetInstance().MultiplyIntervalOnCycle < cycle)
-                {
-                    Metronome.GetInstance().MultiplyIntervalOnCycle = cycle;
-                }
-                if (cycle == Metronome.GetInstance().MultiplyIntervalOnCycle)
-                {
-                    Metronome.GetInstance().TempoChangedSet.Add(this);
-                    Metronome.GetInstance().IncrementTempoChangeCounter();
-                    MultiplyByteInterval();
-                }
+                CurrentHiHatDuration = HiHatBytesToMute.Min;
             }
 
             while (bytesCopied < count)
@@ -488,8 +434,14 @@ namespace Pronome
                     {
                         foreach (WavFileStream hho in Layer.GetAllSources().Where(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open))
                         {
-                            hho.CurrentHiHatDuration = bytesCopied;
+                            hho.HiHatBytesToMute.Add(bytesCopied);
                         }
+                    }
+                    else if (Layer.HasHiHatClosed && SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && HiHatBytesToMute.Any())
+                    {
+                        CurrentHiHatDuration = HiHatBytesToMute.SkipWhile(x => x < bytesCopied).FirstOrDefault();
+                    
+                        if (CurrentHiHatDuration == 0 && bytesCopied > 0) CurrentHiHatDuration = -1;
                     }
 
                     ByteInterval = GetNextInterval();
@@ -537,7 +489,13 @@ namespace Pronome
 
             }
 
-            cycle++;
+            //cycle++;
+
+            if (Layer.HasHiHatClosed && SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open)
+            {
+                // clear out the queued hihat mute points
+                HiHatBytesToMute.Clear();
+            }
 
             return count;
         }

@@ -61,13 +61,10 @@ namespace Pronome
             // transfer silent interval if exists
             if (IsSilentInterval)
             {
-                foreach (IStreamProvider src in layer.AudioSources.Values)
+                foreach (IStreamProvider src in layer.GetAllSources())
                 {
                     src.SetSilentInterval(AudibleInterval, SilentInterval);
                 }
-
-                if (layer.BasePitchSource != default(PitchStream))
-                    layer.BasePitchSource.SetSilentInterval(AudibleInterval, SilentInterval);
             }
         }
 
@@ -429,24 +426,24 @@ namespace Pronome
             }
         }
 
-        /// <summary>
-        /// Increment the tempo change counter and reset when a tempo change is complete.
-        /// </summary>
-        public void IncrementTempoChangeCounter()
-        {
-            lock (tempoChangeCounterLock)
-            {
-                _tempoChangeCounter++;
-
-                if (_tempoChangeCounter == Mixer.MixerInputs.Count())
-                {
-                    // all sound sources have had their tempos changed
-                    TempoChangeCued = false;
-                    _tempoChangeCounter = 0;
-                    TempoChangedSet.Clear();
-                }
-            }
-        }
+        ///// <summary>
+        ///// Increment the tempo change counter and reset when a tempo change is complete.
+        ///// </summary>
+        //public void IncrementTempoChangeCounter()
+        //{
+        //    lock (tempoChangeCounterLock)
+        //    {
+        //        _tempoChangeCounter++;
+        //
+        //        if (_tempoChangeCounter == Mixer.MixerInputs.Count())
+        //        {
+        //            // all sound sources have had their tempos changed
+        //            TempoChangeCued = false;
+        //            _tempoChangeCounter = 0;
+        //            TempoChangedSet.Clear();
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Tracks which audio sources have been affected by a tempo change

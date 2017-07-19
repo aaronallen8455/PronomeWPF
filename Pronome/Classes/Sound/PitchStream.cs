@@ -192,55 +192,48 @@ namespace Pronome
         /**<summary>If a multiply is cued, perform operation on all relevant members at the start of a stream read.</summary>*/
         public void MultiplyByteInterval()
         {
-            lock (_multLock)
+
+            BeatCollection.ConvertBpmValues();
+
+            double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
+
+            double mult = intervalMultiplyFactor * ByteInterval;
+            ByteInterval = (long)mult;
+            Layer.Remainder *= intervalMultiplyFactor;
+            Layer.Remainder += mult - ByteInterval;
+
+            if (Layer.Remainder >= 1)
             {
-                //if (intervalMultiplyCued)
-                //{
-                    BeatCollection.ConvertBpmValues();
-
-                double intervalMultiplyFactor = Metronome.GetInstance().TempoChangeRatio;
-
-                    double mult = intervalMultiplyFactor * ByteInterval;
-                    ByteInterval = (long)mult;
-                    Layer.Remainder *= intervalMultiplyFactor;
-                    Layer.Remainder += mult - ByteInterval;
-
-                    if (Layer.Remainder >= 1)
-                    {
-                        ByteInterval += (long)Layer.Remainder;
-                        Layer.Remainder -= (int)Layer.Remainder;
-                    }
-
-                    // multiply the silent interval
-                    if (Metronome.GetInstance().IsSilentInterval)
-                    {
-                        double sim = currentSlntIntvl * intervalMultiplyFactor;
-                        currentSlntIntvl = (long)sim;
-                        SilentIntervalRemainder *= intervalMultiplyFactor;
-                        SilentIntervalRemainder += sim - currentSlntIntvl;
-                        SilentInterval *= intervalMultiplyFactor;
-                        AudibleInterval *= intervalMultiplyFactor;
-                    }
-
-                    // multiply the offset aswell
-                    if (hasOffset)
-                    {
-                        mult = intervalMultiplyFactor * totalOffset;
-                        totalOffset = (long)mult;
-                        OffsetRemainder *= intervalMultiplyFactor;
-                        OffsetRemainder += mult - totalOffset;
-                    }
-                    if (initialOffset > 0)
-                    {
-                        initialOffset *= intervalMultiplyFactor;
-                    }
-
-                    //intervalMultiplyCued = false;
-                //}
+                ByteInterval += (long)Layer.Remainder;
+                Layer.Remainder -= (int)Layer.Remainder;
             }
+
+            // multiply the silent interval
+            if (Metronome.GetInstance().IsSilentInterval)
+            {
+                double sim = currentSlntIntvl * intervalMultiplyFactor;
+                currentSlntIntvl = (long)sim;
+                SilentIntervalRemainder *= intervalMultiplyFactor;
+                SilentIntervalRemainder += sim - currentSlntIntvl;
+                SilentInterval *= intervalMultiplyFactor;
+                AudibleInterval *= intervalMultiplyFactor;
+            }
+
+            // multiply the offset aswell
+            if (hasOffset)
+            {
+                mult = intervalMultiplyFactor * totalOffset;
+                totalOffset = (long)mult;
+                OffsetRemainder *= intervalMultiplyFactor;
+                OffsetRemainder += mult - totalOffset;
+            }
+            if (initialOffset > 0)
+            {
+                initialOffset *= intervalMultiplyFactor;
+            }
+
         }
 
-        object _multLock = new object();
 
         /**<summary>The volume control for this stream.</summary>*/
         public double Volume
@@ -285,8 +278,8 @@ namespace Pronome
 
             if (IsSilentIntervalSilent())
             {
-                previousByteInterval = result;
-                return result;
+                //previousByteInterval = result;
+                //return result;
             }
             
             currentlyMuted = IsRandomMuted();
@@ -412,8 +405,6 @@ namespace Pronome
 
         double sampleValue = 0;
 
-        double phaseShift = 0;
-
         uint cycle = 0; // cycle count, used to sync up all layers
 
         /**<summary>Reads from the audio stream.</summary>
@@ -424,27 +415,6 @@ namespace Pronome
             if (count == 7040) { return count; } // account for the occasional blip at start up.
 
             int outIndex = offset;
-
-            //// check if layers need to be synced
-            //if (offset == 0 && Metronome.NeedToInsertStream && cycle != 0)
-            //{
-            //    Metronome.CycleToInsertTo(cycle);
-            //}
-
-            // perform cued interval multiplication
-            if (offset == 0 && Metronome.GetInstance().TempoChangeCued && !Metronome.GetInstance().TempoChangedSet.Contains(this))//intervalMultiplyCued)
-            {
-                if (Metronome.GetInstance().MultiplyIntervalOnCycle < cycle)
-                {
-                    Metronome.GetInstance().MultiplyIntervalOnCycle = cycle;
-                }
-                if (cycle == Metronome.GetInstance().MultiplyIntervalOnCycle)
-                {
-                    Metronome.GetInstance().TempoChangedSet.Add(this);
-                    Metronome.GetInstance().IncrementTempoChangeCounter();
-                    MultiplyByteInterval();
-                }
-            }
             
             // Complete Buffer
             for (int sampleCount = 0; sampleCount < count / waveFormat.Channels; sampleCount++)
@@ -479,12 +449,8 @@ namespace Pronome
                         {
                             if (Frequency != curFreq)
                                 multiple = TwoPi * Frequency / waveFormat.SampleRate;
-                            //double oldWaveLength = waveFormat.SampleRate / curFreq;
-                            //double ratio = (nSample % oldWaveLength) / oldWaveLength;
 
                             nSample = (int)(Math.Asin(sampleValue / Volume) / multiple) + 1;
-                            //if (ratio >= .25 && ratio < .5 || ratio >= .75) nSample += (int)(Frequency / waveFormat.SampleRate / 4);
-                            //nSample += .5f; // seems to help
                         }
                         else nSample = 0;
 

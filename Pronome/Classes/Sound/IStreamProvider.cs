@@ -50,5 +50,7 @@ namespace Pronome
         SourceBeatCollection BeatCollection { get; set; }
 
         WaveFormat WaveFormat { get; }
+
+        void MultiplyByteInterval();
     }
 }
