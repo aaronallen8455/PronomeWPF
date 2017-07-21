@@ -71,77 +71,142 @@ namespace Pronome
         /**<summary>Used to hold a reference to the ISampleProvider so we can easily remove it from the mixer when needed.</summary>*/
         protected Dictionary<IStreamProvider, ISampleProvider> SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
 
-        /// <summary>
-        /// True if a beat change has occured while playing and the target layer needs to be treated.
-        /// </summary>
-        static public bool NeedToInsertStream = false;
+        ///// <summary>
+        ///// True if a beat change has occured while playing and the target layer needs to be treated.
+        ///// </summary>
+        //static public bool NeedToInsertStream = false;
+        //
+        ////static public LinkedList<IStreamProvider> StreamsToInsert = new LinkedList<IStreamProvider>();
+        ///// <summary>
+        ///// When changing a beat while playing, this holds the layer to change and the new beat code to be parsed.
+        ///// </summary>
+        //static public Tuple<Layer, string> LayerToChangeAndSync;
+        ///// <summary>
+        ///// Changes the target layer and fast forwards it to the given cycle
+        ///// </summary>
+        ///// <param name="cycle"></param>
+        //static public void CycleToInsertTo(uint cycle)
+        //{
+        //
+        //    lock (LayerToChangeAndSync)
+        //    {
+        //        var currentPlayState = Instance.PlayState;
+        //
+        //        Instance.Pause();
+        //
+        //        NeedToInsertStream = false;
+        //
+        //        Layer layer = LayerToChangeAndSync.Item1;
+        //        // Parse the new beat code string
+        //        layer.Parse(LayerToChangeAndSync.Item2);
+        //
+        //        // fast forward base source to current time position
+        //        if (layer.IsPitch)
+        //        {
+        //            PitchStream stream = layer.BaseAudioSource as PitchStream;
+        //            var buf = new float[3520];
+        //            for (uint i = 0; i <= cycle + 1; i++)
+        //            {
+        //                stream.Read(buf, 0, 3520);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            WavFileStream stream = layer.BaseAudioSource as WavFileStream;
+        //            VolumeSampleProvider strm = stream.VolumeProvider;
+        //            float[] arr = new float[1280 * strm.WaveFormat.BlockAlign];
+        //            for (int i=0; i< cycle; i++)
+        //            {
+        //                strm.Read(arr, 0, 1280 * strm.WaveFormat.BlockAlign);
+        //            }
+        //        }
+        //
+        //        // fast forward the non-base wav sources as well
+        //        foreach (WavFileStream stream in layer.AudioSources.Values)
+        //        {
+        //            float[] arr = new float[1280 * stream.WaveFormat.BlockAlign];
+        //            for (int i=0; i <= cycle + 1; i++)
+        //            {
+        //                stream.VolumeProvider.Read(arr, 0, 1280 * stream.WaveFormat.BlockAlign);
+        //            }
+        //        }
+        //
+        //        // TODO: need to fast-forward referencers as well.
+        //
+        //        
+        //
+        //        GetInstance().TriggerAfterBeatParsed();
+        //
+        //        if (currentPlayState == State.Playing)
+        //        {
+        //            Instance.Play();
+        //        }
+        //    }
+        //}
 
-        //static public LinkedList<IStreamProvider> StreamsToInsert = new LinkedList<IStreamProvider>();
-        /// <summary>
-        /// When changing a beat while playing, this holds the layer to change and the new beat code to be parsed.
-        /// </summary>
-        static public Tuple<Layer, string> LayerToChangeAndSync;
-        /// <summary>
-        /// Changes the target layer and fast forwards it to the given cycle
-        /// </summary>
-        /// <param name="cycle"></param>
-        static public void CycleToInsertTo(uint cycle)
+        public AutoResetEvent LayerChangeTurnstile = new AutoResetEvent(false);
+
+        public Dictionary<int, Layer> LayersToChange = new Dictionary<int, Layer>();
+
+        public double LayerChangeCycle;
+
+        private static object layerChangeLock = new object();
+        private bool? _needsToChangeLayer = false;
+        public bool? NeedsToChangeLayer
         {
-
-            lock (LayerToChangeAndSync)
+            get
             {
-                var currentPlayState = Instance.PlayState;
-
-                Instance.Pause();
-
-                NeedToInsertStream = false;
-
-                Layer layer = LayerToChangeAndSync.Item1;
-                // Parse the new beat code string
-                layer.Parse(LayerToChangeAndSync.Item2);
-
-                // fast forward base source to current time position
-                if (layer.IsPitch)
+                lock (layerChangeLock)
                 {
-                    PitchStream stream = layer.BaseAudioSource as PitchStream;
-                    var buf = new float[3520];
-                    for (uint i = 0; i <= cycle + 1; i++)
-                    {
-                        stream.Read(buf, 0, 3520);
-                    }
-                }
-                else
-                {
-                    WavFileStream stream = layer.BaseAudioSource as WavFileStream;
-                    VolumeSampleProvider strm = stream.VolumeProvider;
-                    float[] arr = new float[1280 * strm.WaveFormat.BlockAlign];
-                    for (int i=0; i< cycle; i++)
-                    {
-                        strm.Read(arr, 0, 1280 * strm.WaveFormat.BlockAlign);
-                    }
-                }
-
-                // fast forward the non-base wav sources as well
-                foreach (WavFileStream stream in layer.AudioSources.Values)
-                {
-                    float[] arr = new float[1280 * stream.WaveFormat.BlockAlign];
-                    for (int i=0; i <= cycle + 1; i++)
-                    {
-                        stream.VolumeProvider.Read(arr, 0, 1280 * stream.WaveFormat.BlockAlign);
-                    }
-                }
-
-                // TODO: need to fast-forward referencers as well.
-
-                
-
-                GetInstance().TriggerAfterBeatParsed();
-
-                if (currentPlayState == State.Playing)
-                {
-                    Instance.Play();
+                    return _needsToChangeLayer;
                 }
             }
+            set
+            {
+                lock (layerChangeLock)
+                {
+                    _needsToChangeLayer = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Perform actions to change a layer's beat while the beat is playing.
+        /// </summary>
+        /// <param name="layer"></param>
+        public void ExecuteLayerChange(Layer layer)
+        {
+            // build the dictionary
+            Layer copyLayer = new Layer(
+                layer.ParsedString, 
+                layer.BaseAudioSource.SoundSource, 
+                layer.ParsedOffset, 
+                layer.Pan, 
+                (float)layer.Volume);
+
+            LayersToChange.Add(Layers.IndexOf(layer), copyLayer);
+
+            NeedsToChangeLayer = true;
+            // wait until the cycle number is set
+            LayerChangeTurnstile.WaitOne();
+
+            double bytesPerCycle = 1;
+            double floatsPerCycle = 1;
+            // fast forward the layers
+            foreach (KeyValuePair<int, Layer> pair in LayersToChange)
+            {
+                Layer l = pair.Value;
+                foreach (IStreamProvider src in l.GetAllSources())
+                {
+                    if (src.SoundSource.IsPitch)
+                    {
+                        (src as PitchStream).Read(new float[(long)(LayerChangeCycle * floatsPerCycle)], 0, )
+                    }
+                }
+            }
+
+            // signal the audio thread to finish the process
+            NeedsToChangeLayer = null;
         }
 
         /** <summary>Add all the audio sources from each layer.</summary>
@@ -219,6 +284,20 @@ namespace Pronome
                         ((WavFileStream)src).VolumeProvider
                     );
                     Mixer.AddMixerInput(SampleDictionary[src]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Enact a tempo change. Used while beat is playing.
+        /// </summary>
+        public void PerformTempoChanges()
+        {
+            foreach (Layer layer in GetInstance().Layers)
+            {
+                foreach (IStreamProvider src in layer.GetAllSources())
+                {
+                    src.MultiplyByteInterval();
                 }
             }
         }
@@ -493,7 +572,12 @@ namespace Pronome
             }
             else //(if stopped) set new tempo by recalculating all the beatCollections
             {
-                Layers.ForEach(x => x.SetBeatCollectionOnSources());
+                foreach (Layer layer in Layers)
+                {
+                    layer.Beat = layer.SetBeatCollectionOnSources(layer.Beat.ToArray()).ToList();
+                    layer.ResetSources();
+                }
+                //Layers.ForEach(x => x.SetBeatCollectionOnSources());
             }
         }
 

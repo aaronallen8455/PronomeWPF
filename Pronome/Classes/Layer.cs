@@ -119,26 +119,59 @@ namespace Pronome
 
             if (offset != "")
                 SetOffset(offset);
-            Parse(beat); // parse the beat code into this layer
+
+            ProcessBeatCode(beat);
+
+            //Parse(beat); // parse the beat code into this layer
             Volume = volume;
             if (pan != 0f)
                 Pan = pan;
             Metronome.GetInstance().AddLayer(this);
         }
 
+        public void ProcessBeatCode(string beatCode, HashSet<int> parsedReferencers = null)
+        {
+            BeatCell[] cells = Parse(beatCode);
+            cells = SetBeat(cells);
+            cells = SetBeatCollectionOnSources(cells);
+            Beat = cells.ToList();
+
+            ResetSources();
+
+            // reparse any layers that reference this one
+            Metronome met = Metronome.GetInstance();
+            int index = met.Layers.IndexOf(this);
+            if (parsedReferencers == null)
+            {
+                parsedReferencers = new HashSet<int>();
+            }
+            parsedReferencers.Add(index);
+            var layers = met.Layers.Where(
+                x => x != this
+                && x.ParsedString.Contains($"${index + 1}")
+                && !parsedReferencers.Contains(met.Layers.IndexOf(x)));
+            foreach (Layer layer in layers)
+            {
+                // account for deserializing a beat
+                if (layer.Beat != null && layer.Beat.Count > 0)
+                {
+                    //layer.Parse(layer.ParsedString, parsedReferencers);
+                    layer.ProcessBeatCode(layer.ParsedString, parsedReferencers);
+                }
+            }
+        }
+
         /** <summary>Parse the beat code, generating beat cells.</summary>
          * <param name="beat">Beat code.</param> 
          * <param name="parsedReferencers">Indexes of referencer layers that have been parsed already.</param>
          */
-        public void Parse(string beat, HashSet<int> parsedReferencers = null)
+        public BeatCell[] Parse(string beat)
         {
             ParsedString = beat;
             // remove comments
             beat = Regex.Replace(beat, @"!.*?!", "");
             // remove whitespace
             beat = Regex.Replace(beat, @"\s", "");
-
-            //string pitchModifier = @"@[a-gA-G]?[#b]?[pP]?[1-9.]+";
 
             if (beat.Contains('$'))
             {
@@ -178,8 +211,6 @@ namespace Pronome
                 inner = Regex.Replace(inner, @"(@[a-gA-GpP]?[#b]?[\d.]+)(\*[\d.*/]+)", "$2$1");
                 // insert into beat
                 beat = beat.Substring(0, match.Index) + inner + beat.Substring(match.Index + match.Length);
-                // get rid of errant multiplier on closing parantheses
-                //beat = Regex.Replace(beat, @"\)\*[\d./\-+*]+", ")");
             }
 
             // handle single cell repeats
@@ -243,29 +274,12 @@ namespace Pronome
 
                 }).ToArray();
 
-                SetBeat(cells);
+                //SetBeat(cells);
 
-                // reparse any layers that reference this one
-                Metronome met = Metronome.GetInstance();
-                int index = met.Layers.IndexOf(this);
-                if (parsedReferencers == null)
-                {
-                    parsedReferencers = new HashSet<int>();
-                }
-                parsedReferencers.Add(index);
-                var layers = met.Layers.Where(
-                    x => x != this 
-                    && x.ParsedString.Contains($"${index + 1}") 
-                    && !parsedReferencers.Contains(met.Layers.IndexOf(x)));
-                foreach (Layer layer in layers)
-                {
-                    // account for deserializing a beat
-                    if (layer.Beat != null && layer.Beat.Count > 0)
-                    {
-                        layer.Parse(layer.ParsedString, parsedReferencers);
-                    }
-                }
+                return cells;
             }
+
+            return null;
         }
 
         /// <summary>
@@ -612,8 +626,23 @@ namespace Pronome
             // reassign source to existing cells that use the base source. base source beats will have an empty string
             if (Beat != null)
             {
-                SetBeat(Beat.ToArray());
+                Beat = SetBeatCollectionOnSources(SetBeat(Beat.ToArray())).ToList();
+
+                ResetSources();
             }
+        }
+
+        /// <summary>
+        /// Remove all sources and then re-add them. Ensures that hihat sounds are added in correct order.
+        /// </summary>
+        public void ResetSources()
+        {
+            foreach (IStreamProvider src in GetAllSources())
+            {
+                Metronome.GetInstance().RemoveAudioSource(src);
+            }
+
+            Metronome.GetInstance().AddSourcesFromLayer(this);
         }
 
         /** <summary>Set the offset for this layer.</summary>
@@ -649,7 +678,7 @@ namespace Pronome
 
         /** <summary>Add array of beat cells and create all audio sources.</summary>
          * <param name="beat">Array of beat cells.</param> */
-        public void SetBeat(BeatCell[] beat)
+        public BeatCell[] SetBeat(BeatCell[] beat)
         {
             // deal with the old audio sources.
             if (Beat != null)
@@ -760,43 +789,44 @@ namespace Pronome
                 }
             }
 
-            Beat = beat.ToList();
+            //Beat = beat.ToList();
+            return beat;
 
-            SetBeatCollectionOnSources();
+            //SetBeatCollectionOnSources();
         }
 
         /** <summary>Set the beat collections for each sound source.</summary> 
          * <param name="Beat">The cells to process</param>
          */
-        public void SetBeatCollectionOnSources()
+        public BeatCell[] SetBeatCollectionOnSources(BeatCell[] beat)
         {
             HashSet<IStreamProvider> completed = new HashSet<IStreamProvider>();
 
             // for each beat, iterate over all beats and build a beat list of values from beats of same source.
-            for (int i = 0; i < Beat.Count; i++)
+            for (int i = 0; i < beat.Length; i++)
             {
                 List<double> cells = new List<double>();
                 double accumulator = 0;
                 // Once per audio source
-                if (completed.Contains(Beat[i].AudioSource)) continue;
+                if (completed.Contains(beat[i].AudioSource)) continue;
                 // if selected beat is not first in cycle, set it's offset
                 //if (i != 0)
                 //{
                 double offsetAccumulate = Offset;
                 for (int p = 0; p < i; p++)
                 {
-                    offsetAccumulate += Beat[p].Bpm;
+                    offsetAccumulate += beat[p].Bpm;
                 }
 
-                Beat[i].AudioSource.SetOffset(BeatCell.ConvertFromBpm(offsetAccumulate, Beat[i].AudioSource));
+                beat[i].AudioSource.SetOffset(BeatCell.ConvertFromBpm(offsetAccumulate, beat[i].AudioSource));
                 //}
                 // iterate over beats starting with current one. Aggregate with cells that have the same audio source.
                 for (int p = i; ; p++)
                 {
 
-                    if (p == Beat.Count) p = 0;
+                    if (p == beat.Length) p = 0;
 
-                    if (Beat[p].AudioSource == Beat[i].AudioSource)
+                    if (beat[p].AudioSource == beat[i].AudioSource)
                     {
 
                         // add accumulator to previous element in list
@@ -805,41 +835,45 @@ namespace Pronome
                             cells[cells.Count - 1] += accumulator;
                             accumulator = 0f;
                         }
-                        cells.Add(Beat[p].Bpm);
+                        cells.Add(beat[p].Bpm);
                     }
-                    else accumulator += Beat[p].Bpm;
+                    else accumulator += beat[p].Bpm;
 
                     // job done if current beat is one before the outer beat.
-                    if (p == i - 1 || (i == 0 && p == Beat.Count - 1))
+                    if (p == i - 1 || (i == 0 && p == beat.Length - 1))
                     {
                         cells[cells.Count - 1] += accumulator;
                         break;
                     }
                 }
-                completed.Add(Beat[i].AudioSource);
+                completed.Add(beat[i].AudioSource);
 
-                Beat[i].AudioSource.BeatCollection = new SourceBeatCollection(this, cells.ToArray(), Beat[i].AudioSource);
+                beat[i].AudioSource.BeatCollection = new SourceBeatCollection(this, cells.ToArray(), beat[i].AudioSource);
             }
 
-            foreach (IStreamProvider source in AudioSources.Values.Concat(new IStreamProvider[] { BaseAudioSource }))
-            {
-                if (!completed.Contains(source))
-                {
-                    // remove empty sources (if base source was being used but now it isn't - 1@34,1@34,1 to 1@34,1@34)
-                    source.BeatCollection.Enumerator = null;
-                    Metronome.GetInstance().RemoveAudioSource(source);
-                    continue;
-                }
-                // do any initial muting, includes hihat timings
-                source.SetInitialMuting();
-            }
+            return beat;
 
-            foreach (IStreamProvider strm in GetAllSources())
-            {
-                Metronome.GetInstance().RemoveAudioSource(strm);
-            }
+            //foreach (IStreamProvider source in AudioSources.Values.Concat(new IStreamProvider[] { BaseAudioSource }))
+            //{
+            //    if (!completed.Contains(source))
+            //    {
+            //        // remove empty sources (if base source was being used but now it isn't - 1@34,1@34,1 to 1@34,1@34)
+            //        source.BeatCollection.Enumerator = null;
+            //        Metronome.GetInstance().RemoveAudioSource(source);
+            //        continue;
+            //    }
+            //    // do any initial muting, includes hihat timings
+            //    source.SetInitialMuting();
+            //}
+            //
+            //foreach (IStreamProvider strm in GetAllSources())
+            //{
+            //    Metronome.GetInstance().RemoveAudioSource(strm);
+            //}
 
-            Metronome.GetInstance().AddSourcesFromLayer(this);
+
+
+            //Metronome.GetInstance().AddSourcesFromLayer(this);
 
             //// if the beat is being changed during playback, we need to sync up the layers
             //if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)

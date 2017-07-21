@@ -89,10 +89,6 @@ namespace Pronome
             if (met.IsSilentInterval)
                 SetSilentInterval(met.AudibleInterval, met.SilentInterval);
 
-            // is this a hihat sound?
-            //if (BeatCell.HiHatOpenFileNames.Contains(fileName)) IsHiHatOpen = true;
-            //else if (BeatCell.HiHatClosedFileNames.Contains(fileName)) IsHiHatClose = true;
-
             chunkSizeOverflow = 3520 * WaveFormat.BlockAlign;
         }
 

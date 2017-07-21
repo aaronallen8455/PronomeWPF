@@ -1,6 +1,7 @@
 ﻿using System;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using System.Collections.Generic;
 
 namespace Pronome
 {
@@ -40,12 +41,15 @@ namespace Pronome
                 _writer?.Dispose();
                 IsRecording = false;
             }
+            cycle = 0;
         }
 
         /// <summary>
         /// True if the player has been primed. Occurs only at application startup.
         /// </summary>
         public bool IsInitialized = false;
+
+        double cycle = 0;
 
         public int Read(float[] buffer, int offset, int count)
         {
@@ -59,18 +63,55 @@ namespace Pronome
             int result = 0;
             try
             {
+                var met = Metronome.GetInstance();
                 // perform tempo changes here
-                if (Metronome.GetInstance().TempoChangeCued)
+                if (met.TempoChangeCued)
                 {
-                    foreach (Layer layer in Metronome.GetInstance().Layers)
+                    // compensate the cycle
+                    cycle /= met.TempoChangeRatio;
+
+                    met.PerformTempoChanges();
+                
+                    met.TempoChangeCued = false;
+                }
+
+                // check if a dynamic beat change has occured. If so, pass on the current cycle number.
+
+                // the new sound sources are instantiated on the main thread and pulled up to that cycle number.
+                // the main thread then signals this thread and then the sources are topped off 
+                // in the audio thread and added to the mixer.
+                if (met.NeedsToChangeLayer == true)
+                {
+                    met.LayerChangeCycle = cycle;
+                    met.LayerChangeTurnstile.Set();
+                }
+                else if (met.NeedsToChangeLayer == null)
+                {
+                    // top off the fast forward
+                    double cycleDiff = cycle - met.LayerChangeCycle;
+                    double totalSamples = cycleDiff * count;
+
+                    foreach (KeyValuePair<int, Layer> pair in met.LayersToChange)
                     {
+                        var layer = pair.Value;
                         foreach (IStreamProvider src in layer.GetAllSources())
                         {
-                            src.MultiplyByteInterval();
+
+                            if (src.SoundSource.IsPitch)
+                            {
+                                (src as PitchStream).Read(new float[(int)totalSamples], 0, (int)totalSamples);
+                            }
+                            else
+                            {
+
+                            }
                         }
+
+                        // remove the old sources and put in the new ones.
+                        layer.ResetSources();
                     }
-                
-                    Metronome.GetInstance().TempoChangeCued = false;
+
+                    met.NeedsToChangeLayer = false;
                 }
 
                 result = _mixer.Read(buffer, offset, count);
@@ -88,6 +129,7 @@ namespace Pronome
                 Dispose();
             }
 
+            cycle++;
 
             return result;
         }
