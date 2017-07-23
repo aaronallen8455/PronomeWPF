@@ -136,7 +136,11 @@ namespace Pronome
             cells = SetBeatCollectionOnSources(cells);
             Beat = cells.ToList();
 
-            ResetSources();
+            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+            {
+                // adds sources to the mixer.
+                ResetSources();
+            }
 
             // reparse any layers that reference this one
             Metronome met = Metronome.GetInstance();
@@ -155,8 +159,20 @@ namespace Pronome
                 // account for deserializing a beat
                 if (layer.Beat != null && layer.Beat.Count > 0)
                 {
-                    //layer.Parse(layer.ParsedString, parsedReferencers);
-                    layer.ProcessBeatCode(layer.ParsedString, parsedReferencers);
+                    if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                    {
+                        //layer.Parse(layer.ParsedString, parsedReferencers);
+                        layer.ProcessBeatCode(layer.ParsedString, parsedReferencers);
+                    }
+                    else
+                    {
+                        // add a copy to the LayerToChange collection
+                        Layer copyLayer = new Layer("1", layer.BaseAudioSource.SoundSource, layer.ParsedOffset, layer.Pan, (float)layer.Volume);
+                        Metronome.GetInstance().LayersToChange.Add(
+                            met.Layers.IndexOf(layer),
+                            copyLayer);
+                        copyLayer.ProcessBeatCode(layer.ParsedString, parsedReferencers);
+                    }
                 }
             }
         }

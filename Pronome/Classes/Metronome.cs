@@ -178,7 +178,7 @@ namespace Pronome
         {
             // build the dictionary
             Layer copyLayer = new Layer(
-                layer.ParsedString, 
+                "1", 
                 layer.BaseAudioSource.SoundSource, 
                 layer.ParsedOffset, 
                 layer.Pan, 
@@ -186,12 +186,28 @@ namespace Pronome
 
             LayersToChange.Add(Layers.IndexOf(layer), copyLayer);
 
+            copyLayer.ProcessBeatCode(layer.ParsedString);
+
             NeedsToChangeLayer = true;
             // wait until the cycle number is set
             LayerChangeTurnstile.WaitOne();
 
-            double bytesPerCycle = 1;
+            FastForwardChangedLayers(LayerChangeCycle);
+
+            // signal the audio thread to finish the process
+            NeedsToChangeLayer = null;
+        }
+
+        /// <summary>
+        /// Fast forward the layer(s) in the changed queue by the number of cycles
+        /// </summary>
+        /// <param name="cycles"></param>
+        public void FastForwardChangedLayers(double cycles)
+        {
+            //double bytesPerCycle = 1;
             double floatsPerCycle = 1;
+            long totalFloats = (long)(cycles * floatsPerCycle);
+            //long totalBytes = (long)(cycles * bytesPerCycle);
             // fast forward the layers
             foreach (KeyValuePair<int, Layer> pair in LayersToChange)
             {
@@ -200,13 +216,27 @@ namespace Pronome
                 {
                     if (src.SoundSource.IsPitch)
                     {
-                        (src as PitchStream).Read(new float[(long)(LayerChangeCycle * floatsPerCycle)], 0, )
+                        long floats = totalFloats;
+
+                        while (floats > 0)
+                        {
+                            int intsToCopy = (int)Math.Min(int.MaxValue, floats);
+                            (src as PitchStream).Read(new float[intsToCopy], 0, intsToCopy);
+                            floats -= int.MaxValue;
+                        }
+                    }
+                    else
+                    {
+                        long bytes = totalFloats * 4;
+
+                        while (bytes > 0)
+                        {
+                            int intsToCopy = (int)Math.Min(int.MaxValue, bytes);
+                            (src as WaveStream).Read(new byte[intsToCopy], 0, intsToCopy);
+                        }
                     }
                 }
             }
-
-            // signal the audio thread to finish the process
-            NeedsToChangeLayer = null;
         }
 
         /** <summary>Add all the audio sources from each layer.</summary>

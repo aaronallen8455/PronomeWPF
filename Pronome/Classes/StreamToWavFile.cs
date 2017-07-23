@@ -89,27 +89,37 @@ namespace Pronome
                 {
                     // top off the fast forward
                     double cycleDiff = cycle - met.LayerChangeCycle;
-                    double totalSamples = cycleDiff * count;
+                    //double totalSamples = cycleDiff * count;
+
+                    met.FastForwardChangedLayers(cycleDiff);
 
                     foreach (KeyValuePair<int, Layer> pair in met.LayersToChange)
                     {
-                        var layer = pair.Value;
-                        foreach (IStreamProvider src in layer.GetAllSources())
+                        Layer copy = pair.Value;
+                        Layer real = met.Layers[pair.Key];
+
+                        // remove old sources
+                        foreach (IStreamProvider src in real.GetAllSources())
                         {
-
-                            if (src.SoundSource.IsPitch)
-                            {
-                                (src as PitchStream).Read(new float[(int)totalSamples], 0, (int)totalSamples);
-                            }
-                            else
-                            {
-
-                            }
+                            met.RemoveAudioSource(src);
+                            src.Dispose();
                         }
 
-                        // remove the old sources and put in the new ones.
-                        layer.ResetSources();
+                        // transfer sources to real layer
+                        real.AudioSources = copy.AudioSources;
+                        real.BaseAudioSource = copy.BaseAudioSource;
+                        real.BasePitchSource = copy.BasePitchSource;
+
+                        foreach (var src in real.GetAllSources())
+                        {
+                            src.Layer = real;
+                        }
+
+                        // put in the new sources.
+                        met.AddSourcesFromLayer(real);
                     }
+
+                    met.LayersToChange.Clear();
 
                     met.NeedsToChangeLayer = false;
                 }
