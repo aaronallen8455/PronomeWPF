@@ -202,13 +202,15 @@ namespace Pronome
                         // if the beat is being changed during playback then the parsing will occur when the cycle count occurs
                         if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
                         {
-                            Metronome.LayerToChangeAndSync = Tuple.Create(Layer, textEditor.Text);
-                            Metronome.NeedToInsertStream = true;
+                            Layer.ParsedString = textEditor.Text;
+                            Metronome.GetInstance().ExecuteLayerChange(Layer);
+                            //Metronome.LayerToChangeAndSync = Tuple.Create(Layer, textEditor.Text);
+                            //Metronome.NeedToInsertStream = true;
                         }
                         else
                         {
                             // parse immediately
-                            Layer.Parse(textEditor.Text);
+                            Layer.ProcessBeatCode(textEditor.Text);
 
                             // redraw beat graph if necessary
                             Metronome.GetInstance().TriggerAfterBeatParsed();

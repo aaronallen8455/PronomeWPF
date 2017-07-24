@@ -188,14 +188,18 @@ namespace Pronome
 
             copyLayer.ProcessBeatCode(layer.ParsedString);
 
-            NeedsToChangeLayer = true;
-            // wait until the cycle number is set
-            LayerChangeTurnstile.WaitOne();
+            var t = new Thread(() =>
+            {
+                NeedsToChangeLayer = true;
+                // wait until the cycle number is set
+                LayerChangeTurnstile.WaitOne();
 
-            FastForwardChangedLayers(LayerChangeCycle);
+                FastForwardChangedLayers(LayerChangeCycle);
 
-            // signal the audio thread to finish the process
-            NeedsToChangeLayer = null;
+                // signal the audio thread to finish the process
+                NeedsToChangeLayer = null;
+            });
+            t.Start();
         }
 
         /// <summary>
@@ -205,7 +209,7 @@ namespace Pronome
         public void FastForwardChangedLayers(double cycles)
         {
             //double bytesPerCycle = 1;
-            double floatsPerCycle = 1;
+            double floatsPerCycle = 13230;
             long totalFloats = (long)(cycles * floatsPerCycle);
             //long totalBytes = (long)(cycles * bytesPerCycle);
             // fast forward the layers
@@ -227,12 +231,13 @@ namespace Pronome
                     }
                     else
                     {
-                        long bytes = totalFloats * 4;
+                        long bytes = totalFloats;
 
                         while (bytes > 0)
                         {
                             int intsToCopy = (int)Math.Min(int.MaxValue, bytes);
                             (src as WaveStream).Read(new byte[intsToCopy], 0, intsToCopy);
+                            bytes -= int.MaxValue;
                         }
                     }
                 }
@@ -811,6 +816,11 @@ namespace Pronome
         void Deserialized(StreamingContext sc)
         {
             PlayState = State.Stopped;
+
+            // init layer change objects
+            NeedsToChangeLayer = false;
+            LayersToChange = new Dictionary<int, Layer>();
+            LayerChangeTurnstile = new AutoResetEvent(false);
 
             foreach (Layer layer in Layers)
             {

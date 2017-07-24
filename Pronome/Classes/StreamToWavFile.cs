@@ -109,6 +109,7 @@ namespace Pronome
                         real.AudioSources = copy.AudioSources;
                         real.BaseAudioSource = copy.BaseAudioSource;
                         real.BasePitchSource = copy.BasePitchSource;
+                        real.Beat = copy.Beat;
 
                         foreach (var src in real.GetAllSources())
                         {
@@ -117,6 +118,11 @@ namespace Pronome
 
                         // put in the new sources.
                         met.AddSourcesFromLayer(real);
+                        copy.AudioSources = null;
+                        copy.BaseAudioSource = null;
+                        copy.BasePitchSource = null;
+                        copy.Beat = null;
+                        met.Layers.Remove(copy);
                     }
 
                     met.LayersToChange.Clear();

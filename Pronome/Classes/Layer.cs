@@ -136,7 +136,7 @@ namespace Pronome
             cells = SetBeatCollectionOnSources(cells);
             Beat = cells.ToList();
 
-            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+            if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
             {
                 // adds sources to the mixer.
                 ResetSources();
@@ -1003,7 +1003,7 @@ namespace Pronome
             AudioSources = new Dictionary<string, IStreamProvider>();
             var source = InternalSource.GetFromUri(BaseSourceName);
             SetBaseSource(source);
-            Parse(ParsedString);
+            ProcessBeatCode(ParsedString);
             if (ParsedOffset != string.Empty)
                 SetOffset(BeatCell.Parse(ParsedOffset));
             if (pan != 0)
