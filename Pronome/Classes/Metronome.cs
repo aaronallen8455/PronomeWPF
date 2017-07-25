@@ -218,27 +218,20 @@ namespace Pronome
                 Layer l = pair.Value;
                 foreach (IStreamProvider src in l.GetAllSources())
                 {
-                    if (src.SoundSource.IsPitch)
-                    {
-                        long floats = totalFloats;
+                    long floats = totalFloats;
 
-                        while (floats > 0)
+                    while (floats > 0)
+                    {
+                        int intsToCopy = (int)Math.Min(int.MaxValue, floats);
+                        if (src.SoundSource.IsPitch)
                         {
-                            int intsToCopy = (int)Math.Min(int.MaxValue, floats);
                             (src as PitchStream).Read(new float[intsToCopy], 0, intsToCopy);
-                            floats -= int.MaxValue;
                         }
-                    }
-                    else
-                    {
-                        long bytes = totalFloats;
-
-                        while (bytes > 0)
+                        else
                         {
-                            int intsToCopy = (int)Math.Min(int.MaxValue, bytes);
                             (src as WaveStream).Read(new byte[intsToCopy], 0, intsToCopy);
-                            bytes -= int.MaxValue;
                         }
+                        floats -= int.MaxValue;
                     }
                 }
             }

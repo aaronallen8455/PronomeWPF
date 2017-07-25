@@ -109,8 +109,8 @@
             x:Key="sourceSelector"
             x:Shared="False"
             ItemsSource="{Binding Source={StaticResource completeSourceLibrary}}"
-            DataContext="{DynamicResource disableDuringPlay}"
-            IsEnabled="{Binding Path=IsEnabled}"/>
+            DataContext="{DynamicResource disableDuringPlay}"/>
+        <!--IsEnabled="{Binding Path=IsEnabled}"/> -->
         
         <!--Pitch input-->
         <TextBox
@@ -122,8 +122,8 @@
             FontFamily="Consolas"
             FontSize="12pt"
             x:Shared="False"
-            DataContext="{DynamicResource disableDuringPlay}"
-            IsEnabled="{Binding Path=IsEnabled}"/>
+            DataContext="{DynamicResource disableDuringPlay}"/>
+        <!--IsEnabled="{Binding Path=IsEnabled}"/> -->
         
         <!--Offset input-->
         <TextBox
@@ -135,8 +135,8 @@
             FontSize="12pt"
             x:Shared="False"
             Text="0"
-            DataContext="{DynamicResource disableDuringPlay}"
-            IsEnabled="{Binding Path=IsEnabled}"/>
+            DataContext="{DynamicResource disableDuringPlay}"/>
+        <!--IsEnabled="{Binding Path=IsEnabled}"/>-->
         
         <!--Volume control-->
         <Slider

@@ -199,7 +199,7 @@
             <Expander Header="Wav File Creation">
                 <StackPanel>
                     <TextBlock>
-                        There's two ways to export your beat to a Wav audio file:<LineBreak/>
+                        There are two ways to export your beat to a Wav audio file:<LineBreak/>
                         - Based on a specified length of time.<LineBreak/>
                         - Record to the Wav file as the beat is playing until you press stop.
                     </TextBlock>

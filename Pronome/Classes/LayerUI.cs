@@ -245,32 +245,46 @@ namespace Pronome
                     // use contents of pitch field as source
                     //Layer.SetBaseSource(pitchInput.Text);
 
-                    // disable play button while base source is being updated
-                    window.playButton.IsEnabled = false;
                 
-                    await window.Dispatcher.InvokeAsync(() =>
+                    if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
                     {
-                        Layer.NewBaseSource(InternalSource.GetFromPitch(pitchInput.Text));
-                    });
-                    window.playButton.IsEnabled = true;
+                        // disable play button while base source is being updated
+                        window.playButton.IsEnabled = false;
+                        await window.Dispatcher.InvokeAsync(() =>
+                        {
+                            Layer.NewBaseSource(InternalSource.GetFromPitch(pitchInput.Text));
+                        });
+                        window.playButton.IsEnabled = true;
+                    }
+                    else
+                    {
+                        // change while playing
+                        Layer.BaseAudioSource.SoundSource = InternalSource.GetFromPitch(pitchInput.Text);
+                        Metronome.GetInstance().ExecuteLayerChange(Layer);
+                    }
                 }
                 else
                 {
-                    //sourceName = sourceName.Substring(sourceName.IndexOf('.') + 1).TrimStart();
-
-                    //ISoundSource newSource = InternalSource.GetWavFromLabel(sourceName);
-
                     // set new base source
                     if (source != Layer.BaseAudioSource.SoundSource)
                     {
                         (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
 
-                        window.playButton.IsEnabled = false;
-                        await window.Dispatcher.InvokeAsync(() =>
+                        if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
                         {
-                            Layer.NewBaseSource(source);
-                        });
-                        window.playButton.IsEnabled = true;
+                            window.playButton.IsEnabled = false;
+                            await window.Dispatcher.InvokeAsync(() =>
+                            {
+                                Layer.NewBaseSource(source);
+                            });
+                            window.playButton.IsEnabled = true;
+                        }
+                        else
+                        {
+                            // change while playing
+                            Layer.BaseAudioSource.SoundSource = source;
+                            Metronome.GetInstance().ExecuteLayerChange(Layer);
+                        }
                     }
                 }
             }
@@ -287,7 +301,15 @@ namespace Pronome
                 {
                     src += '4';
                 }
-                Layer.NewBaseSource(InternalSource.GetFromPitch(src));
+                if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                {
+                    Layer.NewBaseSource(InternalSource.GetFromPitch(src));
+                }
+                else
+                {
+                    Layer.BaseAudioSource.SoundSource = InternalSource.GetFromPitch(src);
+                    Metronome.GetInstance().ExecuteLayerChange(Layer);
+                }
             }
         }
 
@@ -347,6 +369,12 @@ namespace Pronome
                 Layer.SetOffset(offset);
                 Layer.ParsedOffset = offsetInput.Text;
 
+                if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+                {
+                    Metronome.GetInstance().ExecuteLayerChange(Layer);
+                }
+
+                // is this needed when changed while beat is playing?
                 Metronome.GetInstance().TriggerAfterBeatParsed();
             }
         }

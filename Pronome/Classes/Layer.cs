@@ -640,7 +640,7 @@ namespace Pronome
             BaseSourceName = baseSource.Uri;
 
             // reassign source to existing cells that use the base source. base source beats will have an empty string
-            if (Beat != null)
+            if (Beat != null && Metronome.GetInstance().PlayState == Metronome.State.Stopped)
             {
                 Beat = SetBeatCollectionOnSources(SetBeat(Beat.ToArray())).ToList();
 
@@ -665,11 +665,14 @@ namespace Pronome
          * <param name="offset">Quarter notes to offset by.</param> */
         public void SetOffset(double offset)
         {
-            foreach (IStreamProvider src in GetAllSources())
+            if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
             {
-                double current = src.GetOffset();
-                double add = BeatCell.ConvertFromBpm(offset - Offset, src);
-                src.SetOffset(current + add);
+                foreach (IStreamProvider src in GetAllSources())
+                {
+                    double current = src.GetOffset();
+                    double add = BeatCell.ConvertFromBpm(offset - Offset, src);
+                    src.SetOffset(current + add);
+                }
             }
 
             Offset = offset;
