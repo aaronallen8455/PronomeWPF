@@ -71,81 +71,14 @@ namespace Pronome
         /**<summary>Used to hold a reference to the ISampleProvider so we can easily remove it from the mixer when needed.</summary>*/
         protected Dictionary<IStreamProvider, ISampleProvider> SampleDictionary = new Dictionary<IStreamProvider, ISampleProvider>();
 
-        ///// <summary>
-        ///// True if a beat change has occured while playing and the target layer needs to be treated.
-        ///// </summary>
-        //static public bool NeedToInsertStream = false;
-        //
-        ////static public LinkedList<IStreamProvider> StreamsToInsert = new LinkedList<IStreamProvider>();
-        ///// <summary>
-        ///// When changing a beat while playing, this holds the layer to change and the new beat code to be parsed.
-        ///// </summary>
-        //static public Tuple<Layer, string> LayerToChangeAndSync;
-        ///// <summary>
-        ///// Changes the target layer and fast forwards it to the given cycle
-        ///// </summary>
-        ///// <param name="cycle"></param>
-        //static public void CycleToInsertTo(uint cycle)
-        //{
-        //
-        //    lock (LayerToChangeAndSync)
-        //    {
-        //        var currentPlayState = Instance.PlayState;
-        //
-        //        Instance.Pause();
-        //
-        //        NeedToInsertStream = false;
-        //
-        //        Layer layer = LayerToChangeAndSync.Item1;
-        //        // Parse the new beat code string
-        //        layer.Parse(LayerToChangeAndSync.Item2);
-        //
-        //        // fast forward base source to current time position
-        //        if (layer.IsPitch)
-        //        {
-        //            PitchStream stream = layer.BaseAudioSource as PitchStream;
-        //            var buf = new float[3520];
-        //            for (uint i = 0; i <= cycle + 1; i++)
-        //            {
-        //                stream.Read(buf, 0, 3520);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            WavFileStream stream = layer.BaseAudioSource as WavFileStream;
-        //            VolumeSampleProvider strm = stream.VolumeProvider;
-        //            float[] arr = new float[1280 * strm.WaveFormat.BlockAlign];
-        //            for (int i=0; i< cycle; i++)
-        //            {
-        //                strm.Read(arr, 0, 1280 * strm.WaveFormat.BlockAlign);
-        //            }
-        //        }
-        //
-        //        // fast forward the non-base wav sources as well
-        //        foreach (WavFileStream stream in layer.AudioSources.Values)
-        //        {
-        //            float[] arr = new float[1280 * stream.WaveFormat.BlockAlign];
-        //            for (int i=0; i <= cycle + 1; i++)
-        //            {
-        //                stream.VolumeProvider.Read(arr, 0, 1280 * stream.WaveFormat.BlockAlign);
-        //            }
-        //        }
-        //
-        //        // TODO: need to fast-forward referencers as well.
-        //
-        //        
-        //
-        //        GetInstance().TriggerAfterBeatParsed();
-        //
-        //        if (currentPlayState == State.Playing)
-        //        {
-        //            Instance.Play();
-        //        }
-        //    }
-        //}
-
+        /// <summary>
+        /// Used to coordinate a layer change with the audio render callback
+        /// </summary>
         public AutoResetEvent LayerChangeTurnstile = new AutoResetEvent(false);
 
+        /// <summary>
+        /// A collection of layers that need to be changed while playing
+        /// </summary>
         public Dictionary<int, Layer> LayersToChange = new Dictionary<int, Layer>();
 
         public double LayerChangeCycle;
@@ -209,7 +142,7 @@ namespace Pronome
         public void FastForwardChangedLayers(double cycles)
         {
             //double bytesPerCycle = 1;
-            double floatsPerCycle = 13230;
+            int floatsPerCycle = 13230;
             long totalFloats = (long)(cycles * floatsPerCycle);
             //long totalBytes = (long)(cycles * bytesPerCycle);
             // fast forward the layers
@@ -516,46 +449,6 @@ namespace Pronome
         private static object multIntervalLock = new object();
 
         private bool _tempoChangeCued = false;
-        private int _tempoChangeCounter = 0;
-        private static object tempoChangeCounterLock = new object();
-
-        /// <summary>
-        /// Used the count when each layer gets changed for dequeueing the tempo change.
-        /// </summary>
-        public int TempoChangeCounter
-        {
-            get
-            {
-                lock (tempoChangeCounterLock)
-                {
-                    return _tempoChangeCounter;
-                }
-            }
-        }
-
-        ///// <summary>
-        ///// Increment the tempo change counter and reset when a tempo change is complete.
-        ///// </summary>
-        //public void IncrementTempoChangeCounter()
-        //{
-        //    lock (tempoChangeCounterLock)
-        //    {
-        //        _tempoChangeCounter++;
-        //
-        //        if (_tempoChangeCounter == Mixer.MixerInputs.Count())
-        //        {
-        //            // all sound sources have had their tempos changed
-        //            TempoChangeCued = false;
-        //            _tempoChangeCounter = 0;
-        //            TempoChangedSet.Clear();
-        //        }
-        //    }
-        //}
-
-        /// <summary>
-        /// Tracks which audio sources have been affected by a tempo change
-        /// </summary>
-        public HashSet<IStreamProvider> TempoChangedSet = new HashSet<IStreamProvider>();
 
         private static object tempoChangeLock = new object();
         public bool TempoChangeCued
@@ -637,14 +530,12 @@ namespace Pronome
         }
 
         /** <summary>Is a random muting value set?</summary> */
-        [DataMember]
         public bool IsRandomMute = false;
 
         /** <summary>Percent chance that a note gets muted.</summary> */
-        [DataMember]
         public int RandomMutePercent;
+
         /** <summary>Number of seconds over which the random mute percent ramps up to full value.</summary> */
-        [DataMember]
         public int RandomMuteSeconds = 0;
 
         /** <summary>Set a random mute percent.</summary>
@@ -672,14 +563,12 @@ namespace Pronome
         }
 
         /** <summary>True if a silent interval is set.</summary> */
-        [DataMember]
         public bool IsSilentInterval = false;
 
         /** <summary>The value in quarter notes that a beat plays audibly.</summary> */
-        [DataMember]
         public double AudibleInterval;
+
         /** <summary>The value in quarter notes that a beat is silenced.</summary> */
-        [DataMember]
         public double SilentInterval;
 
         /** <summary>Set an audible/silent interval.</summary>
@@ -745,7 +634,7 @@ namespace Pronome
 
                     // need to initiate these values
                     GetInstance().TempoChangeCued = false;
-                    GetInstance().TempoChangedSet = new HashSet<IStreamProvider>();
+                    //GetInstance().TempoChangedSet = new HashSet<IStreamProvider>();
                     //GetInstance().TempoChangeCounter = 0;
                 }
                 catch (SerializationException)
@@ -823,10 +712,10 @@ namespace Pronome
 
             ChangeTempo(Tempo);
 
-            if (IsSilentInterval)
-                SetSilentInterval(AudibleInterval, SilentInterval);
-            if (IsRandomMute)
-                SetRandomMute(RandomMutePercent, RandomMuteSeconds);
+            //if (IsSilentInterval)
+            //    SetSilentInterval(AudibleInterval, SilentInterval);
+            //if (IsRandomMute)
+            //    SetRandomMute(RandomMutePercent, RandomMuteSeconds);
 
             // trigger beat parsed
             onAfterBeatParsed();

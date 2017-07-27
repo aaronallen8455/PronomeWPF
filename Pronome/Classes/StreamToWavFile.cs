@@ -68,7 +68,7 @@ namespace Pronome
                 if (met.TempoChangeCued)
                 {
                     // compensate the cycle
-                    cycle /= met.TempoChangeRatio;
+                    cycle *= met.TempoChangeRatio;
 
                     met.PerformTempoChanges();
                 
@@ -82,7 +82,7 @@ namespace Pronome
                 // in the audio thread and added to the mixer.
                 if (met.NeedsToChangeLayer == true)
                 {
-                    met.LayerChangeCycle = cycle;
+                    met.LayerChangeCycle = cycle + 1;
                     met.LayerChangeTurnstile.Set();
                 }
                 else if (met.NeedsToChangeLayer == null)
@@ -109,6 +109,7 @@ namespace Pronome
                         real.AudioSources = copy.AudioSources;
                         real.BaseAudioSource = copy.BaseAudioSource;
                         real.BasePitchSource = copy.BasePitchSource;
+                        real.BaseSourceName = copy.BaseSourceName;
                         real.Beat = copy.Beat;
 
                         foreach (var src in real.GetAllSources())

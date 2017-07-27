@@ -28,7 +28,7 @@ namespace Pronome
             cycleLength = met.GetQuartersForCompleteCycle();
             // todo: check symetry.
 
-            int layerCount = met.Layers.Count;
+            int layerCount = met.Layers.Count - met.LayersToChange.Count; // don't accidentally use a dummy layer.
 
             tickSize = graphRadius / (layerCount + 1);
 

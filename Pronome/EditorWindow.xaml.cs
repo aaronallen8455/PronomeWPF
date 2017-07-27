@@ -360,10 +360,10 @@ namespace Pronome
         {
             ChangesApplied = applied;
             // don't set the resource if beat is playing.
-            if (applied || !applied && Metronome.GetInstance().PlayState == Metronome.State.Stopped)
-            {
+            //if (applied || !applied && Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+            //{
                 Resources["changesApplied"] = !applied;
-            }
+            //}
         }
 
         public bool GetChangesApplied()
@@ -388,14 +388,22 @@ namespace Pronome
                         row.Layer.ParsedOffset = row.OffsetValue;
                         row.Layer.UI.SetOffsetValue(row.OffsetValue);
                         row.Layer.Offset = row.Offset;
-                        row.Layer.Parse(beatCode);
-                        // redraw beat graph / bounce if necessary
+                        if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                        {
+                            row.Layer.ProcessBeatCode(beatCode);
+                        }
+                        else
+                        {
+                            // make change while playing
+                            row.Layer.ParsedString = beatCode;
+                            Metronome.GetInstance().ExecuteLayerChange(row.Layer);
+                        }
                     }
                 }
                 if (changesMade)
                 {
                     Metronome.AfterBeatParsed -= BuildUI; // don't rebuild UI
-                    Metronome.GetInstance().TriggerAfterBeatParsed();
+                    Metronome.GetInstance().TriggerAfterBeatParsed(); // redraw beat graph / bounce if necessary
                     Metronome.AfterBeatParsed += BuildUI;
                 }
             }));

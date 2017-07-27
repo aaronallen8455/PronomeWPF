@@ -95,11 +95,11 @@ namespace Pronome
                 playButton.IsEnabled = false;
                 pauseButton.IsEnabled = true;
 
-                // disable the apply changes button in editor if not already off
-                if (EditorWindow.Instance != null && !EditorWindow.Instance.ChangesApplied)
-                {
-                    EditorWindow.Instance.Resources["changesApplied"] = false;
-                }
+                //// disable the apply changes button in editor if not already off
+                //if (EditorWindow.Instance != null && !EditorWindow.Instance.ChangesApplied)
+                //{
+                //    EditorWindow.Instance.Resources["changesApplied"] = false;
+                //}
             }
         }
 
@@ -121,11 +121,11 @@ namespace Pronome
             pauseButton.IsEnabled = false;
             (Application.Current.Resources["disableDuringPlay"] as Button).IsEnabled = true;
 
-            // enable the apply changes button in the editor if some changes are pending
-            if (EditorWindow.Instance != null && !EditorWindow.Instance.ChangesApplied)
-            {
-                EditorWindow.Instance.Resources["changesApplied"] = true;
-            }
+            //// enable the apply changes button in the editor if some changes are pending
+            //if (EditorWindow.Instance != null && !EditorWindow.Instance.ChangesApplied)
+            //{
+            //    EditorWindow.Instance.Resources["changesApplied"] = true;
+            //}
         }
 
         private List<int> tempoHistory = new List<int>();
@@ -294,58 +294,6 @@ namespace Pronome
             // save the settings to storage
             UserSettings.GetSettings().SaveToStorage();
 
-            ////// serialize the custom source library for storage
-            ////var ds = new DataContractSerializer(typeof(UserSourceLibrary));
-            ////MemoryStream s = new MemoryStream();
-            ////using (XmlDictionaryWriter w = XmlDictionaryWriter.CreateTextWriter(s))
-            ////{
-            ////    ds.WriteObject(w, UserSource.Library);
-            ////}
-            ////byte[] bin = s.ToArray();
-            ////string x = System.Text.Encoding.Default.GetString(bin);
-            ////s.Dispose();
-            //// save user settings
-            //if (Settings.ContainsKey("winWidth")) Settings["winWidth"] = Width;
-            //else Settings.Add("winWidth", Width);
-            //if (Settings.ContainsKey("winHeight")) Settings["winHeight"] = Height;
-            //else Settings.Add("winHeight", Height);
-            //if (Settings.ContainsKey("winX")) Settings["winX"] = Left;
-            //else Settings.Add("winX", Left);
-            //if (Settings.ContainsKey("winY")) Settings["winY"] = Top;
-            //else Settings.Add("winY", Top);
-            //if (Settings.ContainsKey("beatFontSize")) Settings["beatFontSize"] = (double)Application.Current.Resources["textBoxFontSize"];
-            //else Settings.Add("beatFontSize", (double)Application.Current.Resources["textBoxFontSize"]);
-            //if (Settings.ContainsKey("blinkingEnabled")) Settings["blinkingEnabled"] = BeatGraphWindow.BlinkingIsEnabled ? 1 : 0;
-            //else Settings.Add("blinkingEnabled", BeatGraphWindow.BlinkingIsEnabled ? 1 : 0);
-            //if (Settings.ContainsKey("bounceQueueSize")) Settings["bounceQueueSize"] = BounceWindow.Tick.QueueSize;
-            //else Settings.Add("bounceQueueSize", BounceWindow.Tick.QueueSize);
-            //if (Settings.ContainsKey("bounceDivision")) Settings["bounceDivision"] = BounceWindow.divisionPoint;
-            //else Settings.Add("bounceDivision", BounceWindow.divisionPoint);
-            //if (Settings.ContainsKey("bounceWidthPad")) Settings["bounceWidthPad"] = BounceWindow.widthPad;
-            //else Settings.Add("bounceWidthPad", BounceWindow.widthPad);
-            //if (Settings.ContainsKey("pitchDecayLength")) Settings["pitchDecayLength"] = PitchStream.DecayLength;
-            //else Settings.Add("pitchDecayLength", PitchStream.DecayLength);
-            //
-            ////var dd = new DataContractSerializer(typeof(Dictionary<string, double>));
-            ////using (FileStream sst = File.OpenWrite("testy.bin"))
-            ////using (XmlDictionaryWriter ss = XmlDictionaryWriter.CreateBinaryWriter(sst))
-            ////{
-            ////    dd.WriteObject(ss, Settings);
-            ////}
-            //// Write window size and position to storage
-            //IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
-            //using (IsolatedStorageFileStream stream = new IsolatedStorageFileStream("pronomeSettings", FileMode.Create, f))
-            //    using (StreamWriter writer = new StreamWriter(stream))
-            //    {
-            //    
-            //        foreach (KeyValuePair<string, double> pair in Settings)
-            //        {
-            //            writer.WriteLine("{0}={1}", pair.Key, pair.Value);
-            //        }
-            //    }
-            //
-            //f.Dispose();
-
             // dispose the metronome
             Metronome.GetInstance().Dispose();
         }
@@ -356,39 +304,7 @@ namespace Pronome
 
             // apply settings from storage
             UserSettings.GetSettingsFromStorage()?.ApplySettings();
-
-            //// Read each setting when application is initialized
-            //IsolatedStorageFile f = IsolatedStorageFile.GetUserStoreForAssembly();
-            //using (IsolatedStorageFileStream stream = new IsolatedStorageFileStream("pronomeSettings", FileMode.OpenOrCreate, f))
-            //using (StreamReader reader = new StreamReader(stream))
-            //{
-            //    string line = reader.ReadLine();
-            //    while (line != null)
-            //    {
-            //        string[] setting = line.Split('=');
-            //        try
-            //        {
-            //            Settings.Add(setting[0], double.Parse(setting[1]));
-            //        }
-            //        catch (Exception err) { }
-            //
-            //        line = reader.ReadLine();
-            //    }
-            //}
-            //// apply settings
-            //if (Settings.ContainsKey("winX")) Left = Settings["winX"];
-            //if (Settings.ContainsKey("winY")) Top = Settings["winY"];
-            //if (Settings.ContainsKey("winWidth")) Width = Settings["winWidth"];
-            //if (Settings.ContainsKey("winHeight")) Height = Settings["winHeight"];
-            //if (Settings.ContainsKey("beatFontSize")) Application.Current.Resources["textBoxFontSize"] = Settings["beatFontSize"];
-            //if (Settings.ContainsKey("blinkingEnabled")) BeatGraphWindow.BlinkingIsEnabled = Settings["blinkingEnabled"] == 1 ? true : false;
-            //if (Settings.ContainsKey("bounceQueueSize")) BounceWindow.Tick.QueueSize = Settings["bounceQueueSize"];
-            //if (Settings.ContainsKey("bounceDivision")) BounceWindow.divisionPoint = Settings["bounceDivision"];
-            //if (Settings.ContainsKey("bounceWidthPad")) BounceWindow.widthPad = Settings["bounceWidthPad"];
-            //if (Settings.ContainsKey("pitchDecayLength")) PitchStream.DecayLength = Settings["pitchDecayLength"];
-            //
-            //f.Dispose();
-        }
+                    }
 
         private void openOptionsButton_Click(object sender, RoutedEventArgs e)
         {
@@ -422,7 +338,7 @@ namespace Pronome
             {
                 var bounceWindow = Resources["bounceWindow"] as BounceWindow;
                 bounceWindow.Show();
-                bounceWindow.Activate();
+                //bounceWindow.Activate();
                 if (!bounceWindow.SceneDrawn)
                 {
                     if (BeatGraphWindow.Instance == null || !BeatGraphWindow.Instance.IsVisible)

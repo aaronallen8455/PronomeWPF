@@ -130,7 +130,7 @@ namespace Pronome
             ballRadius = baseBallRadius;
             ballPadding = baseBallPadding;
 
-            layerCount = met.Layers.Count;
+            layerCount = met.Layers.Count - met.LayersToChange.Count; // in case a field was changed as the bounce window opened.
             Balls = new Ball[layerCount];
             Lanes = new Lane[layerCount];
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));

@@ -155,7 +155,7 @@ namespace Pronome
                         
                             // need to initiate these values
                             Metronome.GetInstance().TempoChangeCued = false;
-                            Metronome.GetInstance().TempoChangedSet = new HashSet<IStreamProvider>();
+                            //Metronome.GetInstance().TempoChangedSet = new HashSet<IStreamProvider>();
                         }
                         catch (SerializationException)
                         {

@@ -364,17 +364,17 @@ namespace Pronome
         protected void offsetInput_LostFocus(object sender, RoutedEventArgs e)
         {
             //validate
-            if (BeatCell.TryParse(offsetInput.Text, out double offset))
+            if (BeatCell.TryParse(offsetInput.Text, out double offset) && offset != Layer.Offset)
             {
                 Layer.SetOffset(offset);
                 Layer.ParsedOffset = offsetInput.Text;
 
                 if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
                 {
+                    // change on the fly
                     Metronome.GetInstance().ExecuteLayerChange(Layer);
                 }
 
-                // is this needed when changed while beat is playing?
                 Metronome.GetInstance().TriggerAfterBeatParsed();
             }
         }
