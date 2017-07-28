@@ -83,6 +83,7 @@ namespace Pronome
                 if (met.NeedsToChangeLayer == true)
                 {
                     met.LayerChangeCycle = cycle + 1;
+                    met.NeedsToChangeLayer = false;
                     met.LayerChangeTurnstile.Set();
                 }
                 else if (met.NeedsToChangeLayer == null)
