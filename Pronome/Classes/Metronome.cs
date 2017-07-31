@@ -206,11 +206,6 @@ namespace Pronome
             {
                 RemoveAudioSource(src);
             }
-
-            //if (layer.BasePitchSource != default(PitchStream))
-            //{
-            //    RemoveAudioSource(layer.BasePitchSource);
-            //}
         }
 
         /**<summary>Remove an audiosource from the mixer</summary>

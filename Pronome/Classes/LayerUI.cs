@@ -166,6 +166,12 @@ namespace Pronome
             buttonSidePanel.Children.Add(muteButton);
             muteButton.Checked += new RoutedEventHandler(muteButton_Checked);
             muteButton.Unchecked += new RoutedEventHandler(muteButton_Checked);
+            // if creating layer while playing, start muted
+            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+            {
+                muteButton.IsChecked = true;
+                //muteButton_Checked(null, null);
+            }
 
             // solo control
             soloButton = resources["soloButton"] as ToggleButton;
@@ -182,6 +188,12 @@ namespace Pronome
             deleteButton = resources["deleteButton"] as Button;
             basePanel.Children.Add(deleteButton);
             deleteButton.Click += new RoutedEventHandler(deleteButton_Click);
+
+            // handle adding the layer while playing
+            if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
+            {
+                Metronome.GetInstance().ExecuteLayerChange(Layer);
+            }
         }
 
         protected void textEditor_LostFocus(object sender, RoutedEventArgs e)

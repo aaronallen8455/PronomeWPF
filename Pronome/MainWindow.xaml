@@ -466,8 +466,7 @@
                             <!--Add layer button-->
                             <Button Click="addLayerButton_Click" 
                                     GotFocus="Button_GotFocus" 
-                                    DataContext="{StaticResource disableDuringPlay}" 
-                                    IsEnabled="{Binding Path=IsEnabled}">Add Layer</Button>
+                                    >Add Layer</Button>
 
                             <Border/>
 
