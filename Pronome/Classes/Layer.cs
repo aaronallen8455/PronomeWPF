@@ -37,7 +37,6 @@ namespace Pronome
         public string ParsedString;
 
         /** <summary>The fractional portion of sample per second values are accumulated here and added in when over 1.</summary> */
-        [DataMember]
         public double Remainder = .0; // holds the accumulating fractional milliseconds.
 
         /** <summary>A value in quarter notes that all sounds in this layer are offset by.</summary> */

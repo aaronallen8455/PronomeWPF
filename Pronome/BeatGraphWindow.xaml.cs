@@ -59,7 +59,8 @@ namespace Pronome
         {
             if (Metronome.GetInstance().Layers.Count == 0)
             {
-                throw new Exception("No layers to graph.");
+                //throw new Exception("No layers to graph.");
+                return;
             }
 
             timeoutError.Visibility = Visibility.Hidden; // hide the asymmetry error message.
