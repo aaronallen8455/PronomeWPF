@@ -403,32 +403,18 @@ namespace Pronome
 
         protected void deleteButton_Click(object sender, RoutedEventArgs e)
         {
-            //// if no more layers, stop the playback
-            //if (Metronome.GetInstance().Layers.Count == 1)
-            //{
-            //    (Application.Current.MainWindow as MainWindow).stopButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            //}
-
             // dispose the layer
             int index = Metronome.GetInstance().Layers.IndexOf(Layer);
             Layer.Dispose();
             Remove();
             // reparse layers that referenced this one
             var layers = Metronome.GetInstance().Layers.Where(x => x.ParsedString.Contains($"${index + 1}"));
-            foreach(Layer layer in layers)
+            foreach(Layer layer in layers.ToArray())
             {
                 // check if the layer has no other cells besides the reference now pointing to itself. If so, replace the ref(s) with beat we are deleting
                 if (index == Metronome.GetInstance().Layers.IndexOf(layer))
                 {
-                    bool hasValue = false;
-                    foreach (string cell in layer.ParsedString.Split(',').Select(x => x.TrimStart(new char[] { '{', '[' })))
-                    {
-                        if (char.IsDigit(cell[0]))
-                        {
-                            hasValue = true;
-                            break;
-                        }
-                    }
+                    bool hasValue = Regex.IsMatch(layer.ParsedString, @"[,|][\[{]*\d");
                     // replace with old beat
                     if (!hasValue)
                     {
@@ -436,7 +422,7 @@ namespace Pronome
                         bool more = Layer.Beat.Count > 1;
                         if (more)
                         {
-                            // if a single cell repeat was used on the ref, convert o multi cell
+                            // if a single cell repeat was used on the ref, convert to multi cell
                             layer.ParsedString = Regex.Replace(
                                 layer.ParsedString, 
                                 $@"\${index + 1}(\(\d+\)[\d.+\-/*]*)", 
@@ -447,16 +433,24 @@ namespace Pronome
                         layer.UI.textEditor.Text = layer.ParsedString;
                     }
                 }
-                try
+                if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
                 {
-                    layer.Parse(layer.ParsedString);
+                    try
+                    {
+                        layer.ProcessBeatCode(layer.ParsedString);
+                    }
+                    catch (Exception)
+                    {
+                        // if there was something crazy going on, just make it "1"
+                        layer.ParsedString = "1";
+                        layer.ProcessBeatCode(layer.ParsedString);
+                        layer.UI.textEditor.Text = layer.ParsedString;
+                    }
                 }
-                catch (Exception)
+                else
                 {
-                    // if there was something crazy going on, just make it "1"
-                    layer.ParsedString = "1";
-                    layer.Parse(layer.ParsedString);
-                    layer.UI.textEditor.Text = layer.ParsedString;
+                    // change while playing
+                    Metronome.GetInstance().ExecuteLayerChange(layer);
                 }
             }
             // redraw graph

@@ -232,7 +232,6 @@
             Height="23"
             Background="MediumPurple"
             DataContext="{DynamicResource disableDuringPlay}"
-            IsEnabled="{Binding Path=IsEnabled}"
             Content="{StaticResource closeButtonGlyph}"/>
 
         <!--Labels-->

@@ -286,7 +286,6 @@ namespace Pronome.Editor
                     }
 
                     // draw reference rect
-                    //cell.ReferenceRectangle = EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle;
                     Canvas.SetLeft(cell.ReferenceRectangle, cell.Position * EditorWindow.Scale * EditorWindow.BaseFactor);
                     cell.ReferenceRectangle.Width = pbr.Duration * EditorWindow.Scale * EditorWindow.BaseFactor;
                     Panel.SetZIndex(cell.ReferenceRectangle, 30);

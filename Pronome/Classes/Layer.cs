@@ -119,12 +119,13 @@ namespace Pronome
             if (offset != "")
                 SetOffset(offset);
 
-            ProcessBeatCode(beat);
 
             //Parse(beat); // parse the beat code into this layer
             Volume = volume;
             if (pan != 0f)
                 Pan = pan;
+
+            ProcessBeatCode(beat);
             Metronome.GetInstance().AddLayer(this);
         }
 
@@ -135,15 +136,32 @@ namespace Pronome
             cells = SetBeatCollectionOnSources(cells);
             Beat = cells.ToList();
 
-            if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+            Metronome met = Metronome.GetInstance();
+
+            if (met.PlayState == Metronome.State.Stopped)
             {
                 // adds sources to the mixer.
                 ResetSources();
             }
 
             // reparse any layers that reference this one
-            Metronome met = Metronome.GetInstance();
-            int index = met.Layers.IndexOf(this);
+            int index;
+            if (met.PlayState != Metronome.State.Stopped)
+            {
+                var search = met.LayersToChange.SkipWhile(x => x.Value != this).Select(x => x.Key);
+                index = search.Any() ? search.First() : met.Layers.IndexOf(this);
+            }
+            else
+            {
+                index = met.Layers.IndexOf(this);
+            }
+
+            // will be -1 if this is in layersToChange
+            //if (index == -1)
+            //{
+            //    index = met.LayersToChange.Where(x => x.Value == this).Select(x => x.Key).First();
+            //}
+
             if (parsedReferencers == null)
             {
                 parsedReferencers = new HashSet<int>();
@@ -153,7 +171,7 @@ namespace Pronome
                 x => x != this
                 && x.ParsedString.Contains($"${index + 1}")
                 && !parsedReferencers.Contains(met.Layers.IndexOf(x)));
-            foreach (Layer layer in layers)
+            foreach (Layer layer in layers.ToArray())
             {
                 // account for deserializing a beat
                 if (layer.Beat != null && layer.Beat.Count > 0)
@@ -309,9 +327,21 @@ namespace Pronome
 
             if (visitedIndexes == null) visitedIndexes = new HashSet<int>();
 
-            if (reference >= met.Layers.Count || reference < 0) reference = 0;
+            if (reference >= met.Layers.Count) reference = 0;
 
-            string refString = met.Layers[reference].ParsedString;
+            string refString;
+
+            if (met.PlayState != Metronome.State.Stopped)
+            {
+                // get the ref string from the changed layers rather than static layers while playing
+                //refString = met.LayersToChange[reference]?.ParsedString ?? met.Layers[reference].ParsedString;
+                refString = (met.LayersToChange.ContainsKey(reference) ? met.LayersToChange[reference] : met.Layers[reference]).ParsedString;
+            }
+            else
+            {
+                refString = met.Layers[reference].ParsedString;
+            }
+
             // remove comments
             refString = Regex.Replace(refString, @"!.*?!", "");
             // remove whitespace
