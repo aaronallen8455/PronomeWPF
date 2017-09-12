@@ -334,7 +334,6 @@ namespace Pronome
             if (met.PlayState != Metronome.State.Stopped)
             {
                 // get the ref string from the changed layers rather than static layers while playing
-                //refString = met.LayersToChange[reference]?.ParsedString ?? met.Layers[reference].ParsedString;
                 refString = (met.LayersToChange.ContainsKey(reference) ? met.LayersToChange[reference] : met.Layers[reference]).ParsedString;
             }
             else

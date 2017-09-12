@@ -10,8 +10,8 @@ namespace Pronome.Editor
 
         protected Cell[] SelectedCells;
 
-        private int RepCount = 0;
-        private int MultCount = 0;
+        //private int RepCount = 0;
+        //private int MultCount = 0;
 
         public PasteCells(int index, Row row, LinkedList<Cell> cells, Cell[] selectedCells, int rightIndex) : base(row, "Paste", rightIndex)
         {
@@ -55,16 +55,16 @@ namespace Pronome.Editor
             base.Redo();
 
             // remove the groups that were added to the selection from the pasted area
-            for (int i = 0; i < RepCount; i++)
-            {
-                Cells.First.Value.RepeatGroups.RemoveLast();
-                Cells.Last.Value.RepeatGroups.RemoveLast();
-            }
-            for (int i = 0; i < MultCount; i++)
-            {
-                Cells.First.Value.MultGroups.RemoveLast();
-                Cells.Last.Value.MultGroups.RemoveLast();
-            }
+            //for (int i = 0; i < RepCount; i++)
+            //{
+            //    Cells.First.Value.RepeatGroups.RemoveLast();
+            //    Cells.Last.Value.RepeatGroups.RemoveLast();
+            //}
+            //for (int i = 0; i < MultCount; i++)
+            //{
+            //    Cells.First.Value.MultGroups.RemoveLast();
+            //    Cells.Last.Value.MultGroups.RemoveLast();
+            //}
 
             Cells = null;
         }

@@ -866,12 +866,13 @@ namespace Pronome
                         rgCopy = new RepeatGroup();
                         CopiedRepeatGroups.Add(rg, rgCopy);
                         rgCopy.Times = rg.Times;
+                        rgCopy.LastTermModifier = rg.LastTermModifier;
                     }
 
                     if (rgCopy != null)
                     {
                         rgCopy.Cells.AddLast(copy);
-                        copy.RepeatGroups.AddLast(rg);
+                        copy.RepeatGroups.AddLast(rgCopy);
                     }
                 }
 
@@ -894,7 +895,7 @@ namespace Pronome
                     if (mgCopy != null)
                     {
                         mgCopy.Cells.AddLast(copy);
-                        copy.MultGroups.AddLast(mg);
+                        copy.MultGroups.AddLast(mgCopy);
                     }
                 }
 
@@ -924,7 +925,7 @@ namespace Pronome
             Row row = Cell.SelectedCells.FirstCell.Row;
             int index = row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
             int rightIndex = index + Cell.SelectedCells.Cells.Count;
-            // get groups that need to transfered to the new cells
+            
             PasteCells action = new PasteCells(index, row, CopiedCells, Cell.SelectedCells.Cells.ToArray(), rightIndex);
             action.Redo();
             AddUndoAction(action);
