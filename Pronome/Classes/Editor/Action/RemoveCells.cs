@@ -106,8 +106,9 @@ namespace Pronome.Editor
 
                 // get the string version of duration
                 // add cell's repeat durations if this cell is in the same scope as the first cell.
+
                 if ((!c.RepeatGroups.Any() && !Cell.SelectedCells.FirstCell.RepeatGroups.Any()) ||
-                    c.RepeatGroups.Last?.Value == Cell.SelectedCells.FirstCell.RepeatGroups?.Last.Value)
+                    c.RepeatGroups.Last?.Value == Cell.SelectedCells.FirstCell.RepeatGroups.Last?.Value)
                 {
                     duration.Append("+0").Append(BeatCell.MultiplyTerms(c.Value, times));
                 }

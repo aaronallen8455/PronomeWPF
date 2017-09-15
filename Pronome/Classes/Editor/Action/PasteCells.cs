@@ -25,21 +25,64 @@ namespace Pronome.Editor
             // add any applicable groups to the new cells
             foreach (RepeatGroup rg in SelectedCells[0].RepeatGroups)
             {
-                if (rg.Cells.First.Value == SelectedCells[0]
-                    && rg.Cells.Last.Value == SelectedCells[SelectedCells.Length - 1])
+                if (rg.Cells.First.Value.Position < SelectedCells[0].Position && rg.Cells.Last.Value.Position < SelectedCells[SelectedCells.Length - 1].Position)
                 {
-                    Cells.First.Value.RepeatGroups.AddLast(rg);
-                    Cells.Last.Value.RepeatGroups.AddLast(rg);
+                    // fix bisected groups
+                    var newLast = Row.Cells[Row.Cells.IndexOf(SelectedCells[0]) - 1];
+                    rg.Cells.AddLast(newLast);
+                }
+                else if (rg.Cells.First.Value != SelectedCells[0] || rg.Cells.Last.Value != SelectedCells[SelectedCells.Length - 1])
+                {
+                    if (rg.Cells.First.Value == SelectedCells[0])
+                    {
+                        Cells.First.Value.RepeatGroups.AddLast(rg);
+                        rg.Cells.AddFirst(Cells.First.Value);
+                    }
+                    if (Cells.First != Cells.Last && rg.Cells.Last.Value == SelectedCells[SelectedCells.Length - 1])
+                    {
+                        Cells.Last.Value.RepeatGroups.AddLast(rg);
+                        rg.Cells.AddLast(Cells.Last.Value);
+                    }
+                }
+            }
+            // fix bisected groups
+            foreach (RepeatGroup rg in SelectedCells[SelectedCells.Length - 1].RepeatGroups)
+            {
+                if (rg.Cells.First.Value.Position > SelectedCells[0].Position && rg.Cells.Last.Value.Position > SelectedCells[SelectedCells.Length - 1].Position)
+                {
+                    var newFirst = Row.Cells[Row.Cells.IndexOf(SelectedCells[SelectedCells.Length - 1]) + 1];
+                    rg.Cells.AddFirst(newFirst);
                 }
             }
 
             foreach (MultGroup mg in SelectedCells[0].MultGroups)
             {
-                if (mg.Cells.First.Value == SelectedCells[0]
-                    && mg.Cells.Last.Value == SelectedCells[SelectedCells.Length - 1])
+                if (mg.Cells.First.Value.Position < SelectedCells[0].Position && mg.Cells.Last.Value.Position < SelectedCells[SelectedCells.Length - 1].Position)
                 {
-                    Cells.First.Value.MultGroups.AddLast(mg);
-                    Cells.Last.Value.MultGroups.AddLast(mg);
+                    var newLast = Row.Cells[Row.Cells.IndexOf(SelectedCells[0]) - 1];
+                    mg.Cells.AddLast(newLast);
+                }
+                else if (mg.Cells.First.Value != SelectedCells[0] || mg.Cells.Last.Value != SelectedCells[SelectedCells.Length - 1])
+                {
+                    if (mg.Cells.First.Value == SelectedCells[0])
+                    {
+                        Cells.First.Value.MultGroups.AddLast(mg);
+                        mg.Cells.AddFirst(Cells.First.Value);
+                    }
+                    if (Cells.First != Cells.Last && mg.Cells.Last.Value == SelectedCells[SelectedCells.Length - 1])
+                    {
+                        Cells.Last.Value.MultGroups.AddLast(mg);
+                        mg.Cells.AddLast(Cells.Last.Value);
+                    }
+                }
+            }
+
+            foreach (MultGroup mg in SelectedCells[SelectedCells.Length - 1].MultGroups)
+            {
+                if (mg.Cells.First.Value.Position > SelectedCells[0].Position && mg.Cells.Last.Value.Position > SelectedCells[SelectedCells.Length - 1].Position)
+                {
+                    var newFirst = Row.Cells[Row.Cells.IndexOf(SelectedCells[SelectedCells.Length - 1]) + 1];
+                    mg.Cells.AddFirst(newFirst);
                 }
             }
 
