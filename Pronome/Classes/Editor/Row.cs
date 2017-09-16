@@ -115,7 +115,7 @@ namespace Pronome.Editor
         /// <summary>
         /// Maps the index of a row to the indexes of the rows that reference it.
         /// </summary>
-        public static Dictionary<int, HashSet<int>> ReferenceMap;
+        public static Dictionary<int, HashSet<int>> ReferenceMap = new Dictionary<int, HashSet<int>>();
 
         /// <summary>
         /// The index of this row
@@ -139,8 +139,6 @@ namespace Pronome.Editor
             BackgroundBrush.TileMode = TileMode.Tile;
             Background.Fill = BackgroundBrush;
             Canvas.Children.Add(Sizer);
-
-            ReferenceMap = new Dictionary<int, HashSet<int>>();
 
             FillFromBeatCode(layer.ParsedString);
 

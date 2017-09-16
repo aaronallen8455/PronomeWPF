@@ -67,8 +67,8 @@ namespace Pronome.Editor
                     touchedGroups.Add(rg);
 
                     if (
-                        (Cells[0] == rg.Cells.First.Value || rg.Position >= Cells[0].Position) 
-                        && (Cells[Cells.Length - 1] == rg.Cells.Last.Value || rg.Position + rg.Duration <= Cells[Cells.Length - 1].Position))
+                        (Cells[0] == rg.Cells.First?.Value || rg.Position >= Cells[0].Position) 
+                        && (Cells[Cells.Length - 1] == rg.Cells.Last?.Value || rg.Position + rg.Duration <= Cells[Cells.Length - 1].Position))
                     {
                         RepGroups.Add(rg);
 
