@@ -251,51 +251,54 @@ namespace Pronome
 
                 ISoundSource source = baseSourceSelector.SelectedItem as ISoundSource;
 
-                if (source.IsPitch)
+                if (Layer.BaseSourceName != source.Uri)
                 {
-                    (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
-                    // use contents of pitch field as source
-                    //Layer.SetBaseSource(pitchInput.Text);
+                    if (source.IsPitch)
+                    {
+                        (pitchInput.Parent as StackPanel).Visibility = Visibility.Visible;
+                        // use contents of pitch field as source
+                        //Layer.SetBaseSource(pitchInput.Text);
 
                 
-                    if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
-                    {
-                        // disable play button while base source is being updated
-                        window.playButton.IsEnabled = false;
-                        await window.Dispatcher.InvokeAsync(() =>
-                        {
-                            Layer.NewBaseSource(InternalSource.GetFromPitch(pitchInput.Text));
-                        });
-                        window.playButton.IsEnabled = true;
-                    }
-                    else
-                    {
-                        // change while playing
-                        Layer.BaseAudioSource.SoundSource = InternalSource.GetFromPitch(pitchInput.Text);
-                        Metronome.GetInstance().ExecuteLayerChange(Layer);
-                    }
-                }
-                else
-                {
-                    // set new base source
-                    if (source != Layer.BaseAudioSource.SoundSource)
-                    {
-                        (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
-
                         if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
                         {
+                            // disable play button while base source is being updated
                             window.playButton.IsEnabled = false;
                             await window.Dispatcher.InvokeAsync(() =>
                             {
-                                Layer.NewBaseSource(source);
+                                Layer.NewBaseSource(InternalSource.GetFromPitch(pitchInput.Text));
                             });
                             window.playButton.IsEnabled = true;
                         }
                         else
                         {
                             // change while playing
-                            Layer.BaseAudioSource.SoundSource = source;
+                            Layer.BaseAudioSource.SoundSource = InternalSource.GetFromPitch(pitchInput.Text);
                             Metronome.GetInstance().ExecuteLayerChange(Layer);
+                        }
+                    }
+                    else
+                    {
+                        // set new base source
+                        if (source != Layer.BaseAudioSource.SoundSource)
+                        {
+                            (pitchInput.Parent as StackPanel).Visibility = Visibility.Collapsed;
+
+                            if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                            {
+                                window.playButton.IsEnabled = false;
+                                await window.Dispatcher.InvokeAsync(() =>
+                                {
+                                    Layer.NewBaseSource(source);
+                                });
+                                window.playButton.IsEnabled = true;
+                            }
+                            else
+                            {
+                                // change while playing
+                                Layer.BaseAudioSource.SoundSource = source;
+                                Metronome.GetInstance().ExecuteLayerChange(Layer);
+                            }
                         }
                     }
                 }
@@ -308,19 +311,25 @@ namespace Pronome
             if (Regex.IsMatch(pitchInput.Text, @"^[A-Ga-g][#b]?\d{0,2}$|^[\d.]+$"))
             {
                 string src = pitchInput.Text;
-                // assume octave 4 if non given
-                if (!char.IsDigit(src.Last()))
+
+                if (Layer.BaseSourceName != src)
                 {
-                    src += '4';
-                }
-                if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
-                {
-                    Layer.NewBaseSource(InternalSource.GetFromPitch(src));
-                }
-                else
-                {
-                    Layer.BaseAudioSource.SoundSource = InternalSource.GetFromPitch(src);
-                    Metronome.GetInstance().ExecuteLayerChange(Layer);
+                    ISoundSource newSrc = InternalSource.GetFromPitch(src);
+
+                    // assume octave 4 if non given
+                    if (!char.IsDigit(src.Last()))
+                    {
+                        src += '4';
+                    }
+                    if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                    {
+                        Layer.NewBaseSource(newSrc);
+                    }
+                    else
+                    {
+                        Layer.BaseAudioSource.SoundSource = newSrc;
+                        Metronome.GetInstance().ExecuteLayerChange(Layer);
+                    }
                 }
             }
         }

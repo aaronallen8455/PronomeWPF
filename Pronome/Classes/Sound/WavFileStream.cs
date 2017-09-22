@@ -33,7 +33,8 @@ namespace Pronome
 
         /**<summary>The byte rate for this stream.</summary>*/
         public int BytesPerSec { get; set; }
-        //string fileName;
+
+        public bool ProduceBytes { get; set; } = true;
 
         Stream rawStream;
 
@@ -384,12 +385,10 @@ namespace Pronome
         public long HiHatByteToMute;
         int CurrentHiHatDuration = -1;
         SortedSet<int> HiHatBytesToMute = new SortedSet<int>();
-        //bool HiHatMuteInitiated = false;
-        //uint cycle = 0;
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (count == chunkSizeOverflow) { return count; } // somtimes count is double at start for some reason
+            //if (count == chunkSizeOverflow) { return count; } // somtimes count is double at start for some reason
 
             int bytesCopied = 0;
 
@@ -457,11 +456,21 @@ namespace Pronome
                 int result = 0;
                 int result2 = 0;
 
-                if (!Layer.IsMuted && !(Pronome.Layer.SoloGroupEngaged && !Layer.IsSoloed) && !(SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration == 0))
-                    result = sourceStream.Read(buffer, offset + bytesCopied, chunkSize);
-                else // progress stream silently
-                    result2 = sourceStream.Read(new byte[buffer.Length], offset + bytesCopied, chunkSize);
 
+                // read from file if producing
+                if (ProduceBytes)
+                {
+                    if (!Layer.IsMuted && !(Pronome.Layer.SoloGroupEngaged && !Layer.IsSoloed) && !(SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration == 0))
+                        result = sourceStream.Read(buffer, offset + bytesCopied, chunkSize);
+                    else // progress stream silently
+                        result2 = sourceStream.Read(new byte[buffer.Length], offset + bytesCopied, chunkSize);
+                }
+                else
+                {
+                    result = chunkSize;
+                }
+
+            
                 if (result == 0) // silence
                 {
                     bool use2 = result2 > 0; // true if the sourcestream was progressed silently.
@@ -484,8 +493,6 @@ namespace Pronome
                 }
 
             }
-
-            //cycle++;
 
             if (Layer.HasHiHatClosed && SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open)
             {

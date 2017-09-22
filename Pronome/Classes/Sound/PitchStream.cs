@@ -45,6 +45,8 @@ namespace Pronome
         /**<summary>The layer that this audiosource is used in.</summary>*/
         public Layer Layer { get; set; }
 
+        public bool ProduceBytes { get; set; } = true;
+
         /**<summary>Used in sine wave generation.</summary>*/
         private int nSample;
 
@@ -154,7 +156,7 @@ namespace Pronome
             BeatCollection.Enumerator = BeatCollection.GetEnumerator();
             ByteInterval = 0;
             sampleValue = 0;
-            cycle = 0;
+            //cycle = 0;
             Gain = Volume;
             if (Metronome.GetInstance().IsSilentInterval)
             {
@@ -387,10 +389,10 @@ namespace Pronome
             return totalOffset + OffsetRemainder;
         }
 
-        public uint Cycle
-        {
-            get => cycle;
-        }
+        //public uint Cycle
+        //{
+        //    get => cycle;
+        //}
 
         protected double initialOffset = 0; // the offset value to reset to.
         protected long totalOffset = 0; // time to wait before reading source.
@@ -405,14 +407,14 @@ namespace Pronome
 
         double sampleValue = 0;
 
-        uint cycle = 0; // cycle count, used to sync up all layers
+        //uint cycle = 0; // cycle count, used to sync up all layers
 
         /**<summary>Reads from the audio stream.</summary>
          * <param name="buffer">Sample array buffer.</param>
          */
         public int Read(float[] buffer, int offset, int count)
         {
-            if (count == 7040) { return count; } // account for the occasional blip at start up.
+            //if (count == 7040) { return count; } // account for the occasional blip at start up.
 
             int outIndex = offset;
             
@@ -442,78 +444,86 @@ namespace Pronome
                     double curFreq = Frequency;
                     Frequency = GetNextFrequency();
                     ByteInterval = GetNextInterval();
-                    if (!silentIntvlSilent && !currentlyMuted && Frequency != 0)
+                    // handle volume and frequency consts if producing
+                    if (ProduceBytes)
                     {
-                        // what should nsample be to create a smooth transition?
-                        if (sampleValue != 0 && Gain != 0)
+                        if (!silentIntvlSilent && !currentlyMuted && Frequency != 0)
                         {
-                            if (Frequency != curFreq)
-                                multiple = TwoPi * Frequency / waveFormat.SampleRate;
+                            // what should nsample be to create a smooth transition?
+                            if (sampleValue != 0 && Gain != 0)
+                            {
+                                if (Frequency != curFreq)
+                                    multiple = TwoPi * Frequency / waveFormat.SampleRate;
 
-                            nSample = (int)(Math.Asin(sampleValue / Volume) / multiple) + 1;
+                                nSample = (int)(Math.Asin(sampleValue / Volume) / multiple) + 1;
+                            }
+                            else nSample = 0;
+
+                            freqChanged = curFreq != Frequency;
+                            Gain = Volume;
+                            if (gainStep != newGainStep) // set new gainstep if volume was changed
+                                gainStep = newGainStep;
                         }
-                        else nSample = 0;
+                        else
+                        {
+                            Frequency = curFreq; //retain frequency if random/interval muting occurs.
+                            // if first note is getting muted, set gain to 0
+                            if (Gain == Volume) Gain = 0;
+                        }
+                    }
+                }
 
-                        freqChanged = curFreq != Frequency;
-                        Gain = Volume;
-                        if (gainStep != newGainStep) // set new gainstep if volume was changed
-                            gainStep = newGainStep;
-                    }
-                    else
-                    {
-                        Frequency = curFreq; //retain frequency if random/interval muting occurs.
-                        // if first note is getting muted, set gain to 0
-                        if (Gain == Volume) Gain = 0;
-                    }
-                }
-            
-                if (Gain <= 0)
+                if (ProduceBytes)
                 {
-                    nSample = 0;
-                    sampleValue = 0;
-                }
-                else
-                {
-                    // check for muting
-                    if (Layer.IsMuted || Layer.SoloGroupEngaged && !Layer.IsSoloed)
+                    if (Gain <= 0)
                     {
                         nSample = 0;
                         sampleValue = 0;
                     }
                     else
                     {
-                        // Sin Generator
-                        if (freqChanged)
+                        // check for muting
+                        if (Layer.IsMuted || Layer.SoloGroupEngaged && !Layer.IsSoloed)
                         {
-                            multiple = TwoPi * Frequency / waveFormat.SampleRate; // reuse this value
-                            freqChanged = false;
+                            nSample = 0;
+                            sampleValue = 0;
                         }
+                        else
+                        {
+                            // Sin Generator
+                            if (freqChanged)
+                            {
+                                multiple = TwoPi * Frequency / waveFormat.SampleRate; // reuse this value
+                                freqChanged = false;
+                            }
 
-                        sampleValue = Gain * Math.Sin(nSample * multiple);
+                            sampleValue = Gain * Math.Sin(nSample * multiple);
 
-                        nSample++;
+                            nSample++;
+                        }
+                        Gain -= gainStep;
+
                     }
-                    Gain -= gainStep;
 
-                }
-
-                // Set the pan amounts.
-                for (int i = 0; i < waveFormat.Channels; i++)
-                {
-                    if (i == 0)
-                        buffer[outIndex++] = (float)sampleValue * right;
-                    else
-                        buffer[outIndex++] = (float)sampleValue * left;
+                    // Set the pan amounts.
+                    for (int i = 0; i < waveFormat.Channels; i++)
+                    {
+                        if (i == 0)
+                            buffer[outIndex++] = (float)sampleValue * right;
+                        else
+                            buffer[outIndex++] = (float)sampleValue * left;
+                    }
                 }
             
                 ByteInterval -= 1;
             }
 
-            cycle++;
+            //cycle++;
 
             return count;
         }
 
+       
         public void Dispose() { }
 
     }

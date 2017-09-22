@@ -153,6 +153,37 @@ namespace Pronome
                 {
                     long floats = totalFloats;
 
+                    if (src.GetOffset() < totalFloats)
+                    {
+                        src.ProduceBytes = false;
+                    
+                        src.BeatCollection.Enumerator.MoveNext();
+
+                        while (src.BeatCollection.Enumerator.Current <= floats)
+                        {
+                            long interval = src.BeatCollection.Enumerator.Current;
+
+                            if (src.SoundSource.IsPitch)
+                            {
+                                (src as PitchStream).Read(new float[interval], 0, (int)interval);
+                            }
+                            else
+                            {
+                                (src as WaveStream).Read(new byte[interval], 0, (int)interval);
+                            }
+
+                            floats -= (int)interval;
+                        }
+
+                        if (src.SoundSource.IsPitch)
+                        {
+                            (src as PitchStream).Frequency = 0;
+                        }
+
+                        src.ProduceBytes = true;
+                    }
+
+                    // start reading for last byteInterval
                     while (floats > 0)
                     {
                         int intsToCopy = (int)Math.Min(int.MaxValue, floats);

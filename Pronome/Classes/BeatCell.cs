@@ -107,98 +107,116 @@ namespace Pronome
         {
             if (string.IsNullOrEmpty(str)) return 0;
 
-            StringBuilder ops = new StringBuilder();
-            string operators = "";
-            StringBuilder number = new StringBuilder();
-            List<double> numbers = new List<double>();
-            // parse out the numbers and operators
-            for (int i = 0; i < str.Length; i++)
+            // holds value that will be added to current value after all mult and div have occurred
+            double accum = 0;
+            // builds up a numeric value from individual chars
+            StringBuilder curNum = new StringBuilder("0");
+            // the most recently converted (from chars) number and preceding mult/div operations
+            double focusedNum = 0;
+            char curOp = ' ';
+            // true if accum will be added to focusedNum
+            bool willAdd = true;
+            foreach (char c in str)
             {
-                if (str[i] == '+' || str[i] == '*' || str[i] == '/' || (str[i] == '-' && (str[i-1] != '*' || str[i-1] != '/')))
+                if (char.IsNumber(c) || c == '.')
                 {
-                    numbers.Add(double.Parse(number.ToString()));
-                    number.Clear();
-                    ops.Append(str[i]);
-                }
-                else if (str[i] == 'x' || str[i] == 'X')
-                {
-                    ops.Append('*');
+                    curNum.Append(c);
                 }
                 else
                 {
-                    number.Append(str[i]);
-                }
-            }
-            numbers.Add(double.Parse(number.ToString()));
-            operators = ops.ToString();
-            //double[] numbers = str.Split(new char[] { '+', '-', '*', '/' }).Select((x) => Convert.ToDouble(x)).ToArray();
+                    double num = double.Parse(curNum.ToString());
 
-            double result = 0;
-            double current = numbers[0];
-            char connector = '+';
-            // perform arithmetic
-            for (int i = 0; i < operators.Length; i++)
-            {
-                char op = operators[i];
-                if (op == '*')
-                {
-                    current *= numbers[i + 1];
-                }
-                else if (op == '/')
-                {
-                    current /= numbers[i + 1];
-                }
-                else
-                {
-                    if (connector == '+')
+                    // perform * / on focused num
+                    if (curOp == '*')
                     {
-                        result += current;
+                        focusedNum *= num;
                     }
-                    else if (connector == '-')
+                    else if (curOp == '/')
                     {
-                        result -= current;
-                    }
-                    //result += current;
-                    if (i < operators.Length - 1)
-                    {
-                        
-                        if (operators[i + 1] == '+' || operators[i + 1] == '-')
-                        {
-                            current = 0;
-
-                            if (op == '+')
-                            {
-                                result += numbers[i + 1];
-                            }
-                            else
-                            {
-                                result -= numbers[i + 1];
-                            }
-                        }
-                        else
-                        {
-                            connector = op;
-                            current = numbers[i + 1];
-                        }
+                        focusedNum /= num;
                     }
                     else
                     {
-                        current = 0;
+                        // last op was + or -
+                        focusedNum = num;
+                    }
 
-                        if (op == '+')
-                        {
-                            result += numbers[i + 1];
-                        }
-                        else
-                        {
-                            result -= numbers[i + 1];
-                        }
+                    curNum.Clear();
+
+                    switch (c)
+                    {
+                        case '-':
+                        case '+':
+                            // we can now apply the waiting +/- operation
+                            if (willAdd)
+                            {
+                                accum += focusedNum;
+                            }
+                            else
+                            {
+                                accum -= focusedNum;
+                            }
+
+                            willAdd = c == '+';
+                            curOp = c;
+                            focusedNum = accum;
+                            break;
+                        case 'X':
+                        case 'x':
+                        case '*':
+                            curOp = '*';
+                            break;
+                        case '/':
+                            curOp = '/';
+                            break;
                     }
                 }
             }
-            result = connector == '+' ? result + current : result - current;
 
-            return result;
+            // tie up the loose ends
+
+            if (curOp == ' ')
+            {
+                return double.Parse(str);
+            }
+
+            double lastNum = double.Parse(curNum.ToString());
+
+            switch (curOp)
+            {
+                case '+':
+                    accum += lastNum;
+                    break;
+                case '-':
+                    accum -= lastNum;
+                    break;
+                case '*':
+                    focusedNum *= lastNum;
+
+                    if (willAdd)
+                    {
+                        accum += focusedNum;
+                    }
+                    else
+                    {
+                        accum -= focusedNum;
+                    }
+                    break;
+                case '/':
+                    focusedNum /= lastNum;
+
+                    if (willAdd)
+                    {
+                        accum += focusedNum;
+                    }
+                    else
+                    {
+                        accum -= focusedNum;
+                    }
+                    break;
+            }
+
+            return accum;
         }
 
         /// <summary>

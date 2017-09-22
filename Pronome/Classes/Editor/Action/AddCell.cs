@@ -309,7 +309,7 @@ namespace Pronome.Editor
                     Cell below = Row.Cells[index - 1];
 
                     Group.AddToGroups(cell, below);
-                    
+
                     // is new cell placed in the LTM zone of a rep group?
                     RepeatGroup repWithLtmToMod = null;
                     foreach (RepeatGroup rg in below.RepeatGroups.Where(
@@ -317,15 +317,18 @@ namespace Pronome.Editor
                     {
                         repWithLtmToMod = rg;
                     }
-                    
+
                     // determine new value for the below cell
                     StringBuilder val = new StringBuilder();
                     // take and the distance from the end of the selection
                     val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
                     // subtract the values up to the previous cell
                     HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
-                    foreach (Cell c in Row.Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != below).Where(x => string.IsNullOrEmpty(x.Reference)))
+                    foreach (Cell c in Row.Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != cell).Where(x => string.IsNullOrEmpty(x.Reference)))
                     {
+                        // below is not directly included if we are not adding to an LTM
+                        if (repWithLtmToMod == null && c == below) break;
+
                         // subtract each value from the total
                         val.Append("+0").Append(BeatCell.Invert(c.Value));
                         // account for rep group repititions.
@@ -342,7 +345,7 @@ namespace Pronome.Editor
                                 repGroups.Add(rg);
                                 continue;
                             }
-                    
+
                             foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
                             {
                                 val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(ce.Value), rg.Times - 1));
@@ -352,8 +355,11 @@ namespace Pronome.Editor
                             {
                                 ltmTimes[kv.Key] = kv.Value * rg.Times;
                             }
-                    
-                            ltmTimes.Add(rg, 1);
+
+                            if (rg != repWithLtmToMod)
+                            {
+                                ltmTimes.Add(rg, 1);
+                            }
                         }
                         // subtract the LTMs
                         foreach (KeyValuePair<RepeatGroup, int> kv in ltmTimes)
@@ -364,26 +370,6 @@ namespace Pronome.Editor
                         }
                     }
 
-                    // if the below cell was a single cell repeat, and we are placing the cell into it's LTM
-                    if (repWithLtmToMod != null)
-                    {
-                        string belowLtm = "";
-                        string belowRepValue = "0";
-                        foreach (RepeatGroup rg in below.RepeatGroups.Where(x => !repGroups.Contains(x)))
-                        {
-                            if (!string.IsNullOrEmpty(belowLtm))
-                            {
-                                val.Append("+0").Append(
-                                    BeatCell.MultiplyTerms(
-                                        BeatCell.Invert(belowLtm), rg.Times));
-                            }
-
-                            belowRepValue = BeatCell.MultiplyTerms(BeatCell.Add(belowRepValue, below.Value), rg.Times);
-                        }
-
-                        val.Append("+0").Append(BeatCell.Invert(belowRepValue));
-                    }
-                    
                     // get new cells value by subtracting old value of below cell by new value.
                     string newVal = BeatCell.SimplifyValue(val.ToString());
                     // placing a new cell on the beginning of a LTM is not illegal
@@ -392,7 +378,16 @@ namespace Pronome.Editor
                         newVal = "0";
                     }
 
-                    cell.Value = BeatCell.Subtract(repWithLtmToMod == null ? below.Value : repWithLtmToMod.LastTermModifier, newVal);
+                    if (repWithLtmToMod != null)
+                    {
+                        cell.Value = BeatCell.Subtract(repWithLtmToMod.LastTermModifier, newVal);
+                        repWithLtmToMod.LastTermModifier = newVal;
+                    }
+                    else
+                    {
+                        cell.Value = BeatCell.Subtract(below.Value, newVal);
+                    }
+
 
                     // if placing cell on top of another cell, it's not valid.
                     if (cell.Value == string.Empty || newVal == string.Empty)
@@ -422,7 +417,7 @@ namespace Pronome.Editor
                     {
                         // changing a LTM value
                         //repWithLtmToMod.LastTermModifier = BeatCell.Subtract(repWithLtmToMod.LastTermModifier, newVal);
-                        repWithLtmToMod.LastTermModifier = newVal.TrimStart('0');
+                        //repWithLtmToMod.LastTermModifier = newVal.TrimStart('0');
                     }
                 }
             }
@@ -540,16 +535,16 @@ namespace Pronome.Editor
                     // get new value string for below
                     StringBuilder val = new StringBuilder();
 
-                    bool repWithLtmToModFound = false;
+                    //bool repWithLtmToModFound = false;
                     HashSet<RepeatGroup> repGroups = new HashSet<RepeatGroup>();
                     foreach (Cell c in Row.Cells.SkipWhile(x => x != below).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
                     {
-                        if (c == cell || !string.IsNullOrEmpty(c.Reference)) continue; // don't include the new cell
+                        if (repWithLtmToMod != null && c == below) continue;
+
+                        if (!string.IsNullOrEmpty(c.Reference) || c == cell) continue; // don't include the new cell
                         // add the cells value. If modding an LTM, we need to have passed that group first.
-                        if (repWithLtmToMod == null || repWithLtmToModFound)
-                        {
-                            val.Append(c.Value).Append('+');
-                        }
+                        //if (repWithLtmToMod == null || repWithLtmToModFound)
+                        val.Append(c.Value).Append('+');
                         // we need to track how many times to multiply each rep group's LTM
                         Dictionary<RepeatGroup, int> ltmFactors = new Dictionary<RepeatGroup, int>();
                         // if there's a rep group, add the repeated sections
@@ -566,19 +561,12 @@ namespace Pronome.Editor
                                 continue;
                             }
 
-                            // don't add anything until after the group with LTM to mod has been found (if were modding a LTM)
-                            if (repWithLtmToMod == null || repWithLtmToModFound)
+                            foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
                             {
-                                foreach (Cell ce in rg.Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
-                                {
-                                    val.Append('0').Append(
-                                        BeatCell.MultiplyTerms(ce.Value, rg.Times - 1))
-                                        .Append('+');
-                                }
-
+                                val.Append('0').Append(
+                                    BeatCell.MultiplyTerms(ce.Value, rg.Times - 1))
+                                    .Append('+');
                             }
-                            // found group with LTM tod mod, add it's LTM but not cell values.
-                            if (rg == repWithLtmToMod) repWithLtmToModFound = true;
 
                             // increase multiplier of LTMs
                             foreach (KeyValuePair<RepeatGroup, int> kv in ltmFactors)
@@ -595,15 +583,19 @@ namespace Pronome.Editor
                                 .Append('+');
                         }
                     }
+
+                    if (repWithLtmToMod != null)
+                    {
+                        val.Append(repWithLtmToMod.LastTermModifier).Append('+');
+                    }
                     
                     val.Append('0');
                     val.Append("+0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(EditorWindow.CurrentIncrement), div));
                     cell.Value = BeatCell.Subtract(repWithLtmToMod == null ? below.Value : repWithLtmToMod.LastTermModifier, val.ToString());
-                    //cell.Value = BeatCell.SimplifyValue(below.Value + '-' + val.ToString());
                     string newValue = BeatCell.SimplifyValue(val.ToString());
 
                     // check for cell being doubled
-                    if (cell.Value == string.Empty || newValue == string.Empty)
+                    if (cell.Value == string.Empty || (newValue == string.Empty && repWithLtmToMod == null))
                     {
                         IsValid = false;
                         Row.Cells.Remove(cell);
@@ -621,15 +613,11 @@ namespace Pronome.Editor
                     
                     if (repWithLtmToMod == null)
                     {
-                        //oldValue = below.Value;
                         below.Value = newValue;
                     }
                     else
                     {
-                        //oldValue = repWithLtmToMod.LastTermModifier;
-                        repWithLtmToMod.LastTermModifier = BeatCell.Subtract(
-                            repWithLtmToMod.LastTermModifier, 
-                            newValue);
+                        repWithLtmToMod.LastTermModifier = newValue;
                     }
                 }
             }
