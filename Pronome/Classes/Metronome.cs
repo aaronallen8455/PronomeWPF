@@ -153,15 +153,13 @@ namespace Pronome
                 {
                     long floats = totalFloats;
 
-                    if (src.GetOffset() < totalFloats)
+                    long interval = (long)src.GetOffset() + 1;
+                    if (interval < totalFloats)
                     {
                         src.ProduceBytes = false;
-                    
-                        src.BeatCollection.Enumerator.MoveNext();
 
                         while (src.BeatCollection.Enumerator.Current <= floats)
                         {
-                            long interval = src.BeatCollection.Enumerator.Current;
 
                             if (src.SoundSource.IsPitch)
                             {
@@ -173,6 +171,7 @@ namespace Pronome
                             }
 
                             floats -= (int)interval;
+                            interval = src.BeatCollection.Enumerator.Current;
                         }
 
                         if (src.SoundSource.IsPitch)

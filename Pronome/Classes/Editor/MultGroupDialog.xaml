@@ -52,7 +52,7 @@
             </StackPanel>
 
             <TextBlock TextWrapping="Wrap" HorizontalAlignment="Center">
-                Enter the factor that each group member's duration will be multiplied by.
+                Enter a beatcode expression for the factor that each group member's duration will be multiplied by.
             </TextBlock>
             <!--The Times input-->
             <Grid>
