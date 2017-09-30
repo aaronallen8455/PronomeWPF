@@ -111,6 +111,8 @@ namespace Pronome
                         real.BaseAudioSource = copy.BaseAudioSource;
                         real.BasePitchSource = copy.BasePitchSource;
                         real.BaseSourceName = copy.BaseSourceName;
+                        real.HasHiHatClosed = copy.HasHiHatClosed;
+                        real.HasHiHatOpen = copy.HasHiHatOpen;
                         real.Beat = copy.Beat;
 
                         foreach (var src in real.GetAllSources())
