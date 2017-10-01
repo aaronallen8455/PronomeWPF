@@ -97,6 +97,14 @@ namespace Pronome
         [DataMember(IsRequired = false)]
         public string PersistedSession;
 
+        public static bool DrawMultToScaleStatic = true;
+
+        /// <summary>
+        /// Whether to draw the elements in editor's mult groups with the scale factor applied
+        /// </summary>
+        [DataMember(IsRequired = false)]
+        public bool DrawMultToScale;
+
         /// <summary>
         /// Store the settings
         /// </summary>
@@ -134,6 +142,7 @@ namespace Pronome
             PitchStream.DecayLength = PitchDecayLength;
             UserSourceLibrary s = (mainWindow.Resources["optionsWindow"] as Window).Resources["userSourceLibrary"] as UserSourceLibrary;
             PersistSessionStatic = PersistSession;
+            DrawMultToScaleStatic = DrawMultToScale;
 
             foreach (UserSource source in UserSourceLibrary)
             {
@@ -235,7 +244,8 @@ namespace Pronome
                 PitchDecayLength = PitchStream.DecayLength,
                 UserSourceLibrary = UserSource.Library,
                 PersistSession = persistSession,
-                PersistedSession = serializedBeat
+                PersistedSession = serializedBeat,
+                DrawMultToScale = DrawMultToScaleStatic
             };
         }
     }

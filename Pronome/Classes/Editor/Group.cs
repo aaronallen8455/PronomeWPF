@@ -182,6 +182,13 @@ namespace Pronome.Editor
         /// </summary>
         public LinkedList<Rectangle> HostRects = new LinkedList<Rectangle>();
 
+        /// <summary>
+        /// Aggregated mult factors from all parent mult groups
+        /// </summary>
+        public string MultFactor;
+
+        protected string MultedLtm;
+
         public RepeatGroup()
         {
             Rectangle.Style = EditorWindow.Instance.Resources["repeatRectStyle"] as System.Windows.Style;
@@ -214,6 +221,29 @@ namespace Pronome.Editor
             {
                 HostCanvas.Children.Remove(rect);
             }
+        }
+
+        /// <summary>
+        /// Gets the ltm with mult factor.
+        /// </summary>
+        /// <returns>The ltm with mult factor.</returns>
+        public string GetLtmWithMultFactor()
+        {
+            if (!UserSettings.GetSettings().DrawMultToScale) return LastTermModifier;
+
+            if (string.IsNullOrEmpty(MultedLtm))
+            {
+                MultedLtm = BeatCell.MultiplyTerms(LastTermModifier, MultFactor);
+            }
+
+            return MultedLtm;
+        }
+
+        public string GetValueDividedByMultFactor(string value)
+        {
+            if (!UserSettings.GetSettings().DrawMultToScale) return value;
+
+            return BeatCell.DivideTerms(value, MultFactor);
         }
     }
 }

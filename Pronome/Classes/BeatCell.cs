@@ -473,6 +473,90 @@ namespace Pronome
             return string.Join(string.Empty, terms);
         }
 
+        static public string MultiplyTerms(string exp, string factor)
+        {
+            StringBuilder val = new StringBuilder("0");
+
+            string pattern = @"(^|[+\-])[^+\-]+";
+
+            var fmatches = Regex.Matches(factor, pattern);
+
+            foreach (Match em in Regex.Matches(exp, pattern))
+            {
+                foreach (Match fm in fmatches)
+                {
+                    // both negative, make positive
+                    if (em.Value[0] == '-' && fm.Value[0] == '-')
+                    {
+                        val.Append('+').Append(em.Value.Skip(1)).Append('*').Append(fm.Value.Skip(1));
+                    }
+                    else if (em.Value[0] != '-' && fm.Value[0] != '-')
+                    {
+                        // both positive
+                        val.Append('+').Append(em.Value.TrimStart('+')).Append('*').Append(fm.Value.TrimStart('+'));
+                    }
+                    else if (em.Value[0] != '-')
+                    {
+                        // factor is negative
+                        val.Append(fm.Value).Append('*').Append(em.Value.TrimStart('+'));
+                    }
+                    else
+                    {
+                        // exp is negative
+                        val.Append(em.Value).Append('*').Append(fm.Value.TrimStart('+'));
+                    }
+                }
+            }
+
+            return val.ToString();
+        }
+
+        /// <summary>
+        /// Divides the terms.
+        /// </summary>
+        /// <returns>The terms.</returns>
+        /// <param name="exp">Exp.</param>
+        /// <param name="div">Div.</param>
+        static public string DivideTerms(string exp, string div)
+        {
+            StringBuilder val = new StringBuilder('0');
+
+            // need to consolidate the divisor into a single decimal or fraction
+            string simpleDiv = SimplifyValue(div);
+            // if it's a mixed number, make it a single fraction
+            bool divIsFrac = simpleDiv.Contains('/');
+            if (divIsFrac && simpleDiv.Contains('+'))
+            {
+                string[] split = simpleDiv.Split('+');
+                string[] fracSplit = split[1].Split('/');
+                string numerator = Add(fracSplit[0], MultiplyTerms(split[0], fracSplit[1]));
+                // reverse the numerator and denominator b/c we want to multiply with the exp
+                simpleDiv = fracSplit[1] + '/' + numerator;
+            }
+            else if (divIsFrac)
+            {
+                string[] fracSplit = simpleDiv.Split('/');
+                simpleDiv = fracSplit[1] + '/' + fracSplit[0];
+            }
+
+            // split up the terms in exp
+            foreach (Match m in Regex.Matches(exp, @"(^|[+\-])[^+\-]+"))
+            {
+                val.Append(m.Value);
+                if (divIsFrac)
+                {
+                    val.Append('*'); // multiply by inverted fraction
+                }
+                else
+                {
+                    val.Append('/');
+                }
+                val.Append(simpleDiv);
+            }
+
+            return val.ToString();
+        }
+
         /// <summary>
         /// Subtract the right term from the left.
         /// </summary>

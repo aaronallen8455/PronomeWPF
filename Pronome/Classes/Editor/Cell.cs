@@ -121,6 +121,18 @@ namespace Pronome.Editor
         public bool IsBreak = false;
 
         /// <summary>
+        /// Aggregation of the mult factors for this cell from mult groups it's a member of
+        /// </summary>
+        public string MultFactor = "1";
+
+        protected string MultipliedValue;
+
+        /// <summary>
+        /// The group actions that occur at this cell. First part of tuple is true if group was begun, false if ended.
+        /// </summary>
+        public LinkedList<(bool, Group)> GroupActions = new LinkedList<(bool, Group)>();
+
+        /// <summary>
         /// The index of the layer that this cell is a reference for. Null if it's a regular cell.
         /// </summary>
         public string Reference;
@@ -275,6 +287,37 @@ namespace Pronome.Editor
                 return Position > cell.Position ? 1 : -1;
             }
             return 0;
+        }
+
+        /// <summary>
+        /// Gets the string value with mult factors applied.
+        /// </summary>
+        /// <returns>The value with mult factors.</returns>
+        public string GetValueWithMultFactors()
+        {
+            // don't operate if scaling is disabled
+            if (!UserSettings.GetSettings().DrawMultToScale) return Value;
+
+            if (string.IsNullOrEmpty(MultipliedValue))
+            {
+                MultipliedValue = BeatCell.MultiplyTerms(Value, MultFactor);
+            }
+
+            return MultipliedValue;
+        }
+
+        /// <summary>
+        /// Divides the given string value by the factors of all nested mult groups.
+        /// This is used to convert a "to scale" value to the actual value.
+        /// </summary>
+        /// <returns>The value divided by mult factors.</returns>
+        /// <param name="value">Value.</param>
+        public string GetValueDividedByMultFactors(string value)
+        {
+            // don't operate if scaling is disabled
+            if (!UserSettings.GetSettings().DrawMultToScale) return value;
+
+            return BeatCell.DivideTerms(value, MultFactor);
         }
 
         public class Selection

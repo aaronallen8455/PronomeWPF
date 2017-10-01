@@ -27,5 +27,7 @@ namespace Pronome
         bool IsPitch { get; }
 
         string Label { get; }
+
+        int Index { get; }
     }
 }
