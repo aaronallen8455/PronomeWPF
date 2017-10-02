@@ -254,6 +254,13 @@
                     <MenuItem Header="Create" Command="self:Commands.CreateMultGroup"/>
                     <MenuItem Header="Edit" Command="self:Commands.EditMultGroup"/>
                     <MenuItem Header="Remove" Command="self:Commands.RemoveMultGroup"/>
+                    <Separator/>
+                    <MenuItem x:Name="DrawMultToScale" 
+                              Header="Draw to Scale" 
+                              IsCheckable="True" 
+                              Checked="DrawMultToScale_Checked" 
+                              Unchecked="DrawMultToScale_Checked" 
+                              Initialized="DrawMultToScale_Initialized"/>
                 </MenuItem>
                 <MenuItem Header="Reference...">
                     <MenuItem Header="Insert Reference" Command="self:Commands.CreateReference"/>

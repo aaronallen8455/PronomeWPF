@@ -263,8 +263,8 @@ namespace Pronome.Editor
                     {
                         OpenRepeatGroups.Push(new RepeatGroup() { Row = this });
                         OpenRepeatGroups.Peek().Cells.AddLast(cell);
-                        // need to subtract repeat groups offset because contents is in new CGLayer
-                        OpenRepeatGroups.Peek().Position = position - OpenRepeatGroups.Select(x => x.Position).Sum();
+
+                        OpenRepeatGroups.Peek().Position = position;
 
                         chunk = chunk.Remove(repIndex, 1);
 
@@ -278,10 +278,10 @@ namespace Pronome.Editor
                             Row = this,
                             FactorValue = MultFactors[mIndex],
                             Factor = BeatCell.Parse(MultFactors[mIndex++])
-                        });//, FactorValue = factor, Factor = BeatCell.Parse(factor) });
+                        });
                         OpenMultGroups.Peek().Cells.AddLast(cell);
-                        // need to subtract repeat groups offset because contents is in new CGLayer starting at 0
-                        OpenMultGroups.Peek().Position = position - OpenRepeatGroups.Select(x => x.Position).Sum();
+
+                        OpenMultGroups.Peek().Position = position;
 
                         // track the factor if we need to scale.
                         if (UserSettings.DrawMultToScaleStatic)
@@ -376,7 +376,7 @@ namespace Pronome.Editor
 
                         cell.SetDurationDirectly(duration);
                         // progress position
-                        position += cell.Duration;
+                        position += cell.Duration; //* OpenMultFactor.Peek();
                     }
                 }
 
@@ -422,6 +422,16 @@ namespace Pronome.Editor
 
                         // log group end
                         cell.GroupActions.AddLast((false, mg));
+
+                        // render
+                        if (OpenRepeatGroups.Any())
+                        {
+                            OpenRepeatGroups.Peek().Canvas.Children.Add(mg.Rectangle);
+                        }
+                        else
+                        {
+                            Canvas.Children.Add(mg.Rectangle);
+                        }
                     }
                     else if (repIndex > -1)
                     {
@@ -459,66 +469,6 @@ namespace Pronome.Editor
                     multIndex = chunk.IndexOf('}');
                     repIndex = chunk.IndexOf(']');
                 }
-
-                //while (chunk.Contains('}') || chunk.Contains(']'))
-                //{
-                //    // create the mult and rep groups in the correct order
-                //    int multIndex = chunk.IndexOf('}');
-                //    int repIndex = chunk.IndexOf(']');
-                //
-                //    if (multIndex > -1 && (multIndex < repIndex || repIndex == -1))
-                //    {
-                //        // add mult group
-                //
-                //        MultGroup mg = OpenMultGroups.Pop();
-                //        mg.FactorValue = Regex.Match(chunk, @"(?<=})[\d.+\-/*]+").Value;
-                //        mg.Factor = BeatCell.Parse(mg.FactorValue);
-                //        // set duration
-                //        mg.Duration = cell.Position + cell.ActualDuration - mg.Position;
-                //        // render
-                //        if (OpenRepeatGroups.Any())
-                //        {
-                //            OpenRepeatGroups.Peek().Canvas.Children.Add(mg.Rectangle);
-                //        }
-                //        else
-                //        {
-                //            Canvas.Children.Add(mg.Rectangle);
-                //        }
-                //        var m = Regex.Match(chunk, @"\}[\d.+\-/*]+");
-                //
-                //        chunk = chunk.Remove(m.Index, m.Length);
-                //
-                //        MultGroups.AddLast(mg);
-                //    }
-                //    else if (repIndex > -1)
-                //    {
-                //        // add rep group
-                //
-                //        RepeatGroup rg = OpenRepeatGroups.Pop();
-                //        rg.Duration = cell.Position + cell.ActualDuration - rg.Position;
-                //        Match mtch = Regex.Match(chunk, @"](\d+)");
-                //        if (mtch.Length == 0)
-                //        {
-                //            mtch = Regex.Match(chunk, @"]\((\d+)\)([\d+\-/*.]*)");
-                //            rg.Times = int.Parse(mtch.Groups[1].Value);
-                //            if (mtch.Groups[2].Length != 0)
-                //            {
-                //                rg.LastTermModifier = mtch.Groups[2].Value;//.Length != 0 ? BeatCell.Parse(mtch.Groups[2].Value) : 0;
-                //            }
-                //        }
-                //        else
-                //        {
-                //            rg.Times = int.Parse(mtch.Groups[1].Value);
-                //        }
-                //
-                //        // build the group
-                //        position = BuildRepeatGroup(cell, rg, OpenRepeatGroups, position, !addedToRepCanvas);
-                //
-                //        addedToRepCanvas = true;
-                //        // move to outer group if exists
-                //        chunk = chunk.Substring(chunk.IndexOf(']') + 1);
-                //    }
-                //}
 
                 if (!addedToRepCanvas)
                 {

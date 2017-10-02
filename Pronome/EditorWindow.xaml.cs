@@ -1024,6 +1024,36 @@ namespace Pronome
                 zoomComboBox.Text = text + '%';
             }
         }
+
+        private void DrawMultToScale_Checked(object sender, RoutedEventArgs e)
+        {
+            UserSettings.DrawMultToScaleStatic = ((MenuItem)sender).IsChecked;
+
+            int start = -1;
+            int end = -1;
+
+            // redraw the rows that have mult groups
+            foreach (Row row in Rows.Where(x => x.MultGroups.Any()))
+            {
+                if (row == LastSelectedRow && Cell.SelectedCells.Cells.Any())
+                {
+                    start = row.Cells.IndexOf(Cell.SelectedCells.FirstCell);
+                    end = row.Cells.IndexOf(Cell.SelectedCells.LastCell);
+                }
+                row.Redraw();
+            }
+            // reselect the cells
+            if (start >= 0 && end >= 0)
+            {
+                Cell.SelectedCells.SelectRange(start, end, LastSelectedRow);
+            }
+        }
+
+        private void DrawMultToScale_Initialized(object sender, EventArgs e)
+        {
+            var item = sender as MenuItem;
+            item.IsChecked = UserSettings.DrawMultToScaleStatic;
+        }
     }
 
     public static class Commands

@@ -45,7 +45,7 @@ namespace Pronome.Editor
                     // subtract from last cell's value if not last cell of row
                     if (last != Row.Cells[Row.Cells.Count - 1])
                     {
-                        last.Value = BeatCell.Subtract(last.Value, value);
+                        last.Value = BeatCell.Subtract(last.Value, last.GetValueDividedByMultFactors(value));
                     }
                 }
                 else
@@ -60,7 +60,7 @@ namespace Pronome.Editor
                     // add to last cell's value if not last cell of row
                     if (last != Row.Cells[Row.Cells.Count - 1])
                     {
-                        last.Value = BeatCell.Add(last.Value, value);
+                        last.Value = BeatCell.Add(last.Value, last.GetValueDividedByMultFactors(value));
                     }
                 }
             }
@@ -79,12 +79,12 @@ namespace Pronome.Editor
                     if (useLeftGroup)
                     {
                         // add to LTM
-                        leftGroup.LastTermModifier = BeatCell.Add(leftGroup.LastTermModifier, value);
+                        leftGroup.LastTermModifier = BeatCell.Add(leftGroup.LastTermModifier, leftGroup.GetValueDividedByMultFactor(value));
                     }
                     else
                     {
                         // add to below cell's value
-                        below.Value = BeatCell.Add(below.Value, value);
+                        below.Value = BeatCell.Add(below.Value, below.GetValueDividedByMultFactors(value));
                     }
                     // subtract from last cell's value if not last of row
                     if (last != Row.Cells[Row.Cells.Count - 1])
@@ -92,11 +92,11 @@ namespace Pronome.Editor
                         if (useRightGroup)
                         {
                             // subtract from LTM
-                            rightGroup.LastTermModifier = BeatCell.Subtract(rightGroup.LastTermModifier, value);
+                            rightGroup.LastTermModifier = BeatCell.Subtract(rightGroup.LastTermModifier, rightGroup.GetValueDividedByMultFactor(value));
                         }
                         else
                         {
-                            last.Value = BeatCell.Subtract(last.Value, value);
+                            last.Value = BeatCell.Subtract(last.Value, last.GetValueDividedByMultFactors(value));
                         }
                     }
                 }
@@ -105,23 +105,23 @@ namespace Pronome.Editor
                     if (useLeftGroup)
                     {
                         // subtract from LTM
-                        leftGroup.LastTermModifier = BeatCell.Subtract(leftGroup.LastTermModifier, value);
+                        leftGroup.LastTermModifier = BeatCell.Subtract(leftGroup.LastTermModifier, leftGroup.GetValueDividedByMultFactor(value));
                     }
                     else
                     {
                         // subtract from below cell's value
-                        below.Value = BeatCell.Subtract(below.Value, value);
+                        below.Value = BeatCell.Subtract(below.Value, below.GetValueDividedByMultFactors(value));
                     }
                     // add to last cell's value if not last in row
                     if (last != Row.Cells[Row.Cells.Count - 1])
                     {
                         if (useRightGroup)
                         {
-                            rightGroup.LastTermModifier = BeatCell.Add(rightGroup.LastTermModifier, value);
+                            rightGroup.LastTermModifier = BeatCell.Add(rightGroup.LastTermModifier, rightGroup.GetValueDividedByMultFactor(value));
                         }
                         else
                         {
-                            last.Value = BeatCell.Add(last.Value, value);
+                            last.Value = BeatCell.Add(last.Value, last.GetValueDividedByMultFactors(value));
                         }
                     }
                 }
