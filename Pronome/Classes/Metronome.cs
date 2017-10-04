@@ -157,10 +157,10 @@ namespace Pronome
                     if (interval < totalFloats)
                     {
                         src.ProduceBytes = false;
-
-                        while (src.BeatCollection.Enumerator.Current <= floats)
+                    
+                        while (interval <= floats)
                         {
-
+                    
                             if (src.SoundSource.IsPitch)
                             {
                                 (src as PitchStream).Read(new float[interval], 0, (int)interval);
@@ -169,16 +169,11 @@ namespace Pronome
                             {
                                 (src as WaveStream).Read(new byte[interval], 0, (int)interval);
                             }
-
+                    
                             floats -= (int)interval;
                             interval = src.BeatCollection.Enumerator.Current;
                         }
-
-                        if (src.SoundSource.IsPitch)
-                        {
-                            (src as PitchStream).Frequency = 0;
-                        }
-
+                    
                         src.ProduceBytes = true;
                     }
 

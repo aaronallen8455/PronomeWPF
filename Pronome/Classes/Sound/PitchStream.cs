@@ -445,8 +445,8 @@ namespace Pronome
                     Frequency = GetNextFrequency();
                     ByteInterval = GetNextInterval();
                     // handle volume and frequency consts if producing
-                    if (ProduceBytes)
-                    {
+                    //if (ProduceBytes)
+                    //{
                         if (!silentIntvlSilent && !currentlyMuted && Frequency != 0)
                         {
                             // what should nsample be to create a smooth transition?
@@ -470,7 +470,7 @@ namespace Pronome
                             // if first note is getting muted, set gain to 0
                             if (Gain == Volume) Gain = 0;
                         }
-                    }
+                    //}
                 }
 
                 if (ProduceBytes)

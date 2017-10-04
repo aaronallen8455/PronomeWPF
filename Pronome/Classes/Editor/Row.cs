@@ -124,6 +124,8 @@ namespace Pronome.Editor
 
         public Canvas SelectionCanvas = new Canvas();
 
+        public bool IsDraggingCell;
+
         public Row(Layer layer)
         {
             Layer = layer;
@@ -770,6 +772,12 @@ namespace Pronome.Editor
             }
         }
 
+        public void BeginDraggingCell()
+        {
+            IsDraggingCell = true;
+            BaseElement.CaptureMouse();
+        }
+
         /// <summary>
         /// Perform all graphical tasks with initializing a repeat group. Group must have and Times, LastTermMod, Postion, Duration already set.
         /// </summary>
@@ -1020,10 +1028,47 @@ namespace Pronome.Editor
                     EditorWindow.Instance.layerPanelScrollViewer.ScrollToHorizontalOffset(scrollAmount - .1);
                 }
             }
+            else if (IsDraggingCell && BaseElement.IsMouseCaptured)
+            {
+                // dragging a cell
+                double x = e.GetPosition(BaseElement).X / EditorWindow.Scale / EditorWindow.BaseFactor;
+                double startPos = Cell.SelectedCells.FirstCell.Position;
+                double endPos = Cell.SelectedCells.LastCell.Position;
+                double increment = EditorWindow.Instance.GetGridIncrement();
+
+                // TODO: Don't allow cell to overlap
+
+                if (increment > 0)
+                {
+                    if (x >= endPos + increment)
+                    {
+                        // shift right
+                        var action = new MoveCells(
+                            Cell.SelectedCells.Cells.ToArray(),
+                            EditorWindow.Instance.incrementInput.Text, 
+                            (int)((x - endPos) / increment));
+
+                        action.Redo();
+                        EditorWindow.Instance.AddUndoAction(action);
+                    }
+                    else if (x <= startPos - increment)
+                    {
+                        // shift left
+                        var action = new MoveCells(
+                            Cell.SelectedCells.Cells.ToArray(),
+                            EditorWindow.Instance.incrementInput.Text,
+                            (int)(-(startPos - x) / increment));
+
+                        action.Redo();
+                        EditorWindow.Instance.AddUndoAction(action);
+                    }
+                }
+            }
         }
 
         /// <summary>
         /// Remove the selection box and select cells within it's range. Deselect all if no cells selected
+        /// Also ends the cell drag action
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -1052,6 +1097,12 @@ namespace Pronome.Editor
                 }
 
                 EditorWindow.Instance.UpdateUiForSelectedCell();
+            }
+            else if (IsDraggingCell && BaseElement.IsMouseCaptured)
+            {
+                // end cell dragging
+                BaseElement.ReleaseMouseCapture();
+                IsDraggingCell = false;
             }
         }
 

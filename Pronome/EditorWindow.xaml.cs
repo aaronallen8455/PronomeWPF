@@ -293,6 +293,20 @@ namespace Pronome
         }
 
         /// <summary>
+        /// Returns the grid increment BPM as a double, or 0 if parsing failed
+        /// </summary>
+        /// <returns></returns>
+        public double GetGridIncrement()
+        {
+            if (BeatCell.TryParse(incrementInput.Text, out double val))
+            {
+                return val;
+            }
+
+            return 0;
+        }
+
+        /// <summary>
         /// Push a new action onto the undo stack and clear the redo stack
         /// </summary>
         /// <param name="action"></param>

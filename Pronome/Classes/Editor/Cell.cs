@@ -177,7 +177,24 @@ namespace Pronome.Editor
 
             Panel.SetZIndex(Rectangle, 10);
             Rectangle.MouseLeftButtonDown += Rectangle_MouseDown;
+            Rectangle.MouseLeftButtonUp += Rectangle_MouseLeftButtonUp;
             ReferenceRectangle.MouseLeftButtonDown += Rectangle_MouseDown;
+            ReferenceRectangle.MouseLeftButtonUp += Rectangle_MouseLeftButtonUp;
+            Rectangle.MouseLeave += Rectangle_MouseLeave;
+            ReferenceRectangle.MouseLeave += Rectangle_MouseLeave;
+        }
+
+        /// <summary>
+        /// Begin the dragging action
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Rectangle_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (Mouse.LeftButton == MouseButtonState.Pressed)
+            {
+                Row.BeginDraggingCell();
+            }
         }
 
         /// <summary>
@@ -185,22 +202,28 @@ namespace Pronome.Editor
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
+        private void Rectangle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!Row.IsDraggingCell)
+            {
+                if (!IsReference) // ref cells should not be manipulable
+                {
+                    ToggleSelect();
+
+                    EditorWindow.Instance.UpdateUiForSelectedCell();
+                }
+
+                e.Handled = true;
+            }
+        }
+
         private void Rectangle_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (!IsReference) // ref cells should not be manipulable
-            {
-                ToggleSelect();
-
-                EditorWindow.Instance.UpdateUiForSelectedCell();
-            }
-
             e.Handled = true;
         }
 
         public void ToggleSelect(bool Clicked = true)
         {
-            // TODO: allow selection to grow or shrink with shift click
-
             IsSelected = !IsSelected;
             // set selection color
             Rectangle.Stroke = IsSelected ? System.Windows.Media.Brushes.DeepPink : System.Windows.Media.Brushes.Black;
