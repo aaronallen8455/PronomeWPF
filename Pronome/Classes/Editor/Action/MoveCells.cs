@@ -26,7 +26,6 @@ namespace Pronome.Editor
 
         protected override void Transformation()
         {
-            // TODO: cells should be able to move past one another
             string value = BeatCell.MultiplyTerms(Increment, Math.Abs(Times));
 
             Cell last = Cells[Cells.Length - 1];
@@ -128,6 +127,82 @@ namespace Pronome.Editor
             }
 
             Cells = null;
+        }
+
+        /// <summary>
+        /// Check if the move cell action can be performed. (no cell overlap, etc)
+        /// </summary>
+        /// <returns></returns>
+        public static bool CanPerformLeftMove()
+        {
+            if (Cell.SelectedCells.Cells.Any())
+            {
+                double move = BeatCell.Parse(EditorWindow.CurrentIncrement);// + .0001;
+                Cell first = Cell.SelectedCells.FirstCell;
+                // if selection at start of row, check against the offset
+                if (first == first.Row.Cells[0])
+                {
+                    if (first.Row.Offset >= move)
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // check if selection is in front of a rep group or a cell
+                    // if below cell is a reference, cancel
+                    Cell below = first.Row.Cells[first.Row.Cells.IndexOf(first) - 1];
+                    if (string.IsNullOrEmpty(below.Reference))
+                    {
+                        RepeatGroup belowGroup = null;
+                        if (below.RepeatGroups.Any())
+                        {
+                            belowGroup = below.RepeatGroups.Where(x => x.Cells.Last.Value == below).LastOrDefault();
+                        }
+
+                        // if above rep group, check against the LTM
+                        if (belowGroup != null)
+                        {
+                            if (BeatCell.Parse(belowGroup.LastTermModifier) >= move)
+                            {
+                                return true;
+                            }
+                        }
+                        else
+                        {
+                            // check against below cell's value
+                            if (below.Duration > move)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool CanPerformRightMove()
+        {
+            if (Cell.SelectedCells.Cells.Any())
+            {
+                Cell last = Cell.SelectedCells.LastCell;
+                // if last is last of row, then we can execute
+                if (last == last.Row.Cells.Last())
+                {
+                    return true;
+                }
+                else
+                {
+                    // check that last's value is greater than the move amount.
+                    double move = BeatCell.Parse(EditorWindow.CurrentIncrement);
+                    if (last.Duration > move)// + .0001)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

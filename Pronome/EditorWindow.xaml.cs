@@ -719,50 +719,7 @@ namespace Pronome
 
         private void MoveCellsLeft_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            if (Cell.SelectedCells.Cells.Any())
-            {
-                double move = BeatCell.Parse(CurrentIncrement);// + .0001;
-                Cell first = Cell.SelectedCells.FirstCell;
-                // if selection at start of row, check against the offset
-                if (first == first.Row.Cells[0])
-                {
-                    if (first.Row.Offset >= move)
-                    {
-                        e.CanExecute = true;
-                    }
-                }
-                else
-                {
-                    // check if selection is in front of a rep group or a cell
-                    // if below cell is a reference, cancel
-                    Cell below = first.Row.Cells[first.Row.Cells.IndexOf(first) - 1];
-                    if (string.IsNullOrEmpty(below.Reference))
-                    {
-                        RepeatGroup belowGroup = null;
-                        if (below.RepeatGroups.Any())
-                        {
-                            belowGroup = below.RepeatGroups.Where(x => x.Cells.Last.Value == below).LastOrDefault();
-                        }
-
-                        // if above rep group, check against the LTM
-                        if (belowGroup != null)
-                        {
-                            if (BeatCell.Parse(belowGroup.LastTermModifier) >= move)
-                            {
-                                e.CanExecute = true;
-                            }
-                        }
-                        else
-                        {
-                            // check against below cell's value
-                            if (below.Duration > move)
-                            {
-                                e.CanExecute = true;
-                            }
-                        }
-                    }
-                }
-            }
+            e.CanExecute = MoveCells.CanPerformLeftMove();
         }
 
         private void MoveCells_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -777,24 +734,7 @@ namespace Pronome
 
         private void MoveCellsRight_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            if (Cell.SelectedCells.Cells.Any())
-            {
-                Cell last = Cell.SelectedCells.LastCell;
-                // if last is last of row, then we can execute
-                if (last == last.Row.Cells.Last())
-                {
-                    e.CanExecute = true;
-                }
-                else
-                {
-                    // check that last's value is greater than the move amount.
-                    double move = BeatCell.Parse(CurrentIncrement);
-                    if (last.Duration > move)// + .0001)
-                    {
-                        e.CanExecute = true;
-                    }
-                }
-            }
+            e.CanExecute = MoveCells.CanPerformRightMove();
         }
 
         private void CreateReference_CanExecute(object sender, CanExecuteRoutedEventArgs e)

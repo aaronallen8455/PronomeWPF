@@ -125,6 +125,7 @@ namespace Pronome.Editor
         public Canvas SelectionCanvas = new Canvas();
 
         public bool IsDraggingCell;
+        public double CellDragAnchor = -1;
 
         public Row(Layer layer)
         {
@@ -772,8 +773,9 @@ namespace Pronome.Editor
             }
         }
 
-        public void BeginDraggingCell()
+        public void BeginDraggingCell(double xPos)
         {
+            CellDragAnchor = xPos;
             IsDraggingCell = true;
             BaseElement.CaptureMouse();
         }
@@ -1032,35 +1034,37 @@ namespace Pronome.Editor
             {
                 // dragging a cell
                 double x = e.GetPosition(BaseElement).X / EditorWindow.Scale / EditorWindow.BaseFactor;
-                double startPos = Cell.SelectedCells.FirstCell.Position;
-                double endPos = Cell.SelectedCells.LastCell.Position;
+                //double startPos = Cell.SelectedCells.FirstCell.Position;
+                //double endPos = Cell.SelectedCells.LastCell.Position;
                 double increment = EditorWindow.Instance.GetGridIncrement();
-
-                // TODO: Don't allow cell to overlap
 
                 if (increment > 0)
                 {
-                    if (x >= endPos + increment)
+                    if (x >= CellDragAnchor + increment && MoveCells.CanPerformRightMove())
                     {
                         // shift right
                         var action = new MoveCells(
                             Cell.SelectedCells.Cells.ToArray(),
                             EditorWindow.Instance.incrementInput.Text, 
-                            (int)((x - endPos) / increment));
+                            (int)((x - CellDragAnchor) / increment));
 
                         action.Redo();
                         EditorWindow.Instance.AddUndoAction(action);
+
+                        CellDragAnchor += increment;
                     }
-                    else if (x <= startPos - increment)
+                    else if (x <= CellDragAnchor - increment && MoveCells.CanPerformLeftMove())
                     {
                         // shift left
                         var action = new MoveCells(
                             Cell.SelectedCells.Cells.ToArray(),
                             EditorWindow.Instance.incrementInput.Text,
-                            (int)(-(startPos - x) / increment));
+                            (int)(-(CellDragAnchor - x) / increment));
 
                         action.Redo();
                         EditorWindow.Instance.AddUndoAction(action);
+
+                        CellDragAnchor -= increment;
                     }
                 }
             }
@@ -1103,6 +1107,7 @@ namespace Pronome.Editor
                 // end cell dragging
                 BaseElement.ReleaseMouseCapture();
                 IsDraggingCell = false;
+                CellDragAnchor = -1;
             }
         }
 

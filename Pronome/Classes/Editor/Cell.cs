@@ -181,7 +181,7 @@ namespace Pronome.Editor
             ReferenceRectangle.MouseLeftButtonDown += Rectangle_MouseDown;
             ReferenceRectangle.MouseLeftButtonUp += Rectangle_MouseLeftButtonUp;
             Rectangle.MouseLeave += Rectangle_MouseLeave;
-            ReferenceRectangle.MouseLeave += Rectangle_MouseLeave;
+            ReferenceRectangle.MouseMove += Rectangle_MouseLeave;
         }
 
         /// <summary>
@@ -191,9 +191,9 @@ namespace Pronome.Editor
         /// <param name="e"></param>
         private void Rectangle_MouseLeave(object sender, MouseEventArgs e)
         {
-            if (Mouse.LeftButton == MouseButtonState.Pressed)
+            if (Mouse.LeftButton == MouseButtonState.Pressed && !Row.IsDraggingCell)
             {
-                Row.BeginDraggingCell();
+                Row.BeginDraggingCell(e.GetPosition(Row.BaseElement).X / EditorWindow.Scale / EditorWindow.BaseFactor);
             }
         }
 
