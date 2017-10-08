@@ -4,6 +4,7 @@ using System.Windows;
 using System.ComponentModel;
 using System.Windows.Media;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace Pronome
 {
@@ -89,7 +90,7 @@ namespace Pronome
         /// <summary>
         /// The position of the center line of the balls when at base level.
         /// </summary>
-        protected static double ballBase = height - divisionLine - ballRadius;
+        protected static double ballBase = height - divisionLine - ballRadius * 2;
 
         protected DrawingVisual Drawing = new DrawingVisual();
 
@@ -135,7 +136,7 @@ namespace Pronome
             Lanes = new Lane[layerCount];
             width = (int)(layerCount * (ballRadius * 2 + ballPadding * 2));
             divisionLine = height / (1 / divisionPoint);
-            ballBase = height - divisionLine - ballRadius;
+            ballBase = height - divisionLine - ballRadius * 2;
 
             // calculate imageRatio values
             SetImageRatio();
@@ -281,7 +282,7 @@ namespace Pronome
         /// <returns>Ball geometry</returns>
         protected void MakeBall(int index, DrawingContext dc)
         {
-            double xOffset = (width / (layerCount * 2) * (index * 2 + 1) + widthPad) * imageRatio + imageWidthPad;
+            double xOffset = (width / (layerCount * 2) * (index * 2 + 1) + widthPad) * imageRatio + imageWidthPad - ballRadius;
 
             Color color = ColorHelper.ColorWheel(index);
 
@@ -675,6 +676,7 @@ namespace Pronome
             protected float currentTempo;
             protected double factor;// = defaultFactor; // control the max height of the bounce
             protected RadialGradientBrush gradient;
+            protected RenderTargetBitmap ballImage;
             protected double XOffset;
 
             public Ball(int index, RadialGradientBrush grad, double xOffset, DrawingContext dc)
@@ -691,6 +693,19 @@ namespace Pronome
                 defaultFactor = 1000 * (120 / Metronome.GetInstance().Tempo);
                 SetFactor();
                 ballBaseImageRatioPad = ballBase * imageRatio + imageHeightPad;
+                
+                ballImage = new RenderTargetBitmap((int)ballRadius * 2, (int)ballRadius * 2, 96, 96, PixelFormats.Pbgra32);
+
+                var ball = new DrawingVisual();
+                using (DrawingContext ctx = ball.RenderOpen())
+                {
+                    ctx.DrawEllipse(grad, null, new Point(ballRadius, ballRadius), ballRadius-1, ballRadius-1);
+                }
+                //t.CacheMode = new BitmapCache(1);
+
+                ballImage.Render(ball);
+
+                
                 SetPosition(0, dc);
             }
 
@@ -739,11 +754,25 @@ namespace Pronome
 
                 double y = ballBaseImageRatioPad - factorImageRatio * -total * total - factorImageRatioCurInterval * total;
 
-                dc.DrawEllipse(
-                    gradient,
-                    null,
-                    new Point(XOffset, y),
-                    ballRadius, ballRadius);
+                dc.DrawImage(
+                    ballImage, 
+                    new Rect(XOffset, 
+                    y, 
+                    ballRadius * 2, 
+                    ballRadius * 2));
+
+                //dc.DrawRectangle(gradientBrush, null, new Rect(XOffset-ballRadius, y-ballRadius, ballRadius*2, ballRadius*2));
+                //dc.DrawEllipse(
+                //    gradientBrush,
+                //    null,
+                //    new Point(XOffset, y),
+                //    ballRadius, ballRadius);
+
+                //dc.DrawEllipse(
+                //    gradient,
+                //    null,
+                //    new Point(XOffset, y),
+                //    ballRadius, ballRadius);
             }
 
             double factorImageRatio; // factor * imageRatio
