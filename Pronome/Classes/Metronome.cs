@@ -305,6 +305,10 @@ namespace Pronome
                         AnimationTimer.Init();
                         _timer.Reset();
                     }
+                    else if (PlayState == State.Paused)
+                    {
+                        AnimationTimer.Start();
+                    }
                 }
 
                 // start playing
@@ -352,6 +356,7 @@ namespace Pronome
                 PlayState = State.Paused;
                 
                 UpdateElapsedQuarters(); // flush the elapsed beat timer
+                _timer = null;
             }
         }
 
@@ -411,7 +416,10 @@ namespace Pronome
         /**<summary>Sums up the elapsed quarter notes occuring since the last time ElapsedQuarters was run.</summary>*/
         public void UpdateElapsedQuarters()
         {
-            ElapsedQuarters += _timer.GetElapsedTime() / 60 * tempo;
+            if (_timer != null)
+            {
+                ElapsedQuarters += _timer.GetElapsedTime() / 60 * tempo;
+            }
         }
 
         /**<summary>Get the quarter note value of a complete beat cycle.</summary>*/

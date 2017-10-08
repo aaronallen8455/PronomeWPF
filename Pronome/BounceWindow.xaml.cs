@@ -150,17 +150,15 @@ namespace Pronome
                 for (int i = 0; i < layerCount; i++)
                 {
                     MakeBall(i, dc);
-
-                    //drawingGroup.Children.Add(ball);
                 }
 
                 if (Metronome.GetInstance().PlayState != Metronome.State.Stopped)
                 {
                     // set the initial position (if beat was playing before graph opened)
-                    if (Metronome.GetInstance().PlayState == Metronome.State.Playing)
-                    {
+                    //if (Metronome.GetInstance().PlayState != Metronome.State.Paused)
+                    //{
                         Metronome.GetInstance().UpdateElapsedQuarters();
-                    }
+                    //}
 
                     // sync balls and lanes to elapsed time
                     foreach (Ball ball in Balls)
@@ -174,11 +172,6 @@ namespace Pronome
                     }
                 }
             }
-
-            // draw horizon
-            //var horizonLine = new LineGeometry(new Point(0, height/2), new Point(width + 2 * widthPad, height/2));
-            //drawingGroup.Children.Add(new GeometryDrawing(null, new Pen(Brushes.Aqua, 2), horizonLine));
-
 
             timer = new AnimationTimer();
 
@@ -397,7 +390,10 @@ namespace Pronome
                 Ticks = new Queue<Tick>();
 
                 // generate initial ticks and find current interval
-                InitTicks(Layer.Offset, dc);
+                if (Metronome.GetInstance().PlayState != Metronome.State.Paused || !Instance.SceneDrawn)
+                {
+                    InitTicks(Layer.Offset, dc);
+                }
             }
 
             /// <summary>
@@ -705,8 +701,10 @@ namespace Pronome
 
                 ballImage.Render(ball);
 
-                
-                SetPosition(0, dc);
+                if (Metronome.GetInstance().PlayState != Metronome.State.Paused || !Instance.SceneDrawn)
+                {
+                    SetPosition(0, dc);
+                }
             }
 
             public void AddNext()
