@@ -473,46 +473,48 @@ namespace Pronome
                     //}
                 }
 
-                if (ProduceBytes)
+
+                if (Gain <= 0)
                 {
-                    if (Gain <= 0)
+                    nSample = 0;
+                    sampleValue = 0;
+                }
+                else
+                {
+                    // check for muting
+                    if (Layer.IsMuted || Layer.SoloGroupEngaged && !Layer.IsSoloed)
                     {
                         nSample = 0;
                         sampleValue = 0;
                     }
                     else
                     {
-                        // check for muting
-                        if (Layer.IsMuted || Layer.SoloGroupEngaged && !Layer.IsSoloed)
+                        // Sin Generator
+                        if (freqChanged)
                         {
-                            nSample = 0;
-                            sampleValue = 0;
+                            multiple = TwoPi * Frequency / waveFormat.SampleRate; // reuse this value
+                            freqChanged = false;
                         }
-                        else
-                        {
-                            // Sin Generator
-                            if (freqChanged)
-                            {
-                                multiple = TwoPi * Frequency / waveFormat.SampleRate; // reuse this value
-                                freqChanged = false;
-                            }
 
+                        if (ProduceBytes)
+                        {
                             sampleValue = Gain * Math.Sin(nSample * multiple);
 
                             nSample++;
                         }
-                        Gain -= gainStep;
 
                     }
+                    Gain -= gainStep;
 
-                    // Set the pan amounts.
-                    for (int i = 0; i < waveFormat.Channels; i++)
-                    {
-                        if (i == 0)
-                            buffer[outIndex++] = (float)sampleValue * right;
-                        else
-                            buffer[outIndex++] = (float)sampleValue * left;
-                    }
+                }
+
+                // Set the pan amounts.
+                for (int i = 0; i < waveFormat.Channels; i++)
+                {
+                    if (i == 0)
+                        buffer[outIndex++] = (float)sampleValue * right;
+                    else
+                        buffer[outIndex++] = (float)sampleValue * left;
                 }
             
                 ByteInterval -= 1;

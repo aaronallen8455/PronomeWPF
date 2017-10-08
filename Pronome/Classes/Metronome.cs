@@ -153,7 +153,7 @@ namespace Pronome
                 {
                     long floats = totalFloats;
 
-                    long interval = (long)src.GetOffset() + 1;
+                    long interval = (long)src.GetOffset() + 2; // block alignment
                     if (interval < totalFloats)
                     {
                         src.ProduceBytes = false;
