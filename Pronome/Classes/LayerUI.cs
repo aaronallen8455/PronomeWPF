@@ -216,8 +216,6 @@ namespace Pronome
                         {
                             Layer.ParsedString = textEditor.Text;
                             Metronome.GetInstance().ExecuteLayerChange(Layer);
-                            //Metronome.LayerToChangeAndSync = Tuple.Create(Layer, textEditor.Text);
-                            //Metronome.NeedToInsertStream = true;
                         }
                         else
                         {
@@ -395,8 +393,10 @@ namespace Pronome
                     // change on the fly
                     Metronome.GetInstance().ExecuteLayerChange(Layer);
                 }
-
-                Metronome.GetInstance().TriggerAfterBeatParsed();
+                else
+                {
+                    Metronome.GetInstance().TriggerAfterBeatParsed();
+                }
             }
         }
 
@@ -462,8 +462,12 @@ namespace Pronome
                     Metronome.GetInstance().ExecuteLayerChange(layer);
                 }
             }
-            // redraw graph
-            Metronome.GetInstance().TriggerAfterBeatParsed();
+
+            if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+            {
+                // redraw graph
+                Metronome.GetInstance().TriggerAfterBeatParsed();
+            }
         }
 
         /**<summary>Remove this item from the interface.</summary>*/

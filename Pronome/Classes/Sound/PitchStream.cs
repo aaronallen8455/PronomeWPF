@@ -47,6 +47,8 @@ namespace Pronome
 
         public bool ProduceBytes { get; set; } = true;
 
+        public double SampleRemainder { get; set; }
+
         /**<summary>Used in sine wave generation.</summary>*/
         private int nSample;
 
@@ -156,6 +158,7 @@ namespace Pronome
             BeatCollection.Enumerator = BeatCollection.GetEnumerator();
             ByteInterval = 0;
             sampleValue = 0;
+            SampleRemainder = 0;
             //cycle = 0;
             Gain = Volume;
             if (Metronome.GetInstance().IsSilentInterval)
@@ -201,13 +204,13 @@ namespace Pronome
 
             double mult = intervalMultiplyFactor * ByteInterval;
             ByteInterval = (long)mult;
-            Layer.Remainder *= intervalMultiplyFactor;
-            Layer.Remainder += mult - ByteInterval;
+            SampleRemainder *= intervalMultiplyFactor;
+            SampleRemainder += mult - ByteInterval;
 
-            if (Layer.Remainder >= 1)
+            if (SampleRemainder >= 1)
             {
-                ByteInterval += (long)Layer.Remainder;
-                Layer.Remainder -= (int)Layer.Remainder;
+                ByteInterval += (long)SampleRemainder;
+                SampleRemainder -= (int)SampleRemainder;
             }
 
             // multiply the silent interval
@@ -278,7 +281,7 @@ namespace Pronome
             long result = BeatCollection.Enumerator.Current;
             // hand silent interval
 
-            if (IsSilentIntervalSilent())
+            if (IsSilentIntervalSilent(ByteInterval))
             {
                 //previousByteInterval = result;
                 //return result;
@@ -344,28 +347,40 @@ namespace Pronome
         }
 
         /**<summary>Returns true if silent interval is currently silent.</summary>*/
-        protected bool IsSilentIntervalSilent() // check if silent interval is currently silent or audible. Perform timing shifts
+        public bool IsSilentIntervalSilent(long interval) // check if silent interval is currently silent or audible. Perform timing shifts
         {
             if (!Metronome.GetInstance().IsSilentInterval) return false;
 
-            currentSlntIntvl -= (long)previousByteInterval;
+            bool isSilent = currentSlntIntvl <= SilentInterval;
+
+            currentSlntIntvl -= interval;
+
             if (currentSlntIntvl <= 0)
             {
-                do
-                {
-                    silentIntvlSilent = !silentIntvlSilent;
-                    double nextInterval = silentIntvlSilent ? SilentInterval : AudibleInterval;
-                    currentSlntIntvl += (int)nextInterval;
-                    SilentIntervalRemainder += nextInterval - ((int)nextInterval);
-                    if (SilentIntervalRemainder >= 1)
-                    {
-                        currentSlntIntvl++;
-                        SilentIntervalRemainder--;
-                    }
-                } while (currentSlntIntvl < 0);
+                currentSlntIntvl = (long)(currentSlntIntvl % (SilentInterval + AudibleInterval));
+
+                currentSlntIntvl += (long)(SilentInterval + AudibleInterval);
             }
 
-            return silentIntvlSilent;
+            return isSilent;
+            //currentSlntIntvl -= (long)previousByteInterval;
+            //if (currentSlntIntvl <= 0)
+            //{
+            //    do
+            //    {
+            //        silentIntvlSilent = !silentIntvlSilent;
+            //        double nextInterval = silentIntvlSilent ? SilentInterval : AudibleInterval;
+            //        currentSlntIntvl += (int)nextInterval;
+            //        SilentIntervalRemainder += nextInterval - ((int)nextInterval);
+            //        if (SilentIntervalRemainder >= 1)
+            //        {
+            //            currentSlntIntvl++;
+            //            SilentIntervalRemainder--;
+            //        }
+            //    } while (currentSlntIntvl < 0);
+            //}
+
+            //return silentIntvlSilent;
         }
 
         /**<summary>Empty for this pitches, muting is not determined beforehand.</summary>*/
@@ -432,7 +447,7 @@ namespace Pronome
                     if (totalOffset == 0)
                     {
                         hasOffset = false;
-                        Layer.Remainder += OffsetRemainder;
+                        SampleRemainder += OffsetRemainder;
                     }
                     // add remainder to layer.R
                     continue;

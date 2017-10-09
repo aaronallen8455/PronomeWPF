@@ -36,9 +36,6 @@ namespace Pronome
         [DataMember]
         public string ParsedString;
 
-        /** <summary>The fractional portion of sample per second values are accumulated here and added in when over 1.</summary> */
-        public double Remainder = .0; // holds the accumulating fractional milliseconds.
-
         /** <summary>A value in quarter notes that all sounds in this layer are offset by.</summary> */
         public double Offset = 0; // in BPM
 
@@ -469,7 +466,7 @@ namespace Pronome
                             }
                         }
                         beats.Add(accumulator);
-                        var sbc = new SourceBeatCollection(this, beats.ToArray(), newSource);
+                        var sbc = new SourceBeatCollection(beats.ToArray(), newSource);
                         newSource.BeatCollection = sbc;
                     }
 
@@ -529,7 +526,7 @@ namespace Pronome
                                 accumulator += Beat[index].Bpm;
                             }
                             beats.Add(accumulator);
-                            var sbc = new SourceBeatCollection(this, beats.ToArray(), newPitchSource);
+                            var sbc = new SourceBeatCollection(beats.ToArray(), newPitchSource);
                             newPitchSource.BeatCollection = sbc;
                             BasePitchSource = newPitchSource;
                             // get the offset
@@ -558,7 +555,7 @@ namespace Pronome
                             }
                         }
                         beats.Add(accumulator);
-                        var baseSbc = new SourceBeatCollection(this, beats.ToArray(), newSource);
+                        var baseSbc = new SourceBeatCollection(beats.ToArray(), newSource);
                         newSource.BeatCollection = baseSbc;
                     }
                     else
@@ -895,7 +892,7 @@ namespace Pronome
                 }
                 completed.Add(beat[i].AudioSource);
 
-                beat[i].AudioSource.BeatCollection = new SourceBeatCollection(this, cells.ToArray(), beat[i].AudioSource);
+                beat[i].AudioSource.BeatCollection = new SourceBeatCollection(cells.ToArray(), beat[i].AudioSource);
             }
 
             return beat;
@@ -978,7 +975,6 @@ namespace Pronome
         /** <summary>Reset this layer so that it will play from the start.</summary> */
         public void Reset()
         {
-            Remainder = 0;
             foreach (IStreamProvider src in GetAllSources())
             {
                 src.Reset();

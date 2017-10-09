@@ -103,6 +103,15 @@ namespace Pronome
             }
         }
 
+        public double ConvertBpmToSamples(double bpm)
+        {
+            double result = 60 / Tempo * bpm * 44100;
+
+            if (result > long.MaxValue) throw new Exception(bpm.ToString());
+
+            return result;
+        }
+
         /// <summary>
         /// Perform actions to change a layer's beat while the beat is playing.
         /// </summary>
@@ -149,8 +158,30 @@ namespace Pronome
             foreach (KeyValuePair<int, Layer> pair in LayersToChange)
             {
                 Layer l = pair.Value;
+
                 foreach (IStreamProvider src in l.GetAllSources())
                 {
+                    //long floats;
+                    //double offset = src.GetOffset();
+                    //
+                    //if (totalFloats > offset)
+                    //{
+                    //    double bytesToRun = (totalFloats - src.GetOffset()) % ConvertBpmToSamples(l.GetTotalBpmValue());
+                    //    // compress the number of samples to run
+                    //    floats = (long)(bytesToRun + offset);
+                    //
+                    //    src.SampleRemainder += bytesToRun + offset - floats;
+                    //
+                    //    src.IsSilentIntervalSilent(totalFloats - floats);
+                    //}
+                    //else
+                    //{
+                    //    floats = totalFloats;
+                    //}
+
+
+
+
                     long floats = totalFloats;
 
                     long interval = (long)src.GetOffset() + 2; // block alignment

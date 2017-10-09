@@ -36,6 +36,8 @@ namespace Pronome
 
         public bool ProduceBytes { get; set; } = true;
 
+        public double SampleRemainder { get; set; }
+
         Stream rawStream;
 
         /**<summary>Constructor</summary>*/
@@ -122,7 +124,7 @@ namespace Pronome
             HiHatOpenIsMuted = false;
             //HiHatMuteInitiated = false;
             HiHatCycleToMute = 0;
-
+            SampleRemainder = 0;
 
             // set stream back to start.
             Position = 0;
@@ -181,7 +183,7 @@ namespace Pronome
 
             previousByteInterval = result;
 
-            if (IsSilentIntervalSilent())
+            if (IsSilentIntervalSilent(ByteInterval))
             {
                 return result;
             }
@@ -203,14 +205,14 @@ namespace Pronome
 
             double div = ByteInterval / BlockAlignment;
             div *= intervalMultiplyFactor;
-            Layer.Remainder *= intervalMultiplyFactor; // multiply remainder as well
-            Layer.Remainder += div - (int)div;
+            SampleRemainder *= intervalMultiplyFactor; // multiply remainder as well
+            SampleRemainder += div - (int)div;
             ByteInterval = (int)div * BlockAlignment;
                 
-            if (Layer.Remainder >= 1)
+            if (SampleRemainder >= 1)
             {
-                ByteInterval += (int)Layer.Remainder * BlockAlignment;
-                Layer.Remainder -= (int)Layer.Remainder;
+                ByteInterval += (int)SampleRemainder * BlockAlignment;
+                SampleRemainder -= (int)SampleRemainder;
             }
 
             // multiply the offset aswell
@@ -270,34 +272,47 @@ namespace Pronome
                 if (met.IsRandomMute)
                     currentlyMuted = IsRandomMuted();
                 if (met.IsSilentInterval)
-                    silentIntvlSilent = IsSilentIntervalSilent();
+                    silentIntvlSilent = IsSilentIntervalSilent(0);
             }
         }
 
-        protected bool IsSilentIntervalSilent() // check if silent interval is currently silent or audible. Perform timing shifts
+        public bool IsSilentIntervalSilent(long interval) // check if silent interval is currently silent or audible. Perform timing shifts
         {
             if (!Metronome.GetInstance().IsSilentInterval) return false;
-            currentSlntIntvl -= previousByteInterval;
+
+            bool isSilent = currentSlntIntvl <= SilentInterval;
+
+            currentSlntIntvl -= interval;
+
             if (currentSlntIntvl <= 0)
             {
-                do
-                {
-                    silentIntvlSilent = !silentIntvlSilent;
-                    double nextInterval = silentIntvlSilent ? SilentInterval : AudibleInterval;
-                    currentSlntIntvl += (long)nextInterval;
-                    SilentIntervalRemainder += nextInterval - (long)nextInterval;
+                currentSlntIntvl = (long)(currentSlntIntvl % (SilentInterval + AudibleInterval));
 
-                    if (SilentIntervalRemainder >= 1)
-                    {
-                        int rounded = (int)SilentIntervalRemainder;
-                        currentSlntIntvl += rounded;
-                        SilentIntervalRemainder -= rounded;
-                    }
-
-                } while (currentSlntIntvl < 0);
+                currentSlntIntvl += (long)(SilentInterval + AudibleInterval);
             }
 
-            return silentIntvlSilent;
+            return isSilent;
+            //currentSlntIntvl -= previousByteInterval;
+            //if (currentSlntIntvl <= 0)
+            //{
+            //    do
+            //    {
+            //        silentIntvlSilent = !silentIntvlSilent;
+            //        double nextInterval = silentIntvlSilent ? SilentInterval : AudibleInterval;
+            //        currentSlntIntvl += (long)nextInterval;
+            //        SilentIntervalRemainder += nextInterval - (long)nextInterval;
+            //
+            //        if (SilentIntervalRemainder >= 1)
+            //        {
+            //            int rounded = (int)SilentIntervalRemainder;
+            //            currentSlntIntvl += rounded;
+            //            SilentIntervalRemainder -= rounded;
+            //        }
+            //
+            //    } while (currentSlntIntvl < 0);
+            //}
+            //
+            //return silentIntvlSilent;
         }
 
         protected long? randomMuteCountdown = null;
@@ -371,7 +386,7 @@ namespace Pronome
         {
             AudibleInterval = BeatCell.ConvertFromBpm(audible, this) * BlockAlignment;
             SilentInterval = BeatCell.ConvertFromBpm(silent, this) * BlockAlignment;
-            currentSlntIntvl = (long)(AudibleInterval - initialOffset * BlockAlignment - BlockAlignment);
+            currentSlntIntvl = (long)(initialOffset * BlockAlignment - BlockAlignment);
             SilentIntervalRemainder = audible - (int)audible + offsetRemainder;
 
             SetInitialMuting();
@@ -410,7 +425,7 @@ namespace Pronome
 
                     if (totalOffset == 0)
                     {
-                        Layer.Remainder += offsetRemainder;
+                        SampleRemainder += offsetRemainder;
                         hasOffset = false;
                     }
                     continue;

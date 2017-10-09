@@ -6,16 +6,14 @@ namespace Pronome
 {
     public class SourceBeatCollection : IEnumerable<long>
     {
-        Layer Layer;
         public IStreamProvider Source;
         double[] Beats;
         double[] Bpm;
         public IEnumerator<long> Enumerator;
         public bool isWav;
 
-        public SourceBeatCollection(Layer layer, double[] beats, IStreamProvider src)
+        public SourceBeatCollection(double[] beats, IStreamProvider src)
         {
-            Layer = layer;
             Source = src;
             Bpm = beats;
             ConvertBpmValues();
@@ -34,13 +32,13 @@ namespace Pronome
 
                 long whole = (long)bpm;
 
-                Layer.Remainder += bpm - whole; // add to layer's remainder accumulator
+                Source.SampleRemainder += bpm - whole; // add to layer's remainder accumulator
 
-                if (Layer.Remainder >= 1)
+                if (Source.SampleRemainder >= 1)
                 {
-                    int rounded = (int)Layer.Remainder;
+                    int rounded = (int)Source.SampleRemainder;
                     whole += rounded;
-                    Layer.Remainder -= rounded;
+                    Source.SampleRemainder -= rounded;
                 }
 
                 if (isWav)

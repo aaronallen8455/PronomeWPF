@@ -132,6 +132,8 @@ namespace Pronome
                     met.LayersToChange.Clear();
 
                     met.NeedsToChangeLayer = false;
+
+                    met.TriggerAfterBeatParsed();
                 }
 
                 result = _mixer.Read(buffer, offset, count);

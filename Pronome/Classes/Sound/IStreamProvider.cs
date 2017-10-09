@@ -43,7 +43,14 @@ namespace Pronome
 
         //void MultiplyByteInterval(double factor);
 
+        bool IsSilentIntervalSilent(long interval);
+
         void SetInitialMuting();
+
+        /// <summary>
+        /// The partial sample that are accumulated and added back in when >= 1
+        /// </summary>
+        double SampleRemainder { get; set; }
 
         Layer Layer { get; set; }
 

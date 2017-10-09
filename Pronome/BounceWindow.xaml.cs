@@ -717,6 +717,8 @@ namespace Pronome
 
                 double bpm = 0;
 
+                //if (Index >= Layer.Beat.Count) Index %= Layer.Beat.Count;
+
                 bpm += Layer.Beat[Index].Bpm;
 
                 Index++;
