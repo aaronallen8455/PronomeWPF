@@ -103,11 +103,13 @@ namespace Pronome
             }
         }
 
-        public double ConvertBpmToSamples(double bpm)
+        public double ConvertBpmToSamples(double bpm, IStreamProvider src)
         {
             double result = 60 / Tempo * bpm * 44100;
 
             if (result > long.MaxValue) throw new Exception(bpm.ToString());
+
+            result *= 2;
 
             return result;
         }
@@ -161,52 +163,54 @@ namespace Pronome
 
                 foreach (IStreamProvider src in l.GetAllSources())
                 {
-                    //long floats;
-                    //double offset = src.GetOffset();
-                    //
-                    //if (totalFloats > offset)
-                    //{
-                    //    double bytesToRun = (totalFloats - src.GetOffset()) % ConvertBpmToSamples(l.GetTotalBpmValue());
-                    //    // compress the number of samples to run
-                    //    floats = (long)(bytesToRun + offset);
-                    //
-                    //    src.SampleRemainder += bytesToRun + offset - floats;
-                    //
-                    //    src.IsSilentIntervalSilent(totalFloats - floats);
-                    //}
-                    //else
-                    //{
-                    //    floats = totalFloats;
-                    //}
-
-
-
-
-                    long floats = totalFloats;
-
-                    long interval = (long)src.GetOffset() + 2; // block alignment
-                    if (interval < totalFloats)
+                    long floats;
+                    double offset = src.GetOffset();
+                    
+                    if (totalFloats > offset)
                     {
-                        src.ProduceBytes = false;
+                        double layerLength = ConvertBpmToSamples(l.GetTotalBpmValue(), src);
+
+                        double bytesToRun = (totalFloats - src.GetOffset()) % layerLength;
+                        // compress the number of samples to run
+                        floats = (long)(bytesToRun + offset);
                     
-                        while (interval <= floats)
-                        {
+                        src.SampleRemainder += bytesToRun + offset - floats;
                     
-                            if (src.SoundSource.IsPitch)
-                            {
-                                (src as PitchStream).Read(new float[interval], 0, (int)interval);
-                            }
-                            else
-                            {
-                                (src as WaveStream).Read(new byte[interval], 0, (int)interval);
-                            }
-                    
-                            floats -= (int)interval;
-                            interval = src.BeatCollection.Enumerator.Current;
-                        }
-                    
-                        src.ProduceBytes = true;
+                        src.IsSilentIntervalSilent(totalFloats - floats);
                     }
+                    else
+                    {
+                        floats = totalFloats;
+                    }
+
+
+
+
+                    //long floats = totalFloats;
+                    //
+                    //long interval = (long)src.GetOffset() + 2; // block alignment
+                    //if (interval < totalFloats)
+                    //{
+                    //    src.ProduceBytes = false;
+                    //
+                    //    while (interval <= floats)
+                    //    {
+                    //
+                    //        if (src.SoundSource.IsPitch)
+                    //        {
+                    //            (src as PitchStream).Read(new float[interval], 0, (int)interval);
+                    //        }
+                    //        else
+                    //        {
+                    //            (src as WaveStream).Read(new byte[interval], 0, (int)interval);
+                    //        }
+                    //
+                    //        floats -= (int)interval;
+                    //        interval = src.BeatCollection.Enumerator.Current;
+                    //    }
+                    //
+                    //    src.ProduceBytes = true;
+                    //}
 
                     // start reading for last byteInterval
                     while (floats > 0)

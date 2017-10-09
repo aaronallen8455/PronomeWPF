@@ -137,7 +137,9 @@ namespace Pronome
                 randomMuteCountdown = null; // will be reinitialized
                 currentlyMuted = false;
             }
-            silentIntvlSilent = false;
+            //silentIntvlSilent = false;
+            //currentSlntIntvl = (long)(initialOffset * BlockAlignment - BlockAlignment);
+
             if (Metronome.GetInstance().IsSilentInterval)
             { // setInitialMuting is called in this method
                 SetSilentInterval(Metronome.GetInstance().AudibleInterval, Metronome.GetInstance().SilentInterval);

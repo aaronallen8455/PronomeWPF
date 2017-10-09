@@ -120,6 +120,9 @@ namespace Pronome
                             src.Layer = real;
                         }
 
+                        // needed to transfer volume setting to new sources
+                        real.Volume = real.Volume;
+
                         // put in the new sources.
                         met.AddSourcesFromLayer(real);
                         copy.AudioSources = null;

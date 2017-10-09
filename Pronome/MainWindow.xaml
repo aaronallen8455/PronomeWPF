@@ -531,13 +531,14 @@
                             <StackPanel Margin="5, 0" VerticalAlignment="Center">
                                 <TextBlock Foreground="White" FontSize="7pt" HorizontalAlignment="Center">Master Vol.</TextBlock>
                                 <Slider 
-                                Name="masterVolume" 
-                                Value="1" 
-                                ValueChanged="masterVolume_ValueChanged" 
-                                MouseWheel="masterVolume_MouseWheel"
-                                Minimum="0" 
-                                Maximum="1" 
-                                Width="80"/>
+                                    Name="masterVolume" 
+                                    Value="1" 
+                                    ValueChanged="masterVolume_ValueChanged" 
+                                    MouseWheel="masterVolume_MouseWheel"
+                                    Initialized="masterVolume_Initialized"
+                                    Minimum="0" 
+                                    Maximum="1" 
+                                    Width="80"/>
                             </StackPanel>
 
                             <Border/>

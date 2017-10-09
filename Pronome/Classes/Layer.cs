@@ -73,6 +73,11 @@ namespace Pronome
             {
                 volume = value;
                 double newVolume = value * Metronome.GetInstance().Volume;
+
+                //foreach (IStreamProvider src in GetAllSources())
+                //{
+                //    src.Volume = newVolume;
+                //}
                 if (AudioSources != null)
                 {
                     foreach (IStreamProvider src in AudioSources.Values) src.Volume = newVolume;

@@ -43,6 +43,8 @@ namespace Pronome
                 {
                     new LayerUI(LayerStack, layer);
                 }
+
+                masterVolume.Value = Metronome.GetInstance().Volume;
             }
             else
             {
@@ -216,6 +218,11 @@ namespace Pronome
         private void masterVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Metronome.GetInstance().Volume = masterVolume.Value;
+        }
+
+        private void masterVolume_Initialized(object sender, EventArgs e)
+        {
+            (sender as Slider).Value = Metronome.GetInstance().Volume;
         }
 
         /// <summary>
