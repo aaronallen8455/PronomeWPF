@@ -94,11 +94,7 @@ namespace Pronome
         public static void LibraryCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             // update the collection used by the source selectors
-            //var sourceLibrary = Application.Current.Resources["completeSourceLibrary"] as CompleteSourceLibrary;
-            //
-            //sourceLibrary.OnNotifyCollectionChanged(
-            //    new System.Collections.Specialized.NotifyCollectionChangedEventArgs( 
-            //        System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+            
             CompleteSourceLibrary.ResetAllInstances();
         }
 

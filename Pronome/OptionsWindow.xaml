@@ -10,9 +10,9 @@
     <Window.Resources>
         <!--Define the data source for the user source library-->
         <local:UserSourceLibrary x:Key="userSourceLibrary"/>
-
         <local:HiHatStatusConverter x:Key="hihatStatusConverter"/>
         <local:NullToBooleanConverter x:Key="nullToBoolConverter"/>
+        <local:RecentlyOpenedFiles x:Key="recentlyOpenedFiles"/>
 
         <RoutedCommand x:Key="userSourceRemoveCommand"/>
     </Window.Resources>
@@ -136,6 +136,16 @@
                     <WrapPanel>
                         <Button Name="saveButton" Click="saveButton_Click">Save Beat As...</Button>
                         <Button Name="loadButton" Click="loadButton_Click" IsEnabled="{Binding Path=IsEnabled}">Load Beat</Button>
+                    </WrapPanel>
+                    <WrapPanel Orientation="Vertical" Margin="0,20,0,0">
+                        <Label Target="{Binding ElementName=recentFilesComboBox}">Recently Opened</Label>
+                        <ComboBox 
+                            Name="recentFilesComboBox" 
+                            IsEnabled="{Binding Path=IsEnabled}" 
+                            ItemsSource="{Binding Source={StaticResource recentlyOpenedFiles}}"
+                            DisplayMemberPath="Name"
+                            SelectedValuePath="Uri"
+                            SelectionChanged="recentFilesComboBox_SelectionChanged"/>
                     </WrapPanel>
                 </StackPanel>
             </Expander>

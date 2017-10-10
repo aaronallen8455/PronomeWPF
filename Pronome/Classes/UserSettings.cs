@@ -5,6 +5,9 @@ using System.IO.IsolatedStorage;
 using System.Xml;
 using System.Text;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System;
+using System.Linq;
 
 namespace Pronome
 {
@@ -106,6 +109,12 @@ namespace Pronome
         public bool DrawMultToScale;
 
         /// <summary>
+        /// The list of recently opened files
+        /// </summary>
+        [DataMember(IsRequired = false)]
+        public RecentlyOpenedFiles RecentFiles;
+
+        /// <summary>
         /// Store the settings
         /// </summary>
         public void SaveToStorage()
@@ -147,6 +156,17 @@ namespace Pronome
             foreach (UserSource source in UserSourceLibrary)
             {
                 s.Add(source);
+            }
+
+            // transfer the recent files to options collection, if exists
+            RecentlyOpenedFiles recent = (mainWindow.Resources["optionsWindow"] as Window).Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles;
+
+            if (RecentFiles != null)
+            {
+                foreach (FileInfo file in RecentFiles.Take(50))
+                {
+                    recent.Add(file);
+                }
             }
 
             // deserialize the peristed session beat if enabled
@@ -243,10 +263,26 @@ namespace Pronome
                 BounceWidthPad = BounceWindow.widthPad,
                 PitchDecayLength = PitchStream.DecayLength,
                 UserSourceLibrary = UserSource.Library,
+                RecentFiles = (mainWindow.Resources["optionsWindow"] as Window).Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles,
                 PersistSession = persistSession,
                 PersistedSession = serializedBeat,
                 DrawMultToScale = DrawMultToScaleStatic
             };
         }
+    }
+
+    /// <summary>
+    /// Used to list the recently opened beat files
+    /// </summary>
+    [CollectionDataContract]
+    public class RecentlyOpenedFiles : ObservableCollection<FileInfo> { }
+
+    [DataContract]
+    public class FileInfo
+    {
+        [DataMember]
+        public string Uri { get; set; }
+        [DataMember]
+        public string Name { get; set; }
     }
 }
