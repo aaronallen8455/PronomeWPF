@@ -22,7 +22,27 @@ namespace Pronome
                 TextBox.KeyUpEvent,
                 new System.Windows.Input.KeyEventHandler(TextBox_KeyUp)
             );
-            
+
+            var activationData = AppDomain.CurrentDomain.SetupInformation.ActivationArguments.ActivationData;
+            // check if app was launched by opening a .beat file
+            if (activationData != null && activationData.Length > 0)
+            {
+                string fname = "No filename given";
+                try
+                {
+                    fname = activationData[0];
+
+                    Uri uri = new Uri(fname);
+                    fname = uri.LocalPath;
+
+                    Properties["launchedFile"] = fname;
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+
             base.OnStartup(e);
         }
         

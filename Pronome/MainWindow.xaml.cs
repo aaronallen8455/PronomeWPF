@@ -85,7 +85,10 @@ namespace Pronome
             LayerUI layerUI = new LayerUI(layerStack);
 
             // redraw the beat graph
-            Metronome.GetInstance().TriggerAfterBeatParsed();
+            if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+            {
+                Metronome.GetInstance().TriggerAfterBeatParsed();
+            }
         }
 
         /**<summary>Play the beat.</summary>*/

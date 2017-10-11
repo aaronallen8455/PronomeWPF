@@ -161,7 +161,7 @@ namespace Pronome
             {
                 Layer l = pair.Value;
 
-                foreach (IStreamProvider src in l.GetAllSources())
+                foreach (IStreamProvider src in l.GetAllSources().OrderBy(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed))
                 {
                     long floats;
                     double offset = src.GetOffset();
@@ -183,7 +183,8 @@ namespace Pronome
                         floats = totalFloats;
                     }
 
-
+                    // enforce block alignment
+                    floats -= floats % src.BlockAlignment;
 
 
                     //long floats = totalFloats;

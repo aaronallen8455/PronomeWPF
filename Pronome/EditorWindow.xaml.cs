@@ -93,6 +93,8 @@ namespace Pronome
         /// </summary>
         public const float BaseFactor = 55f;
 
+        protected bool ChangeAppliedButtonWasClicked; // used so that changing the beat from editor won't cause buildUI() to run
+
         public EditorWindow()
         {
             InitializeComponent();
@@ -139,6 +141,13 @@ namespace Pronome
 
         public void BuildUI(object sender = null, EventArgs e = null)
         {
+            // don't run if changes were applied while beat playing and event was triggered by StreamToWavFile
+            if (ChangeAppliedButtonWasClicked)
+            {
+                ChangeAppliedButtonWasClicked = false;
+                return;
+            }
+
             // remove old UI
             layerPanel.Children.Clear();
             Rows.Clear();
@@ -416,9 +425,16 @@ namespace Pronome
                 }
                 if (changesMade)
                 {
-                    Metronome.AfterBeatParsed -= BuildUI; // don't rebuild UI
-                    Metronome.GetInstance().TriggerAfterBeatParsed(); // redraw beat graph / bounce if necessary
-                    Metronome.AfterBeatParsed += BuildUI;
+                    if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                    {
+                        Metronome.AfterBeatParsed -= BuildUI; // don't rebuild UI
+                        Metronome.GetInstance().TriggerAfterBeatParsed(); // redraw beat graph / bounce if necessary
+                        Metronome.AfterBeatParsed += BuildUI;
+                    }
+                    else
+                    {
+                        ChangeAppliedButtonWasClicked = true;
+                    }
                 }
             }));
 

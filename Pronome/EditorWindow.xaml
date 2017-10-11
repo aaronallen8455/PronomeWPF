@@ -303,7 +303,7 @@
                               ItemsSource="{Binding Source={StaticResource completeSourceLibrary}}"
                               IsEnabled="{DynamicResource cellSelected}"/>
                 </StackPanel>
-                <StackPanel Name="pitchInputPanel">
+                <StackPanel Name="pitchInputPanel" Visibility="Hidden">
                     <Label Target="{Binding ElementName=pitchInput}">Pitch</Label>
                     <TextBox Name="pitchInput" Width="50" LostFocus="pitchInput_LostFocus"/>
                 </StackPanel>
