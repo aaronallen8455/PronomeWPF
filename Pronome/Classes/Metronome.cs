@@ -8,6 +8,7 @@ using System.Threading;
 using System.Windows;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using TaskDialogInterop;
 
 namespace Pronome
 {
@@ -704,9 +705,15 @@ namespace Pronome
                 catch (SerializationException)
                 {
                     string name = Path.GetFileName(fileName);
-                    new TaskDialogWrapper(Application.Current.MainWindow).Show(
-                        "Invalid Beat File", $"'{name}' could not be used because it is not a valid beat file.", 
-                        "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
+
+                    TaskDialog.ShowMessage(Application.Current.MainWindow, "Invalid Beat File",
+                        $"'{name}' could not be used because it is not a valid beat file.", "", null, null, null,
+                        TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
+
+
+                    //new TaskDialogWrapper(Application.Current.MainWindow).Show(
+                    //    "Invalid Beat File", $"'{name}' could not be used because it is not a valid beat file.", 
+                    //    "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
                     //MessageBox.Show($"'{name}' could not be used because it is not a valid beat file.", "Invalid Beat File", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 

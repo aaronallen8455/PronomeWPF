@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System;
 using System.Linq;
+using TaskDialogInterop;
 
 namespace Pronome
 {
@@ -188,9 +189,13 @@ namespace Pronome
                         }
                         catch (SerializationException)
                         {
-                            new TaskDialogWrapper(Application.Current.MainWindow).Show(
-                                "Session Persistence Failed", "An error occured while attempting to load the beat from your last session, sorry about that!",
-                                "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
+                            TaskDialog.ShowMessage(Application.Current.MainWindow, "Session Persistence Failed",
+                                "Whoops! An error occured while attempting to load the beat from your last session.", null, null, null, null,
+                                TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
+
+                            //new TaskDialogWrapper(Application.Current.MainWindow).Show(
+                            //    "Session Persistence Failed", "An error occured while attempting to load the beat from your last session, sorry about that!",
+                            //    "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
                         }
                     }
                 }

@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using System.Collections.Generic;
 using NAudio.Wave;
 using System.Runtime.InteropServices;
+using TaskDialogInterop;
 
 // TODO: pitch random muting doesn't occur on first note
 namespace Pronome
@@ -159,10 +160,15 @@ namespace Pronome
             }
             else
             {
-                new TaskDialogWrapper(Application.Current.MainWindow).Show(
-                        "File Not Found", "That file no longer exists!",
-                        "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
+                TaskDialog.ShowMessage(Application.Current.MainWindow, "File Not Found",
+                    "That file no longer exists!", null, null, null, null,
+                    TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
 
+                //new TaskDialogWrapper(Application.Current.MainWindow).Show(
+                //        "File Not Found", "That file no longer exists!",
+                //        "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
+
+                // remove the missing file from the list
                 (Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles).Remove(combobox.SelectedItem as FileInfo);
             }
         }
@@ -338,15 +344,28 @@ namespace Pronome
                 }
                 catch (Exception)
                 {
-                    var result = new TaskDialogWrapper(this).Show(
-                        "Incorrect Format",
-                        $"The file, {openFileDialog.SafeFileName}, isn't in the correct format (wav encoded, 44.1khz sampling rate).",
-                        "Do you want to save a converted version to use instead?",
-                        TaskDialogWrapper.TaskDialogButtons.Yes | TaskDialogWrapper.TaskDialogButtons.No,
-                        TaskDialogWrapper.TaskDialogIcon.Warning
-                    );
+                    TaskDialogOptions config = new TaskDialogOptions()
+                    {
+                        Owner = this,
+                        Title = "Incorrect Format",
+                        MainInstruction = $"The file, {openFileDialog.SafeFileName}, isn't in the correct format (wav encoded, 44.1khz sampling rate).",
+                        Content = "Do you want to save a converted version to use instead?",
+                        CommonButtons = TaskDialogCommonButtons.YesNo,
+                        MainIcon = VistaTaskDialogIcon.Warning
+                    };
+
+                    var result = TaskDialog.Show(config);
+
+
+                    //var result = new TaskDialogWrapper(this).Show(
+                    //    "Incorrect Format",
+                    //    $"The file, {openFileDialog.SafeFileName}, isn't in the correct format (wav encoded, 44.1khz sampling rate).",
+                    //    "Do you want to save a converted version to use instead?",
+                    //    TaskDialogWrapper.TaskDialogButtons.Yes | TaskDialogWrapper.TaskDialogButtons.No,
+                    //    TaskDialogWrapper.TaskDialogIcon.Warning
+                    //);
                     
-                    if (result == TaskDialogWrapper.TaskDialogResult.Yes)
+                    if (result.Result == TaskDialogSimpleResult.Yes)
                     {
                         // save file prompt
                         var saveFile = new SaveFileDialog();
@@ -380,13 +399,17 @@ namespace Pronome
                                 // change name back if there was an error
                                 System.IO.File.Move(openFileDialog.FileName, openFileDialog.FileName.Substring(0, openFileDialog.FileName.Length - 1));
 
-                                new TaskDialogWrapper(this)
-                                    .Show(
-                                    "Error", 
-                                    "The file could not be converted, an error occured.", 
-                                    "",
-                                    TaskDialogWrapper.TaskDialogButtons.Ok,
-                                    TaskDialogWrapper.TaskDialogIcon.Error);
+                                TaskDialog.ShowMessage(this, "Error", 
+                                    "The file could not be converted, an error occured.","",null, null, null, 
+                                    TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
+
+                                //new TaskDialogWrapper(this)
+                                //    .Show(
+                                //    "Error", 
+                                //    "The file could not be converted, an error occured.", 
+                                //    "",
+                                //    TaskDialogWrapper.TaskDialogButtons.Ok,
+                                //    TaskDialogWrapper.TaskDialogIcon.Error);
                             }
                         }
                     }

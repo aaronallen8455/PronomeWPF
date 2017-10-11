@@ -13,6 +13,7 @@ using ICSharpCode.AvalonEdit;
 using ICSharpCode.SharpDevelop.Editor;
 using ICSharpCode.AvalonEdit.AddIn;
 using System.Runtime.InteropServices;
+using TaskDialogInterop;
 
 namespace Pronome
 {
@@ -231,12 +232,16 @@ namespace Pronome
                 }
                 catch (BeatSyntaxException ex)
                 {
-                    new TaskDialogWrapper(Application.Current.MainWindow).Show(
-                        "Beat Code Contains Error(s)",
-                        "Please fix the following error(s):",
-                        ex.Message,
-                        TaskDialogWrapper.TaskDialogButtons.Ok,
-                        TaskDialogWrapper.TaskDialogIcon.Warning);
+                    TaskDialog.ShowMessage(Application.Current.MainWindow, "Beat Code Contains Error(s)",
+                        "Please fix the following error(s):", ex.Message, null, null, null,
+                        TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
+
+                    //new TaskDialogWrapper(Application.Current.MainWindow).Show(
+                    //    "Beat Code Contains Error(s)",
+                    //    "Please fix the following error(s):",
+                    //    ex.Message,
+                    //    TaskDialogWrapper.TaskDialogButtons.Ok,
+                    //    TaskDialogWrapper.TaskDialogIcon.Warning);
                 }
             }
         }
