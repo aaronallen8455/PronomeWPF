@@ -180,7 +180,7 @@ namespace Pronome
         private void tempoInput_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             // exit if a tempo change is currently queued.
-            if (Metronome.GetInstance().TempoChangeCued) return;
+            //if (Metronome.GetInstance().TempoChangeCued) return;
 
             var input = sender as TextBox;
             float tempo = Metronome.GetInstance().Tempo;
@@ -196,7 +196,7 @@ namespace Pronome
         private void tempoUp_Click(object sender, RoutedEventArgs e)
         {
             // exit if a tempo change is currently queued.
-            if (Metronome.GetInstance().TempoChangeCued) return;
+            //if (Metronome.GetInstance().TempoChangeCued) return;
 
             float current = Metronome.GetInstance().Tempo;
             current++;
@@ -207,7 +207,7 @@ namespace Pronome
         private void tempoDown_Click(object sender, RoutedEventArgs e)
         {
             // exit if a tempo change is currently queued.
-            if (Metronome.GetInstance().TempoChangeCued) return;
+            //if (Metronome.GetInstance().TempoChangeCued) return;
 
             float tempo = Metronome.GetInstance().Tempo;
             if (tempo > 1)

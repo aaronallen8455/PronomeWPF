@@ -767,7 +767,6 @@ namespace Pronome
                 if (IsPitch) // need to rebuild the pitch source
                 {
                     BasePitchSource?.Frequencies.Clear();
-                    //BasePitchSource.BaseFrequency = PitchStream.ConvertFromSymbol(BaseSourceName);
                 }
                 else
                 {
@@ -777,8 +776,6 @@ namespace Pronome
                         BasePitchSource.Dispose();
                         BasePitchSource = null;
                     }
-            
-                    //AudioSources.Add("", BaseAudioSource);
                 }
             }
 
@@ -791,7 +788,7 @@ namespace Pronome
             for (int i = 0; i < beat.Count(); i++)
             {
                 beat[i].Layer = this;
-                if (beat[i].SoundSource != null && !beat[i].SoundSource.IsPitch)// !Regex.IsMatch(beat[i].SourceName, @"^[A-Ga-g][#b]?\d+$|^[Pp][\d.]+$"))
+                if (beat[i].SoundSource != null && !beat[i].SoundSource.IsPitch)
                 {
                     // Wavs
                     // should cells of the same source use the same audiosource instead of creating new source each time? Yes
@@ -801,6 +798,8 @@ namespace Pronome
                         {
                             Layer = this
                         };
+                        wavStream.Volume = Volume * Metronome.GetInstance().Volume;
+
                         AudioSources.Add(beat[i].SoundSource.Uri, wavStream);
                     }
                     beat[i].AudioSource = AudioSources[beat[i].SoundSource.Uri];
@@ -819,8 +818,7 @@ namespace Pronome
                             BasePitchSource = new PitchStream(beat[i].SoundSource)
                             {
                                 Layer = this,
-                                Volume = Volume,
-                                //BaseFrequency = PitchStream.ConvertFromSymbol(beat[i].SourceName)
+                                Volume = Volume * Metronome.GetInstance().Volume,
                             };
                         }
                         BasePitchSource.AddFrequency(beat[i].SoundSource.Uri, beat[i]);
@@ -838,10 +836,7 @@ namespace Pronome
                 }
             }
 
-            //Beat = beat.ToList();
             return beat;
-
-            //SetBeatCollectionOnSources();
         }
 
         /** <summary>Set the beat collections for each sound source.</summary> 
@@ -997,7 +992,7 @@ namespace Pronome
 
             if (!IsPitch && BasePitchSource != default(PitchStream))
             {
-                sources.Concat(new IStreamProvider[] { BasePitchSource });
+                return sources.Concat(new IStreamProvider[] { BasePitchSource });
             }
 
             return sources;

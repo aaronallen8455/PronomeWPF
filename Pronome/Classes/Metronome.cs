@@ -162,7 +162,7 @@ namespace Pronome
             {
                 Layer l = pair.Value;
 
-                foreach (IStreamProvider src in l.GetAllSources().OrderBy(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed))
+                foreach (IStreamProvider src in l.GetAllSources().OrderBy(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open))
                 {
                     long floats;
                     double offset = src.GetOffset();
@@ -240,14 +240,14 @@ namespace Pronome
             foreach (IStreamProvider src in layer.GetAllSources().OrderBy(x => x.SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Closed))
             {
                 AddAudioSource(src);
-            }
 
-            // transfer silent interval if exists
-            if (IsSilentInterval)
-            {
-                foreach (IStreamProvider src in layer.GetAllSources())
+                // transfer silent interval if exists
+                if (IsSilentInterval)
                 {
-                    src.SetSilentInterval(AudibleInterval, SilentInterval);
+                    //foreach (IStreamProvider src in layer.GetAllSources())
+                    //{
+                        src.SetSilentInterval(AudibleInterval, SilentInterval);
+                    //}
                 }
             }
 
@@ -536,6 +536,8 @@ namespace Pronome
 
         public double TempoChangeRatio;
 
+        protected float OldTempo;
+
         /** <summary>Change the tempo. Can be during play.</summary> */
         public void ChangeTempo(float newTempo)
         {
@@ -545,14 +547,18 @@ namespace Pronome
                 UpdateElapsedQuarters();
             }
 
-            float oldTempo = tempo;
+            if (!TempoChangeCued)
+            {
+                OldTempo = tempo;
+            }
+
             tempo = newTempo;
 
             if (PlayState != State.Stopped)
             {
 
                 // modify the beat values and current byte intervals for all layers and audio sources.
-                double ratio = oldTempo / newTempo;
+                double ratio = OldTempo / newTempo;
                 TempoChangeRatio = ratio;
                 TempoChangeCued = true;
             }
@@ -778,7 +784,7 @@ namespace Pronome
             foreach (Layer layer in Layers)
             {
                 layer.Deserialize();
-                AddSourcesFromLayer(layer);
+                //AddSourcesFromLayer(layer);
             }
 
             ChangeTempo(Tempo);
