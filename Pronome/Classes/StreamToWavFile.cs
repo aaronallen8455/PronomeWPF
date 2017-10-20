@@ -114,6 +114,9 @@ namespace Pronome
                         real.HasHiHatClosed = copy.HasHiHatClosed;
                         real.HasHiHatOpen = copy.HasHiHatOpen;
                         real.Beat = copy.Beat;
+                        real.IsPitch = copy.IsPitch;
+                        real.Volume = copy.Volume;
+                        real.Pan = copy.Pan;
 
                         foreach (var src in real.GetAllSources())
                         {
