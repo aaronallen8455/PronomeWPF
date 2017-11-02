@@ -142,6 +142,8 @@ namespace Pronome
                     met.TriggerAfterBeatParsed();
                 }
 
+                // insert count-off here
+
                 result = _mixer.Read(buffer, offset, count);
 
                 if (count > 0 && IsRecording)
