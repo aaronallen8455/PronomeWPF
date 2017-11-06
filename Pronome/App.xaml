@@ -6,7 +6,6 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="MenuStyling.xaml"/>
                 <ResourceDictionary Source="MiscDictionary.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 

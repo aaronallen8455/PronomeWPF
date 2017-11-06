@@ -314,62 +314,6 @@ namespace Pronome
 
             // apply settings from storage
             UserSettings.GetSettingsFromStorage()?.ApplySettings();
-                    }
-
-        private void openOptionsButton_Click(object sender, RoutedEventArgs e)
-        {
-            Window pop = Resources["optionsWindow"] as Window;
-            pop.Show();
-            pop.Activate();
-        }
-
-        private void openGraphButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (Metronome.GetInstance().Layers.Count > 0)
-            {
-                var graph = Resources["graphWindow"] as BeatGraphWindow;
-                graph.Show();
-                graph.Activate();
-                if (!graph.GraphIsDrawn)
-                {
-                    if (BounceWindow.Instance == null || !BounceWindow.Instance.IsVisible)
-                    {
-                        ColorHelper.ResetRgbSeed();
-                    }
-
-                    graph.DrawGraph();
-                }
-            }
-        }
-
-        private void openBounceButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (Metronome.GetInstance().Layers.Count > 0)
-            {
-                var bounceWindow = Resources["bounceWindow"] as BounceWindow;
-                bounceWindow.Show();
-                //bounceWindow.Activate();
-                if (!bounceWindow.SceneDrawn)
-                {
-                    if (BeatGraphWindow.Instance == null || !BeatGraphWindow.Instance.IsVisible)
-                    {
-                        ColorHelper.ResetRgbSeed();
-                    }
-
-                    bounceWindow.DrawScene();
-                }
-            }
-        }
-
-        private void openEditorButton_Click(object sender, RoutedEventArgs e)
-        {
-            var editorWindow = Resources["editorWindow"] as EditorWindow;
-            if (!editorWindow.IsVisible)
-            {
-                editorWindow.BuildUI();
-            }
-            editorWindow.Show();
-            editorWindow.Activate();
         }
 
         private void minimizeButton_Click(object sender, RoutedEventArgs e)
@@ -414,6 +358,96 @@ namespace Pronome
             var helpWindow = Resources["helpWindow"] as Instructions;
             helpWindow.Show();
             helpWindow.Activate();
+        }
+
+        private void OpenFileCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
+
+        private void OpenFileCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Metronome.GetInstance().PlayState == Metronome.State.Stopped;
+        }
+
+        private void OpenRecentCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
+
+        private void OpenBounceCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            var bounceWindow = Resources["bounceWindow"] as BounceWindow;
+            bounceWindow.Show();
+            //bounceWindow.Activate();
+            if (!bounceWindow.SceneDrawn)
+            {
+                if (BeatGraphWindow.Instance == null || !BeatGraphWindow.Instance.IsVisible)
+                {
+                    ColorHelper.ResetRgbSeed();
+                }
+
+                bounceWindow.DrawScene();
+            }
+        }
+
+        private void OpenBounceCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = Metronome.GetInstance().Layers.Count > 0;
+        }
+
+        private void OpenGraphCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            var graph = Resources["graphWindow"] as BeatGraphWindow;
+            graph.Show();
+            graph.Activate();
+            if (!graph.GraphIsDrawn)
+            {
+                if (BounceWindow.Instance == null || !BounceWindow.Instance.IsVisible)
+                {
+                    ColorHelper.ResetRgbSeed();
+                }
+
+                graph.DrawGraph();
+            }
+        }
+
+        private void OpenOptionsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            Window pop = Resources["optionsWindow"] as Window;
+            pop.Show();
+            pop.Activate();
+        }
+
+        private void OpenEditorCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            var editorWindow = Resources["editorWindow"] as EditorWindow;
+            if (!editorWindow.IsVisible)
+            {
+                editorWindow.BuildUI();
+            }
+            editorWindow.Show();
+            editorWindow.Activate();
+        }
+
+        private void OpenTapCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
+
+        private void SaveFileCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
+
+        private void SaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
+        }
+
+        private void RevertToSaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+
         }
     }
 
