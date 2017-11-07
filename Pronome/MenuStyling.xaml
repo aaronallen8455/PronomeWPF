@@ -81,9 +81,9 @@
         <GradientStop Color="#50717070" Offset="0.75"/>
         <GradientStop Color="#90717070" Offset="1"/>
     </LinearGradientBrush>
-    
+
     <SolidColorBrush x:Key="SubMenuBackgroundBrush" Color="Black"/>
-    
+
     <Geometry x:Key="UpArrow">M 0,4 L 3.5,0 L 7,4 Z</Geometry>
     <Style x:Key="MenuScrollButton" BasedOn="{x:Null}" TargetType="{x:Type RepeatButton}">
         <Setter Property="ClickMode" Value="Hover"/>
@@ -169,7 +169,7 @@
             </Grid>
         </Border>
     </ControlTemplate>
-    
+
     <ControlTemplate x:Key="{ComponentResourceKey ResourceId=TopLevelHeaderTemplateKey, TypeInTargetAssembly={x:Type MenuItem}}" TargetType="{x:Type MenuItem}">
         <Grid SnapsToDevicePixels="true">
             <Rectangle x:Name="OuterBorder" RadiusY="2" RadiusX="2"/>
@@ -211,7 +211,7 @@
                 <Setter Property="Color" TargetName="Shdw" Value="#71000000"/>
             </Trigger>
             <Trigger Property="IsHighlighted" Value="true">
-                
+
                 <!-- MOUSE OVER COLOR FOR TOP LEVEL MENU -->
                 <Setter Property="Fill" TargetName="Bg" Value="{StaticResource MenuItemSelectionFill}"/>
             </Trigger>

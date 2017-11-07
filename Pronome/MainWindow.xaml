@@ -28,7 +28,7 @@
         <CommandBinding Command="{StaticResource openGraphCommand}" Executed="OpenGraphCommand_Executed" CanExecute="OpenBounceCommand_CanExecute"/>
         <CommandBinding Command="{StaticResource openOptionsCommand}" Executed="OpenOptionsCommand_Executed"/>
         <CommandBinding Command="{StaticResource openTapCommand}" Executed="OpenTapCommand_Executed"/>
-        <CommandBinding Command="{StaticResource revertToSaveCommand}" Executed="RevertToSaveCommand_Executed"/>
+        <CommandBinding Command="{StaticResource revertToSaveCommand}" Executed="RevertToSaveCommand_Executed" CanExecute="RevertToSaveCommand_CanExecute"/>
         <CommandBinding Command="{StaticResource saveCommand}" Executed="SaveFileCommand_Executed"/>
         <CommandBinding Command="{StaticResource saveAsCommand}" Executed="SaveAsCommand_Executed"/>
     </Window.CommandBindings>
@@ -61,11 +61,13 @@
                         <MenuItem Header="File">
                             <MenuItem Header="_Open..." Command="{StaticResource openFileCommand}" InputGestureText="Ctrl+O"/>
                             <MenuItem Header="Open Recent" Command="{StaticResource openRecentCommand}" ItemsSource="{Binding Source={ StaticResource recentlyOpenedFiles}}">
-                                <MenuItem.ItemTemplate>
-                                    <DataTemplate>
-                                        <MenuItem Header="{Binding Path=Name}" ToolTip="{Binding Path=Uri}" Click="OpenRecentItem_Click"/>
-                                    </DataTemplate>
-                                </MenuItem.ItemTemplate>
+                                <MenuItem.ItemContainerStyle>
+                                    <Style TargetType="{x:Type MenuItem}">
+                                        <Setter Property="Header" Value="{Binding Path=Name}"/>
+                                        <Setter Property="ToolTip" Value="{Binding Path=Uri}"/>
+                                        <EventSetter Event="Click" Handler="OpenRecentItem_Click"/>
+                                    </Style>
+                                </MenuItem.ItemContainerStyle>
                             </MenuItem>
                             <Separator/>
                             <MenuItem Header="_Save..." Command="{StaticResource saveCommand}" InputGestureText="Ctrl+S"/>

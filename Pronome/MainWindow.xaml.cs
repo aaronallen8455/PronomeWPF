@@ -470,6 +470,11 @@ namespace Pronome
             }
         }
 
+        private void RevertToSaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = SaveFileHelper.CurrentFile != null;
+        }
+
         private void OpenRecentItem_Click(object sender, RoutedEventArgs e)
         {
             var item = sender as MenuItem;
