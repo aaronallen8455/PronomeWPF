@@ -716,18 +716,17 @@ namespace Pronome
                         $"'{name}' could not be used because it is not a valid beat file.", "", null, null, null,
                         TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
 
-
-                    //new TaskDialogWrapper(Application.Current.MainWindow).Show(
-                    //    "Invalid Beat File", $"'{name}' could not be used because it is not a valid beat file.", 
-                    //    "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
-                    //MessageBox.Show($"'{name}' could not be used because it is not a valid beat file.", "Invalid Beat File", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
-                foreach (Layer layer in GetInstance().Layers)
-                {
-                    new LayerUI(MainWindow.LayerStack, layer);
-                }
             }
+
+            foreach (Layer layer in GetInstance().Layers)
+            {
+                new LayerUI(MainWindow.LayerStack, layer);
+            }
+
+            ((MainWindow)Application.Current.MainWindow).tempoInput.Text = GetInstance().Tempo.ToString();
+            ((MainWindow)Application.Current.MainWindow).masterVolume.Value = GetInstance().Volume;
         }
 
         /**<summary>Gets the contents of the saved beats directory.</summary>*/

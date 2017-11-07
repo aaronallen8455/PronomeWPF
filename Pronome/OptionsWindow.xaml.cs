@@ -75,103 +75,103 @@ namespace Pronome
             }
         }
 
-        private void saveButton_Click(object sender, RoutedEventArgs e)
-        {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.AddExtension = true;
-            saveFileDialog.DefaultExt = "beat";
-            saveFileDialog.ValidateNames = true;
-            saveFileDialog.Title = "Save Beat As";
-            saveFileDialog.Filter = "Beat file (*.beat)|*.beat";
-
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    Metronome.Save(saveFileDialog.FileName);
-
-                    var file = new FileInfo() { Uri = saveFileDialog.FileName, Name = System.IO.Path.GetFileName(saveFileDialog.FileName) };
-                    (Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles).Add(file);
-                }));
-            }
-        }
-
-        private void loadButton_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Beat file (*.beat)|*.beat";
-            openFileDialog.Title = "Open Beat";
-            openFileDialog.DefaultExt = "beat";
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                var file = new FileInfo() { Uri = openFileDialog.FileName, Name = System.IO.Path.GetFileName(openFileDialog.FileName) };
-                (Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles).Add(file);
-
-                OpenFile(openFileDialog.FileName);
-            }
-        }
-
-        /// <summary>
-        /// Open a beat file
-        /// </summary>
-        /// <param name="uri"></param>
-        private void OpenFile(string uri)
-        {
-            Metronome.Load(uri);
-
-            Metronome met = Metronome.GetInstance();
-
-            // set muting inputs
-            if (Metronome.GetInstance().IsRandomMute)
-            {
-                randomMuteToggle.IsChecked = true;
-                randomMuteInput.Text = met.RandomMutePercent.ToString();
-                randomMuteTimerInput.Text = met.RandomMuteSeconds.ToString();
-            }
-            else
-            {
-                randomMuteToggle.IsChecked = false;
-            }
-            if (Metronome.GetInstance().IsSilentInterval)
-            {
-                intervalMuteToggle.IsChecked = true;
-                intervalAudibleInput.Text = met.AudibleInterval.ToString();
-                intervalSilentInput.Text = met.SilentInterval.ToString();
-            }
-            else
-            {
-                intervalMuteToggle.IsChecked = false;
-            }
-
-                        // set the UI inputs
-                        ((MainWindow)Application.Current.MainWindow).tempoInput.Text = met.Tempo.ToString();
-            ((MainWindow)Application.Current.MainWindow).masterVolume.Value = met.Volume;
-        }
-
-        private void recentFilesComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var combobox = sender as ComboBox;
-            string uri = combobox.SelectedValue as string;
-
-            if (System.IO.File.Exists(uri))
-            {
-                OpenFile(uri);
-            }
-            else
-            {
-                TaskDialog.ShowMessage(Application.Current.MainWindow, "File Not Found",
-                    "That file no longer exists!", null, null, null, null,
-                    TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
-
-                //new TaskDialogWrapper(Application.Current.MainWindow).Show(
-                //        "File Not Found", "That file no longer exists!",
-                //        "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
-
-                // remove the missing file from the list
-                (Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles).Remove(combobox.SelectedItem as FileInfo);
-            }
-        }
+        //private void saveButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    SaveFileDialog saveFileDialog = new SaveFileDialog();
+        //    saveFileDialog.AddExtension = true;
+        //    saveFileDialog.DefaultExt = "beat";
+        //    saveFileDialog.ValidateNames = true;
+        //    saveFileDialog.Title = "Save Beat As";
+        //    saveFileDialog.Filter = "Beat file (*.beat)|*.beat";
+        //
+        //    if (saveFileDialog.ShowDialog() == true)
+        //    {
+        //        Dispatcher.BeginInvoke(new Action(() =>
+        //        {
+        //            Metronome.Save(saveFileDialog.FileName);
+        //
+        //            var file = new FileInfo() { Uri = saveFileDialog.FileName, Name = System.IO.Path.GetFileName(saveFileDialog.FileName) };
+        //            (Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles).Add(file);
+        //        }));
+        //    }
+        //}
+        //
+        //private void loadButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    OpenFileDialog openFileDialog = new OpenFileDialog();
+        //    openFileDialog.Filter = "Beat file (*.beat)|*.beat";
+        //    openFileDialog.Title = "Open Beat";
+        //    openFileDialog.DefaultExt = "beat";
+        //
+        //    if (openFileDialog.ShowDialog() == true)
+        //    {
+        //        var file = new FileInfo() { Uri = openFileDialog.FileName, Name = System.IO.Path.GetFileName(openFileDialog.FileName) };
+        //        (Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles).Add(file);
+        //
+        //        OpenFile(openFileDialog.FileName);
+        //    }
+        //}
+        //
+        ///// <summary>
+        ///// Open a beat file
+        ///// </summary>
+        ///// <param name="uri"></param>
+        //private void OpenFile(string uri)
+        //{
+        //    Metronome.Load(uri);
+        //
+        //    Metronome met = Metronome.GetInstance();
+        //
+        //    // set muting inputs
+        //    if (Metronome.GetInstance().IsRandomMute)
+        //    {
+        //        randomMuteToggle.IsChecked = true;
+        //        randomMuteInput.Text = met.RandomMutePercent.ToString();
+        //        randomMuteTimerInput.Text = met.RandomMuteSeconds.ToString();
+        //    }
+        //    else
+        //    {
+        //        randomMuteToggle.IsChecked = false;
+        //    }
+        //    if (Metronome.GetInstance().IsSilentInterval)
+        //    {
+        //        intervalMuteToggle.IsChecked = true;
+        //        intervalAudibleInput.Text = met.AudibleInterval.ToString();
+        //        intervalSilentInput.Text = met.SilentInterval.ToString();
+        //    }
+        //    else
+        //    {
+        //        intervalMuteToggle.IsChecked = false;
+        //    }
+        //
+        //                // set the UI inputs
+        //                ((MainWindow)Application.Current.MainWindow).tempoInput.Text = met.Tempo.ToString();
+        //    ((MainWindow)Application.Current.MainWindow).masterVolume.Value = met.Volume;
+        //}
+        //
+        //private void recentFilesComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        //{
+        //    var combobox = sender as ComboBox;
+        //    string uri = combobox.SelectedValue as string;
+        //
+        //    if (System.IO.File.Exists(uri))
+        //    {
+        //        OpenFile(uri);
+        //    }
+        //    else
+        //    {
+        //        TaskDialog.ShowMessage(Application.Current.MainWindow, "File Not Found",
+        //            "That file no longer exists!", null, null, null, null,
+        //            TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
+        //
+        //        //new TaskDialogWrapper(Application.Current.MainWindow).Show(
+        //        //        "File Not Found", "That file no longer exists!",
+        //        //        "", TaskDialogWrapper.TaskDialogButtons.Ok, TaskDialogWrapper.TaskDialogIcon.Error);
+        //
+        //        // remove the missing file from the list
+        //        (Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles).Remove(combobox.SelectedItem as FileInfo);
+        //    }
+        //}
 
         private void exportWavButton_Click(object sender, RoutedEventArgs e)
         {

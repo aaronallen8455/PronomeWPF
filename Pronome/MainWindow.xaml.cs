@@ -23,6 +23,8 @@ namespace Pronome
 
         public static MainWindow Instance;
 
+        protected SaveFileHelper SaveFileHelper;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -54,6 +56,8 @@ namespace Pronome
                 new LayerUI(layerStack);
             }
             tempoInput.Text = Metronome.GetInstance().Tempo.ToString();
+
+            SaveFileHelper = new SaveFileHelper(Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles);
 
             Instance = this;
         }
@@ -362,7 +366,7 @@ namespace Pronome
 
         private void OpenFileCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-
+            SaveFileHelper.LoadFile();
         }
 
         private void OpenFileCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -372,7 +376,13 @@ namespace Pronome
 
         private void OpenRecentCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            var item = e.OriginalSource as MenuItem;
 
+            // the file URI is in the tooltip
+            if (item?.ToolTip != null)
+            {
+                SaveFileHelper.LoadFileUri(item.ToolTip.ToString());
+            }
         }
 
         private void OpenBounceCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -437,17 +447,38 @@ namespace Pronome
 
         private void SaveFileCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-
+            if (SaveFileHelper.CurrentFile == null)
+            {
+                SaveFileHelper.SaveFileAs();
+            }
+            else
+            {
+                SaveFileHelper.SaveFile(SaveFileHelper.CurrentFile.Uri);
+            }
         }
 
         private void SaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-
+            SaveFileHelper.SaveFileAs();
         }
 
         private void RevertToSaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            if (SaveFileHelper.CurrentFile != null)
+            {
+                SaveFileHelper.LoadFileUri(SaveFileHelper.CurrentFile.Uri);
+            }
+        }
 
+        private void OpenRecentItem_Click(object sender, RoutedEventArgs e)
+        {
+            var item = sender as MenuItem;
+
+            // the file URI is in the tooltip
+            if (item?.ToolTip != null)
+            {
+                SaveFileHelper.LoadFileUri(item.ToolTip.ToString());
+            }
         }
     }
 

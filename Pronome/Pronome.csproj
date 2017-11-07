@@ -146,6 +146,7 @@
       <DependentUpon>RepeatGroupDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Classes\Editor\Row.cs" />
+    <Compile Include="Classes\SaveFileHelper.cs" />
     <Compile Include="Classes\Sound\InternalSource.cs" />
     <Compile Include="Classes\Sound\ISoundSource.cs" />
     <Compile Include="Classes\Sound\UserSource.cs" />

@@ -160,11 +160,12 @@ namespace Pronome
             }
 
             // transfer the recent files to options collection, if exists
-            RecentlyOpenedFiles recent = (mainWindow.Resources["optionsWindow"] as Window).Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles;
+            RecentlyOpenedFiles recent = mainWindow.Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles;
+            //RecentlyOpenedFiles recent = (mainWindow.Resources["optionsWindow"] as Window).Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles;
 
             if (RecentFiles != null)
             {
-                foreach (FileInfo file in RecentFiles.Take(50))
+                foreach (FileInfo file in RecentFiles.Take(15))
                 {
                     recent.Add(file);
                 }
@@ -268,7 +269,7 @@ namespace Pronome
                 BounceWidthPad = BounceWindow.widthPad,
                 PitchDecayLength = PitchStream.DecayLength,
                 UserSourceLibrary = UserSource.Library,
-                RecentFiles = (mainWindow.Resources["optionsWindow"] as Window).Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles,
+                RecentFiles = (mainWindow.Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles),//.Resources["recentlyOpenedFiles"] as RecentlyOpenedFiles,
                 PersistSession = persistSession,
                 PersistedSession = serializedBeat,
                 DrawMultToScale = DrawMultToScaleStatic
@@ -283,11 +284,16 @@ namespace Pronome
     public class RecentlyOpenedFiles : ObservableCollection<FileInfo> { }
 
     [DataContract]
-    public class FileInfo
+    public class FileInfo : IEquatable<FileInfo>
     {
         [DataMember]
         public string Uri { get; set; }
         [DataMember]
         public string Name { get; set; }
+
+        public bool Equals(FileInfo file)
+        {
+            return file.Uri == Uri;
+        }
     }
 }

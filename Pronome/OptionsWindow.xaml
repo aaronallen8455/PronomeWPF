@@ -128,7 +128,7 @@
                 </StackPanel>
             </Expander>
             <!--Save and Load-->
-            <Expander Header="Save and Load">
+            <!--<Expander Header="Save and Load">
                 <StackPanel>
                     <TextBlock>
                         You can save your work to a file or open a previously saved beat.
@@ -148,7 +148,7 @@
                             SelectionChanged="recentFilesComboBox_SelectionChanged"/>
                     </WrapPanel>
                 </StackPanel>
-            </Expander>
+            </Expander>-->
             <!--Custom Sound Library-->
             <Expander Header="Custom Sound Library">
                 <StackPanel>

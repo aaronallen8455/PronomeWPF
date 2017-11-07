@@ -60,7 +60,13 @@
 
                         <MenuItem Header="File">
                             <MenuItem Header="_Open..." Command="{StaticResource openFileCommand}" InputGestureText="Ctrl+O"/>
-                            <MenuItem Header="Open Recent" Command="{StaticResource openRecentCommand}"/>
+                            <MenuItem Header="Open Recent" Command="{StaticResource openRecentCommand}" ItemsSource="{Binding Source={ StaticResource recentlyOpenedFiles}}">
+                                <MenuItem.ItemTemplate>
+                                    <DataTemplate>
+                                        <MenuItem Header="{Binding Path=Name}" ToolTip="{Binding Path=Uri}" Click="OpenRecentItem_Click"/>
+                                    </DataTemplate>
+                                </MenuItem.ItemTemplate>
+                            </MenuItem>
                             <Separator/>
                             <MenuItem Header="_Save..." Command="{StaticResource saveCommand}" InputGestureText="Ctrl+S"/>
                             <MenuItem Header="Save As..." Command="{StaticResource saveAsCommand}" InputGestureText="Shift+Ctrl+S"/>
