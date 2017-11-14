@@ -77,6 +77,8 @@
                         <MenuItem Header="Edit">
                             <MenuItem Header="Beat _Editor" Command="{StaticResource openEditorCommand}" InputGestureText="Ctrl+E"/>
                             <MenuItem Header="_Tapping" Command="{StaticResource openTapCommand}" InputGestureText="Ctrl+T"/>
+                            <MenuItem Header="Undo Tapping"/>
+                            <MenuItem Header="Redo Tapping"/>
                             <Separator/>
                             <MenuItem Header="Options" Command="{StaticResource openOptionsCommand}"/>
                         </MenuItem>

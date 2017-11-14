@@ -1,0 +1,134 @@
+﻿<Window x:Class="Pronome.TappingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:local="clr-namespace:Pronome"
+        mc:Ignorable="d"
+        Title="Tap in a Rhythm" Height="350" Width="300"
+        KeyDown="Window_KeyDown">
+
+    <Window.Resources>
+        <RoutedUICommand x:Key="startCommand"/>
+        <RoutedUICommand x:Key="doneCommand"/>
+        <sys:Boolean x:Key="isListening">False</sys:Boolean>
+    </Window.Resources>
+    
+    <Window.CommandBindings>
+        <CommandBinding Command="{StaticResource startCommand}" CanExecute="StartCommand_CanExecute" Executed="StartCommand_Executed"/>
+        <CommandBinding Command="{StaticResource doneCommand}" Executed="DoneCommand_Executed"/>
+    </Window.CommandBindings>
+    
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom" FlowDirection="RightToLeft">
+            <StatusBar.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="{StaticResource ResourceKey=dialogButtonMargin}"/>
+                    <Setter Property="Padding" Value="{StaticResource ResourceKey=dialogButtonPadding}"/>
+                    <Setter Property="Width" Value="55"/>
+                </Style>
+            </StatusBar.Resources>
+            <!--Buttons-->
+            <Button Name="startButton" 
+                    Command="{StaticResource startCommand}" 
+                    Grid.Column="1" 
+                    IsDefault="True">Start</Button>
+            <Button Name="doneButton" 
+                    Command="{StaticResource doneCommand}" 
+                    Grid.Column="2">Done</Button>
+        </StatusBar>
+
+        <ItemsControl DockPanel.Dock="Top">
+            <!-- target the wrapper parent of the child with a style -->
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="FrameworkElement">
+                    <Setter Property="Margin" Value="10"></Setter>
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+
+            <!-- use a stack panel as the main container -->
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <StackPanel>
+                <TextBlock FontSize="{StaticResource dialogHeaderFontSize}">Tap in a Rhythm</TextBlock>
+                <Separator/>
+            </StackPanel>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="30"/>
+                </Grid.RowDefinitions>
+                
+                <Label Grid.Column="0"
+                       Grid.Row="0" 
+                       HorizontalAlignment="Right"
+                       Target="{Binding ElementName=targetLayerComboBox}"
+                       >Target Layer</Label>
+                <ComboBox x:Name="targetLayerComboBox"
+                          Grid.Column="1" 
+                          Grid.Row="0" 
+                          HorizontalAlignment="Left"
+                          Width="84"
+                          VerticalAlignment="Center"
+                          Loaded="ComboBox_Loaded"/>
+
+                <Label Grid.Column="0" 
+                       Grid.Row="1"
+                       HorizontalAlignment="Right"
+                       Target="{Binding ElementName=quantizeIntervalsTextBox}"
+                       >Quantize Intervals</Label>
+                <TextBox Grid.Column="1" 
+                         Grid.Row="1" 
+                         HorizontalAlignment="Left" 
+                         Width="118"
+                         VerticalAlignment="Center"
+                         x:Name="quantizeIntervalsTextBox"/>
+
+                <Label Grid.Column="0"
+                       Grid.Row="2"
+                       HorizontalAlignment="Right"
+                       Target="{Binding ElementName=modeComboBox}"
+                       >Mode</Label>
+                <ComboBox Grid.Column="1" 
+                          Grid.Row="2"
+                          HorizontalAlignment="Left"
+                          Width="118" 
+                          VerticalAlignment="Center"
+                          x:Name="modeComboBox">
+                    <ComboBoxItem>Overwrite</ComboBoxItem>
+                    <ComboBoxItem>Insert</ComboBoxItem>
+                </ComboBox>
+
+                <Label Grid.Column="0" 
+                       Grid.Row="3"
+                       HorizontalAlignment="Right"
+                       Target="{Binding ElementName=countOffCheckBox}"
+                       >Countoff</Label>
+                <CheckBox Grid.Column="1" 
+                          Grid.Row="3" 
+                          VerticalAlignment="Center"
+                          x:Name="countOffCheckBox"/>
+                
+            </Grid>
+            <TextBlock HorizontalAlignment="Center" 
+                       Foreground="#FF1A8323"
+                       Visibility="Hidden"
+                       Name="listeningMessage">
+                Listening for taps... Press any key to tap
+            </TextBlock>
+        </ItemsControl>
+
+    </DockPanel>
+</Window>

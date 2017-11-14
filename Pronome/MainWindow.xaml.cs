@@ -442,7 +442,9 @@ namespace Pronome
 
         private void OpenTapCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            var modal = new TappingWindow();
 
+            modal.ShowDialog();
         }
 
         private void SaveFileCommand_Executed(object sender, ExecutedRoutedEventArgs e)

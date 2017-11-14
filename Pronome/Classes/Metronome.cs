@@ -40,13 +40,16 @@ namespace Pronome
         {
             Recorder = new StreamToWavFile(Mixer);
             Player.Init(Recorder);
+            
         }
 
         /** <summary>Get the singleton instance.</summary> */
         static public Metronome GetInstance()
         {
             if (Instance == null)
+            {
                 Instance = new Metronome();
+            }
             return Instance;
         }
 
@@ -318,6 +321,13 @@ namespace Pronome
                     src.MultiplyByteInterval();
                 }
             }
+        }
+
+        public void SetupCountoff()
+        {
+            int cycleSize = 13230;
+            Recorder.CountoffLength = (long)(Tempo / 60 * 44100 * 4);
+            Recorder.CountoffLeadIn = (int)(cycleSize - Recorder.CountoffLength % cycleSize);
         }
 
         public enum State { Playing, Paused, Stopped };

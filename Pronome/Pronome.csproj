@@ -152,6 +152,9 @@
     <Compile Include="Classes\Sound\UserSource.cs" />
     <Compile Include="Classes\StereoPanStrategy.cs" />
     <Compile Include="Classes\Avalon\TextMarkerService.cs" />
+    <Compile Include="TappingWindow.xaml.cs">
+      <DependentUpon>TappingWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="BeatGraphWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -238,6 +241,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="OptionsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="TappingWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

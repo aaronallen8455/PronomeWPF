@@ -78,6 +78,8 @@ namespace Pronome
             
         }
 
+        public BeatCell() { }
+
         ///**<summary>A list of the HiHat open sound file names.</summary>*/
         //static public string[] HiHatOpenFileNames = new string[]
         //{

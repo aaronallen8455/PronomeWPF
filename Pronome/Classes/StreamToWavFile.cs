@@ -16,11 +16,37 @@ namespace Pronome
 
         public WaveFormat WaveFormat { get; private set; }
 
+        protected PitchStream CountOffStream;
+
+        private long _countOffLength;
+        /// <summary>
+        /// number of sample in which to play the countoff
+        /// </summary>
+        public long CountoffLength
+        {
+            get => _countOffLength;
+            set
+            {
+                if (CountOffStream == null)
+                {
+                    CountOffStream = new PitchStream(InternalSource.GetDefault());
+                    CountOffStream.BeatCollection = new SourceBeatCollection(new double[] { 1 }, CountOffStream);
+                    CountOffStream.AddFrequency("A4", new BeatCell());
+                }
+
+                _countOffLength = value;
+            }
+            
+        }
+        /// <summary>
+        /// number of samples added to front to align the countoff
+        /// </summary>
+        public int CountoffLeadIn;
+
         public StreamToWavFile(MixingSampleProvider mixer)
         {
             _mixer = mixer;
             WaveFormat = mixer.WaveFormat;
-            //_writer = new WaveFileWriter("test.wav", WaveFormat);
         }
 
         public void InitRecording(string fileName)
@@ -143,8 +169,48 @@ namespace Pronome
                 }
 
                 // insert count-off here
+                if (CountoffLength > 0)
+                {
+                    if (CountoffLeadIn > 0)
+                    {
+                        if (count > CountoffLeadIn)
+                        {
+                            count -= CountoffLeadIn;
 
-                result = _mixer.Read(buffer, offset, count);
+                            for (int i=0; i < CountoffLeadIn; i++)
+                            {
+                                buffer[i] = 0;
+                            }
+
+                            //Array.Copy(new float[CountoffLeadIn], buffer, offset);
+                            result += CountoffLeadIn;
+                            offset += CountoffLeadIn;
+                            CountoffLength -= count;
+                            CountoffLeadIn = 0;
+                        }
+                        else
+                        {
+                            CountoffLeadIn -= count;
+                            for (int i = 0; i < count; i++)
+                            {
+                                buffer[i] = 0;
+                            }
+                            //Array.Copy(new float[count], buffer, offset);
+                            result = count;
+                            count = 0;
+                        }
+                    }
+                    else
+                    {
+                        CountoffLength -= count;
+                    }
+
+                    result += CountOffStream.Read(buffer, offset, count);
+                }
+                else
+                {
+                    result = _mixer.Read(buffer, offset, count);
+                }
 
                 if (count > 0 && IsRecording)
                 {

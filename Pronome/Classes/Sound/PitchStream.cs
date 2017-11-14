@@ -363,24 +363,6 @@ namespace Pronome
             }
 
             return isSilent;
-            //currentSlntIntvl -= (long)previousByteInterval;
-            //if (currentSlntIntvl <= 0)
-            //{
-            //    do
-            //    {
-            //        silentIntvlSilent = !silentIntvlSilent;
-            //        double nextInterval = silentIntvlSilent ? SilentInterval : AudibleInterval;
-            //        currentSlntIntvl += (int)nextInterval;
-            //        SilentIntervalRemainder += nextInterval - ((int)nextInterval);
-            //        if (SilentIntervalRemainder >= 1)
-            //        {
-            //            currentSlntIntvl++;
-            //            SilentIntervalRemainder--;
-            //        }
-            //    } while (currentSlntIntvl < 0);
-            //}
-
-            //return silentIntvlSilent;
         }
 
         /**<summary>Empty for this pitches, muting is not determined beforehand.</summary>*/
@@ -403,11 +385,6 @@ namespace Pronome
         {
             return totalOffset + OffsetRemainder;
         }
-
-        //public uint Cycle
-        //{
-        //    get => cycle;
-        //}
 
         protected double initialOffset = 0; // the offset value to reset to.
         protected long totalOffset = 0; // time to wait before reading source.
@@ -497,7 +474,7 @@ namespace Pronome
                 else
                 {
                     // check for muting
-                    if (Layer.IsMuted || Layer.SoloGroupEngaged && !Layer.IsSoloed)
+                    if (Layer != null && (Layer.IsMuted || Layer.SoloGroupEngaged && !Layer.IsSoloed))
                     {
                         nSample = 0;
                         sampleValue = 0;
