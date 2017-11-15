@@ -118,6 +118,11 @@ namespace Pronome
             return result;
         }
 
+        public double ConvertSamplesToBpm(double samples)
+        {
+            return samples / 44100 * (60 / Tempo) / 2;
+        }
+
         /// <summary>
         /// Perform actions to change a layer's beat while the beat is playing.
         /// </summary>
@@ -326,8 +331,9 @@ namespace Pronome
         public void SetupCountoff()
         {
             int cycleSize = 13230;
-            Recorder.CountoffLength = (long)(Tempo / 60 * 44100 * 4);
+            Recorder.CountoffLength = (long)(60 / Tempo * 44100 * 8);
             Recorder.CountoffLeadIn = (int)(cycleSize - Recorder.CountoffLength % cycleSize);
+            Recorder.TotalCountoffBpm = 4 + ConvertSamplesToBpm(Recorder.CountoffLeadIn);
         }
 
         public enum State { Playing, Paused, Stopped };
@@ -459,7 +465,7 @@ namespace Pronome
         protected AnimationTimer _timer;
 
         /**<summary>Number of quarter notes that have been accumulated since the beat started playing.</summary>*/
-        public double ElapsedQuarters { get; protected set; }
+        public double ElapsedQuarters { get; set; }
         /**<summary>Sums up the elapsed quarter notes occuring since the last time ElapsedQuarters was run.</summary>*/
         public void UpdateElapsedQuarters()
         {

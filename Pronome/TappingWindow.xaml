@@ -6,7 +6,8 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:Pronome"
         mc:Ignorable="d"
-        Title="Tap in a Rhythm" Height="350" Width="300"
+        Title="Tap in a Rhythm" Height="350" Width="400"
+        WindowStartupLocation="CenterScreen"
         KeyDown="Window_KeyDown">
 
     <Window.Resources>
@@ -94,6 +95,7 @@
                          HorizontalAlignment="Left" 
                          Width="118"
                          VerticalAlignment="Center"
+                         TextChanged="quantizeIntervalsTextBox_TextChanged"
                          x:Name="quantizeIntervalsTextBox"/>
 
                 <Label Grid.Column="0"

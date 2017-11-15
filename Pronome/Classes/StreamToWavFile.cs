@@ -32,6 +32,7 @@ namespace Pronome
                     CountOffStream = new PitchStream(InternalSource.GetDefault());
                     CountOffStream.BeatCollection = new SourceBeatCollection(new double[] { 1 }, CountOffStream);
                     CountOffStream.AddFrequency("A4", new BeatCell());
+                    CountOffStream.Volume = 1;
                 }
 
                 _countOffLength = value;
@@ -42,6 +43,8 @@ namespace Pronome
         /// number of samples added to front to align the countoff
         /// </summary>
         public int CountoffLeadIn;
+
+        public double TotalCountoffBpm;
 
         public StreamToWavFile(MixingSampleProvider mixer)
         {
@@ -168,7 +171,7 @@ namespace Pronome
                     met.TriggerAfterBeatParsed();
                 }
 
-                // insert count-off here
+                // perform countoff
                 if (CountoffLength > 0)
                 {
                     if (CountoffLeadIn > 0)
@@ -206,6 +209,13 @@ namespace Pronome
                     }
 
                     result += CountOffStream.Read(buffer, offset, count);
+
+                    if (CountoffLength == 0)
+                    {
+                        Metronome.GetInstance().ElapsedQuarters -= TotalCountoffBpm;
+                        CountOffStream.Reset();
+                        cycle = -1;
+                    }
                 }
                 else
                 {
