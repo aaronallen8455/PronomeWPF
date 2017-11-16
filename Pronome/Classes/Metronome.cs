@@ -195,33 +195,6 @@ namespace Pronome
                     // enforce block alignment
                     floats -= floats % src.BlockAlignment;
 
-
-                    //long floats = totalFloats;
-                    //
-                    //long interval = (long)src.GetOffset() + 2; // block alignment
-                    //if (interval < totalFloats)
-                    //{
-                    //    src.ProduceBytes = false;
-                    //
-                    //    while (interval <= floats)
-                    //    {
-                    //
-                    //        if (src.SoundSource.IsPitch)
-                    //        {
-                    //            (src as PitchStream).Read(new float[interval], 0, (int)interval);
-                    //        }
-                    //        else
-                    //        {
-                    //            (src as WaveStream).Read(new byte[interval], 0, (int)interval);
-                    //        }
-                    //
-                    //        floats -= (int)interval;
-                    //        interval = src.BeatCollection.Enumerator.Current;
-                    //    }
-                    //
-                    //    src.ProduceBytes = true;
-                    //}
-
                     // start reading for last byteInterval
                     while (floats > 0)
                     {
@@ -232,6 +205,10 @@ namespace Pronome
                         }
                         else
                         {
+                            if (src.BlockAlignment > 2)
+                            {
+                                intsToCopy *= src.BlockAlignment / 2;
+                            }
                             (src as WaveStream).Read(new byte[intsToCopy], 0, intsToCopy);
                         }
                         floats -= int.MaxValue;
@@ -420,7 +397,7 @@ namespace Pronome
         {
             //fileName = ValidateFileName(fileName);
             Recorder.InitRecording(fileName);
-            Play();
+            MainWindow.Instance.playButton_Click(null, null);
         }
 
         /** <summary>Record the beat to a wav file.</summary>

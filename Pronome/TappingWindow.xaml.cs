@@ -82,7 +82,7 @@ namespace Pronome
 
             if (Metronome.GetInstance().PlayState != Metronome.State.Playing)
             {
-                Metronome.GetInstance().Play();
+                MainWindow.Instance.playButton_Click(null, null);
             }
         }
 
@@ -171,7 +171,7 @@ namespace Pronome
                     // if a tap occurs during a reference, we desugar the reference
 
                     // get the objects representing the beatcode
-                    Row row = new Row(Layer)
+                    Row row = new Row(Layer, true)
                     {
                         Offset = Layer.Offset,
                         OffsetValue = Layer.ParsedOffset
@@ -226,9 +226,6 @@ namespace Pronome
                         double qPos = BeatCell.Parse(belowValue); // quantized BPM position double
                         double newCellPosition = qPos;
 
-                        // going to iterate over all the cells
-                        CellTreeNode cellNode = row.Cells.Min;
-
                         // rep groups that have been traversed and should'nt be touched again
                         HashSet<RepeatGroup> touchedReps = new HashSet<RepeatGroup>();
 
@@ -241,9 +238,11 @@ namespace Pronome
 
                         int completeReps = 0; // the times run due to values being subtracted at each step
 
-                        while (cellNode != null)
+                        Cell belowCell = null;
+
+                        foreach (Cell c in row.Cells)
                         {
-                            Cell c = cellNode.Cell;
+                            belowCell = c;
                             // will need to desugar if it's a ref
 
                             if (c.RepeatGroups.Any())
@@ -330,8 +329,6 @@ namespace Pronome
                             // subtract the cell value
                             qPos -= c.Duration;
                             belowValue = BeatCell.Subtract(belowValue, c.GetValueWithMultFactors());
-
-                            cellNode = cellNode.Next();
                         }
 
                         if (!string.IsNullOrEmpty(belowValue))
@@ -493,7 +490,7 @@ namespace Pronome
                                 {
                                     // transfer the group action if it's the last cell
                                     Cell lastCell = lastRep.Cells.Last.Value;
-                                    if (lastCell == cellNode.Cell)
+                                    if (lastCell == belowCell)
                                     {
                                         newCell.GroupActions = new LinkedList<(bool, Group)>(lastCell.GroupActions.Where(x => !x.Item1));
                                         lastCell.GroupActions = new LinkedList<(bool, Group)>(lastCell.GroupActions.Where(x => x.Item1));
@@ -507,7 +504,7 @@ namespace Pronome
 
                                 // add cell to mult groups
                                 MultGroup lastMult = null;
-                                foreach (MultGroup mult in cellNode.Cell.MultGroups)
+                                foreach (MultGroup mult in belowCell.MultGroups)
                                 {
                                     mult.Cells.AddLast(newCell);
                                     lastMult = mult;
@@ -516,7 +513,7 @@ namespace Pronome
                                 {
                                     // transfer group actions if it's the new last cell
                                     Cell lastCell = lastMult.Cells.Last.Value;
-                                    if (lastCell == cellNode.Cell)
+                                    if (lastCell == belowCell)
                                     {
                                         newCell.GroupActions = new LinkedList<(bool, Group)>(lastCell.GroupActions.Where(x => !x.Item1));
                                         lastCell.GroupActions = new LinkedList<(bool, Group)>(lastCell.GroupActions.Where(x => x.Item1));
@@ -532,17 +529,16 @@ namespace Pronome
                                 if (repWithLtmToInsertInto == null)
                                 {
                                     // insert new cell
-                                    Cell below = cellNode.Cell;
 
-                                    string newCellValue = BeatCell.Subtract(below.GetValueWithMultFactors(true), belowValue);
+                                    string newCellValue = BeatCell.Subtract(belowCell.GetValueWithMultFactors(true), belowValue);
 
-                                    newCell.Duration = below.Duration - qPos;
+                                    newCell.Duration = belowCell.Duration - qPos;
 
                                     newCell.Value = BeatCell.SimplifyValue(newCell.GetValueDividedByMultFactors(newCellValue, true));
                                     // modify below cell
-                                    below.Value = BeatCell.SimplifyValue(below.GetValueDividedByMultFactors(belowValue, true));
-                                    below.ResetMultipliedValue();
-                                    below.Duration = qPos;
+                                    belowCell.Value = BeatCell.SimplifyValue(belowCell.GetValueDividedByMultFactors(belowValue, true));
+                                    belowCell.ResetMultipliedValue();
+                                    belowCell.Duration = qPos;
                                 }
                                 else
                                 {
@@ -570,11 +566,38 @@ namespace Pronome
                     beatCode = row.Stringify();
                     offset = row.OffsetValue;
                 }
+                // apply changes
+
+                if (offset == string.Empty) offset = "0";
+
+                if (beatCode != Layer.ParsedString || Layer.ParsedOffset != offset)
+                {
+                    Layer.UI.textEditor.Text = beatCode;
+                    Layer.ParsedOffset = offset;
+                    Layer.UI.SetOffsetValue(offset);
+                    Layer.Offset = BeatCell.Parse(offset);
+                    if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                    {
+                        Layer.ProcessBeatCode(beatCode);
+                    }
+                    else
+                    {
+                        // make change while playing
+                        Layer.ParsedString = beatCode;
+                        Metronome.GetInstance().ExecuteLayerChange(Layer);
+                    }
+
+                    if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                    {
+                        Metronome.GetInstance().TriggerAfterBeatParsed(); // redraw beat graph / bounce if necessary
+                    }
+                }
             }
+
 
             IsListening = false;
 
-            this.Close();
+            Close();
         }
 
         private void ComboBox_Loaded(object sender, RoutedEventArgs e)
@@ -593,6 +616,9 @@ namespace Pronome
         {
             if (IsListening)
             {
+                Metronome.GetInstance().UpdateElapsedQuarters();
+                var x = Metronome.GetInstance().ElapsedQuarters;
+
                 Taps.AddLast(Metronome.GetInstance().ElapsedQuarters);
             }
         }

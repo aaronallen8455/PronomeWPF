@@ -127,7 +127,7 @@ namespace Pronome.Editor
         public bool IsDraggingCell;
         public double CellDragAnchor = -1;
 
-        public Row(Layer layer)
+        public Row(Layer layer, bool ignoreScalingSetting = false)
         {
             Layer = layer;
             Index = Metronome.GetInstance().Layers.IndexOf(Layer);
@@ -143,7 +143,7 @@ namespace Pronome.Editor
             Background.Fill = BackgroundBrush;
             Canvas.Children.Add(Sizer);
 
-            FillFromBeatCode(layer.ParsedString);
+            FillFromBeatCode(layer.ParsedString, ignoreScalingSetting);
 
             BaseElement = EditorWindow.Instance.Resources["rowBaseElement"] as Grid;
 
@@ -165,7 +165,7 @@ namespace Pronome.Editor
         /// Generate the UI from a beat code string. Sets the BeatCode to the input string.
         /// </summary>
         /// <param name="beatCode"></param>
-        public void FillFromBeatCode(string beatCode)
+        public void FillFromBeatCode(string beatCode, bool ignoreScalingSetting = false)
         {
             OpenMultFactor = new Stack<double>();
             OpenMultFactor.Push(1);
@@ -173,7 +173,7 @@ namespace Pronome.Editor
             OpenMultFactorValue = new Stack<string>();
             OpenMultFactorValue.Push("1");
 
-            ParsedBeatResult result = ParseBeat(beatCode);
+            ParsedBeatResult result = ParseBeat(beatCode, ignoreScalingSetting);
             Cells = result.Cells;
             SetBackground(result.Duration);
             // set the new beatcode string
@@ -201,7 +201,7 @@ namespace Pronome.Editor
         /// </summary>
         /// <param name="beat"></param>
         /// <returns></returns>
-        protected ParsedBeatResult ParseBeat(string beat)
+        protected ParsedBeatResult ParseBeat(string beat, bool ignoreScalingSetting = false)
         {
             CellList cells = new CellList();
 
@@ -252,11 +252,20 @@ namespace Pronome.Editor
 
                 if (repIndex == -1 && OpenRepeatGroups.Any())
                 {
-                    OpenRepeatGroups.Peek().Cells.AddLast(cell);
+                    foreach (RepeatGroup rep in OpenRepeatGroups)
+                    {
+                        rep.Cells.AddLast(cell);
+                    }
+
+                    OpenRepeatGroups.Peek().ExclusiveCells.AddLast(cell);
                 }
                 if (multIndex == -1 && OpenMultGroups.Any())
                 {
-                    OpenMultGroups.Peek().Cells.AddLast(cell);
+                    foreach (MultGroup mult in OpenMultGroups)
+                    {
+                        mult.Cells.AddLast(cell);
+                    }
+                    OpenMultGroups.Peek().ExclusiveCells.AddLast(cell);
                 }
 
                 while (multIndex != -1 || repIndex != -1)
@@ -265,7 +274,12 @@ namespace Pronome.Editor
                     if (repIndex != -1 && (multIndex == -1 || repIndex < multIndex))
                     {
                         OpenRepeatGroups.Push(new RepeatGroup() { Row = this });
-                        OpenRepeatGroups.Peek().Cells.AddLast(cell);
+
+                        foreach (RepeatGroup rep in OpenRepeatGroups)
+                        {
+                            rep.Cells.AddLast(cell);
+                        }
+                        OpenRepeatGroups.Peek().ExclusiveCells.AddLast(cell);
 
                         OpenRepeatGroups.Peek().Position = position;
 
@@ -282,12 +296,17 @@ namespace Pronome.Editor
                             FactorValue = MultFactors[mIndex],
                             Factor = BeatCell.Parse(MultFactors[mIndex++])
                         });
-                        OpenMultGroups.Peek().Cells.AddLast(cell);
+
+                        foreach (MultGroup mult in OpenMultGroups)
+                        {
+                            mult.Cells.AddLast(cell);
+                        }
+                        OpenMultGroups.Peek().ExclusiveCells.AddLast(cell);
 
                         OpenMultGroups.Peek().Position = position;
 
                         // track the factor if we need to scale.
-                        if (UserSettings.DrawMultToScaleStatic)
+                        if (ignoreScalingSetting || UserSettings.DrawMultToScaleStatic)
                         {
                             OpenMultFactor.Push(OpenMultFactor.Peek() * OpenMultGroups.Peek().Factor);
                             OpenMultFactorValue.Push(BeatCell.MultiplyTerms(OpenMultFactorValue.Peek(), OpenMultGroups.Peek().FactorValue));
@@ -333,7 +352,7 @@ namespace Pronome.Editor
 
                     ParsedBeatResult pbr = ResolveReference(refIndex, position);
                     
-                    if (UserSettings.DrawMultToScaleStatic)
+                    if (ignoreScalingSetting || UserSettings.DrawMultToScaleStatic)
                     {
                         pbr.Duration *= OpenMultFactor.Peek();
                     }
@@ -372,7 +391,7 @@ namespace Pronome.Editor
 
                         double duration = BeatCell.Parse(bpm);
 
-                        if (UserSettings.DrawMultToScaleStatic)
+                        if (ignoreScalingSetting || UserSettings.DrawMultToScaleStatic)
                         {
                             duration *= OpenMultFactor.Peek();
                         }
@@ -405,7 +424,7 @@ namespace Pronome.Editor
                     if (multIndex > -1 && (multIndex < repIndex || repIndex == -1))
                     {
                         // close mult group
-                        if (UserSettings.GetSettings().DrawMultToScale)
+                        if (ignoreScalingSetting || UserSettings.GetSettings().DrawMultToScale)
                         {
                             OpenMultFactor.Pop();
                             OpenMultFactorValue.Pop();
@@ -678,7 +697,7 @@ namespace Pronome.Editor
                         {
                             // open repeat group
                             // is single cell?
-                            if (((RepeatGroup)group).Cells.Count != 1)
+                            if (((RepeatGroup)group).ExclusiveCells.Count != 1)
                             {
                                 result.Append('[');
                             }
@@ -695,7 +714,7 @@ namespace Pronome.Editor
                         {
                             var rg = group as RepeatGroup;
                             // close repeat group
-                            if (rg.Cells.Count != 1)
+                            if (rg.ExclusiveCells.Count != 1)
                             {
                                 result.Append(']');
                                 // multi cell

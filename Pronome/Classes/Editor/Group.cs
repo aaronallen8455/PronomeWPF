@@ -14,9 +14,15 @@ namespace Pronome.Editor
         public Row Row;
 
         /// <summary>
-        /// The cells belonging to this group. Does not include cells from nested groups, only the direct members.
+        /// The cells belonging to this group as well as any nested groups
         /// </summary>
         public LinkedList<Cell> Cells = new LinkedList<Cell>();
+
+        /// <summary>
+        /// The cells belonging to this group. Does not include cells from nested groups, only the direct members.
+        /// </summary>
+        public LinkedList<Cell> ExclusiveCells = new LinkedList<Cell>();
+
         protected double _position;
         /// <summary>
         /// The left offset of the group in BPM. Setting will adjust rect position.
@@ -227,9 +233,12 @@ namespace Pronome.Editor
         /// Gets the ltm with mult factor.
         /// </summary>
         /// <returns>The ltm with mult factor.</returns>
-        public string GetLtmWithMultFactor()
+        public string GetLtmWithMultFactor(bool ignoreScaleSetting = false)
         {
-            if (!UserSettings.GetSettings().DrawMultToScale) return LastTermModifier;
+            if (string.IsNullOrEmpty(LastTermModifier) || (!ignoreScaleSetting && !UserSettings.GetSettings().DrawMultToScale))
+            {
+                return LastTermModifier;
+            }
 
             if (string.IsNullOrEmpty(MultedLtm))
             {
@@ -239,11 +248,126 @@ namespace Pronome.Editor
             return MultedLtm;
         }
 
-        public string GetValueDividedByMultFactor(string value)
+        public string GetValueDividedByMultFactor(string value, bool ignoreScaleSetting = false)
         {
-            if (!UserSettings.GetSettings().DrawMultToScale) return value;
+            if (string.IsNullOrEmpty(value) || (!ignoreScaleSetting && !UserSettings.GetSettings().DrawMultToScale))
+            {
+                return value;
+            }
 
             return BeatCell.DivideTerms(value, MultFactor);
+        }
+
+        /// <summary>
+        /// Resets the multed ltm, so that it will be recalculated against a new value.
+        /// </summary>
+        public void ResetMultedLtm()
+        {
+            MultedLtm = string.Empty;
+        }
+
+        /// <summary>
+        /// Produce a deep copy of this group and it's components.
+        /// </summary>
+        /// <returns>The copy.</returns>
+        public Group DeepCopy()
+        {
+            return DeepCopy(this);
+        }
+
+        /// <summary>
+        /// Produce a deep copy of a group and it's components
+        /// </summary>
+        /// <returns>The copy.</returns>
+        /// <param name="group">Group.</param>
+        public static Group DeepCopy(Group group)
+        {
+            Group copy = null;
+
+            if (group is RepeatGroup)
+            {
+                var r = group as RepeatGroup;
+
+                copy = new RepeatGroup()
+                {
+                    LastTermModifier = r.LastTermModifier,
+                    Duration = r.Duration,
+                    MultFactor = r.MultFactor,
+                    Position = r.Position,
+                    Row = r.Row,
+                    Times = r.Times
+                };
+            }
+            else if (group is MultGroup)
+            {
+                var m = group as MultGroup;
+
+                copy = new MultGroup()
+                {
+                    Factor = m.Factor,
+                    FactorValue = m.FactorValue,
+                    Duration = m.Duration,
+                    Position = m.Position,
+                    Row = m.Row
+                };
+            }
+
+            Dictionary<Group, Group> copiedGroups = new Dictionary<Group, Group>();
+
+            bool first = true;
+            foreach (Cell c in group.Cells)
+            {
+                IEnumerable<(bool, Group)> nested = c.GroupActions;
+
+                // the first cell, we skip any opening groups up to and including the target
+                if (first)
+                {
+                    nested = nested.SkipWhile(x => x.Item2 != group).Skip(1);
+
+                    first = false;
+                }
+
+                // only clone a group that is opening
+                nested = nested.SkipWhile(x => !x.Item1);
+                if (nested.Any())
+                {
+                    (bool _, Group g) = nested.First();
+                    Group nestedCopy = DeepCopy(g);
+
+                    copy.Cells = new LinkedList<Cell>(copy.Cells.Concat(nestedCopy.Cells));
+                }
+                else
+                {
+                    Cell copyCell = new Cell(group.Row)
+                    {
+                        Duration = c.Duration,
+                        MultFactor = c.MultFactor,
+                        Position = c.Position,
+                        Source = c.Source,
+                        Value = c.Value,
+                        Reference = c.Reference,
+                        IsBreak = c.IsBreak,
+                    };
+
+                    // add the group to the cell's collection
+                    if (copy is RepeatGroup)
+                    {
+                        copyCell.RepeatGroups.AddLast(copy as RepeatGroup);
+                    }
+                    else if (copy is MultGroup)
+                    {
+                        copyCell.MultGroups.AddLast(copy as MultGroup);
+                    }
+
+                    copy.ExclusiveCells.AddLast(copyCell);
+                    copy.Cells.AddLast(copyCell);
+                }
+            }
+
+            copy.ExclusiveCells.First.Value.GroupActions.AddFirst((true, copy));
+            copy.ExclusiveCells.Last.Value.GroupActions.AddLast((false, copy));
+
+            return copy;
         }
     }
 }

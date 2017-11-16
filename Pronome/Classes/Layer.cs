@@ -131,6 +131,11 @@ namespace Pronome
             Metronome.GetInstance().AddLayer(this);
         }
 
+        /// <summary>
+        /// Process the given beatCode to set the layer's rhythm
+        /// </summary>
+        /// <param name="beatCode"></param>
+        /// <param name="parsedReferencers"></param>
         public void ProcessBeatCode(string beatCode, HashSet<int> parsedReferencers = null)
         {
             BeatCell[] cells = Parse(beatCode);
@@ -193,6 +198,14 @@ namespace Pronome
                         copyLayer.ProcessBeatCode(layer.ParsedString, parsedReferencers);
                     }
                 }
+            }
+        }
+
+        public void SetBeatCode(string beatCode, string offset)
+        {
+            if (beatCode != ParsedString)
+            {
+                UI.SetOffsetValue(offset);
             }
         }
 

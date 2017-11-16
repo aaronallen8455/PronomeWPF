@@ -96,7 +96,7 @@ namespace Pronome
         }
 
         /**<summary>Play the beat.</summary>*/
-        private void playButton_Click(object sender, RoutedEventArgs e)
+        public void playButton_Click(object sender, RoutedEventArgs e)
         {
             if (Metronome.GetInstance().Play())
             {

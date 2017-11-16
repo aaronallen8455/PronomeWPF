@@ -316,10 +316,13 @@ namespace Pronome.Editor
         /// Gets the string value with mult factors applied.
         /// </summary>
         /// <returns>The value with mult factors.</returns>
-        public string GetValueWithMultFactors()
+        public string GetValueWithMultFactors(bool ignoreScaleSetting = false)
         {
             // don't operate if scaling is disabled
-            if (!UserSettings.GetSettings().DrawMultToScale) return Value;
+            if (string.IsNullOrEmpty(MultFactor) || (!ignoreScaleSetting && !UserSettings.GetSettings().DrawMultToScale))
+            {
+                return Value;
+            }
 
             if (string.IsNullOrEmpty(MultipliedValue))
             {
@@ -335,12 +338,119 @@ namespace Pronome.Editor
         /// </summary>
         /// <returns>The value divided by mult factors.</returns>
         /// <param name="value">Value.</param>
-        public string GetValueDividedByMultFactors(string value)
+        public string GetValueDividedByMultFactors(string value, bool ignoreScaleSetting = false)
         {
             // don't operate if scaling is disabled
-            if (!UserSettings.GetSettings().DrawMultToScale) return value;
+            if (string.IsNullOrEmpty(MultFactor) || (!ignoreScaleSetting && !UserSettings.GetSettings().DrawMultToScale))
+            {
+                return value;
+            }
 
             return BeatCell.DivideTerms(value, MultFactor);
+        }
+
+        /// <summary>
+        /// Resets the multiplied value so that it will be recalculated against a new cell value.
+        /// </summary>
+        public void ResetMultipliedValue()
+        {
+            MultipliedValue = string.Empty;
+        }
+
+        static public LinkedList<Cell> DeepCopyCells(IEnumerable<Cell> cells, Group noCopyGroup = null)
+        {
+            var copiedCells = new LinkedList<Cell>();
+            var oldToNew = new Dictionary<Group, Group>();
+
+            foreach (Cell ce in cells)
+            {
+                Cell copy = new Cell(null)
+                {
+                    Duration = ce.Duration,
+                    Source = ce.Source,
+                    IsBreak = ce.IsBreak,
+                    Value = ce.Value
+                };
+
+                foreach (var kp in oldToNew)
+                {
+                    // add cell to each containing group
+                    kp.Value.ExclusiveCells.AddLast(copy);
+
+                    // add the group to the cell
+                    if (kp.Key is RepeatGroup)
+                    {
+                        copy.RepeatGroups.AddLast((RepeatGroup)kp.Value);
+                    }
+                    else if (kp.Key is MultGroup)
+                    {
+                        copy.MultGroups.AddLast((MultGroup)kp.Value);
+                    }
+                }
+
+                // copy the groups
+                foreach ((bool isStart, Group oldGroup) in ce.GroupActions)
+                {
+                    if (oldGroup == noCopyGroup) continue;
+
+                    if (isStart)
+                    {
+                        // start of group
+                        Group newGroup = null;
+
+                        if (oldGroup is RepeatGroup)
+                        {
+                            newGroup = new RepeatGroup()
+                            {
+                                Times = ((RepeatGroup)oldGroup).Times,
+                                Duration = oldGroup.Duration,
+                                LastTermModifier = ((RepeatGroup)oldGroup).LastTermModifier,
+                                Position = oldGroup.Position,
+                                MultFactor = ((RepeatGroup)oldGroup).MultFactor
+                            };
+
+                            copy.RepeatGroups.AddLast((RepeatGroup)newGroup);
+                        }
+                        else if (oldGroup is MultGroup)
+                        {
+                            newGroup = new MultGroup()
+                            {
+                                Duration = oldGroup.Duration,
+                                Factor = (oldGroup as MultGroup).Factor,
+                                FactorValue = ((MultGroup)oldGroup).FactorValue,
+                                Position = oldGroup.Position
+                            };
+
+                            copy.MultGroups.AddLast((MultGroup)newGroup);
+                        }
+                        newGroup.ExclusiveCells.AddLast(copy);
+
+                        copy.GroupActions.AddLast((true, newGroup));
+
+                        oldToNew.Add(oldGroup, newGroup);
+                    }
+                    else
+                    {
+                        // end of group
+                        copy.GroupActions.AddLast((false, oldToNew[oldGroup]));
+
+                        if (oldGroup is RepeatGroup)
+                        {
+                            copy.RepeatGroups.AddLast((RepeatGroup)oldToNew[oldGroup]);
+                        }
+                        else if (oldGroup is MultGroup)
+                        {
+                            copy.MultGroups.AddLast((MultGroup)oldToNew[oldGroup]);
+                        }
+
+                        oldToNew.Remove(oldGroup);
+                    }
+                }
+
+                copiedCells.AddLast(copy);
+            }
+
+            return copiedCells;
         }
 
         public class Selection
