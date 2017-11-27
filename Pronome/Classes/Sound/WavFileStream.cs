@@ -34,8 +34,6 @@ namespace Pronome
         /**<summary>The byte rate for this stream.</summary>*/
         public int BytesPerSec { get; set; }
 
-        public bool ProduceBytes { get; set; } = true;
-
         public double SampleRemainder { get; set; }
 
         Stream rawStream;
@@ -475,18 +473,10 @@ namespace Pronome
 
 
                 // read from file if producing
-                if (ProduceBytes)
-                {
-                    if (!Layer.IsMuted && !(Pronome.Layer.SoloGroupEngaged && !Layer.IsSoloed) && !(SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration == 0))
-                        result = sourceStream.Read(buffer, offset + bytesCopied, chunkSize);
-                    else // progress stream silently
-                        result2 = sourceStream.Read(new byte[buffer.Length], offset + bytesCopied, chunkSize);
-                }
-                else
-                {
-                    result = chunkSize;
-                }
-
+                if (!Layer.IsMuted && !(Pronome.Layer.SoloGroupEngaged && !Layer.IsSoloed) && !(SoundSource.HiHatStatus == InternalSource.HiHatStatuses.Open && CurrentHiHatDuration == 0))
+                    result = sourceStream.Read(buffer, offset + bytesCopied, chunkSize);
+                else // progress stream silently
+                    result2 = sourceStream.Read(new byte[buffer.Length], offset + bytesCopied, chunkSize);
             
                 if (result == 0) // silence
                 {

@@ -59,7 +59,5 @@ namespace Pronome
         WaveFormat WaveFormat { get; }
 
         void MultiplyByteInterval();
-
-        bool ProduceBytes { get; set; }
     }
 }

@@ -18,6 +18,8 @@ namespace Pronome
         /**<summary>Test for whether this is a pitch source.</summary>*/
         public bool IsPitch { get { return true; } }
 
+        protected IEnumerator<float> SinWave;
+
         // Const Math
         private const double TwoPi = 2 * Math.PI;
 
@@ -45,12 +47,10 @@ namespace Pronome
         /**<summary>The layer that this audiosource is used in.</summary>*/
         public Layer Layer { get; set; }
 
-        public bool ProduceBytes { get; set; } = true;
-
         public double SampleRemainder { get; set; }
 
         /**<summary>Used in sine wave generation.</summary>*/
-        private int nSample;
+        private float nSample;
 
         public ISoundSource SoundSource { get; set; }
 
@@ -395,7 +395,7 @@ namespace Pronome
         protected long previousByteInterval;
         protected long ByteInterval;
 
-        double multiple; // used in sine wave calculation
+        double WaveLength = 1; // used in sine wave calculation
 
         double sampleValue = 0;
 
@@ -437,32 +437,45 @@ namespace Pronome
                     Frequency = GetNextFrequency();
                     ByteInterval = GetNextInterval();
                     // handle volume and frequency consts if producing
-                    //if (ProduceBytes)
-                    //{
-                        if (!silentIntvlSilent && !currentlyMuted && Frequency != 0)
+
+                    if (!silentIntvlSilent && !currentlyMuted && Frequency != 0)
+                    {
+                        // what should nsample be to create a smooth transition?
+                        if (sampleValue != 0 && Gain != 0)
                         {
-                            // what should nsample be to create a smooth transition?
-                            if (sampleValue != 0 && Gain != 0)
+                            double wavePosition = (float)((nSample % WaveLength) / WaveLength);
+
+                            if (Frequency != curFreq)
+                                WaveLength = waveFormat.SampleRate / Frequency;
+
+                            nSample = (float)(Math.Asin(sampleValue / Volume) / TwoPi * WaveLength);
+
+                            // reposition to correct quadrant of wave
+                            if (wavePosition > .25 && wavePosition <= .5)
                             {
-                                if (Frequency != curFreq)
-                                    multiple = TwoPi * Frequency / waveFormat.SampleRate;
-
-                                nSample = (int)(Math.Asin(sampleValue / Volume) / multiple) + 1;
+                                nSample += (float)(WaveLength / 4 - nSample) * 2;
                             }
-                            else nSample = 0;
+                            else if (wavePosition > .5 && wavePosition <= .75)
+                            {
+                                nSample -= (float)(WaveLength / 4 + nSample) * 2;
+                            }
+                        }
+                        else nSample = 0;
 
-                            freqChanged = curFreq != Frequency;
-                            Gain = Volume;
-                            if (gainStep != newGainStep) // set new gainstep if volume was changed
-                                gainStep = newGainStep;
-                        }
-                        else
-                        {
-                            Frequency = curFreq; //retain frequency if random/interval muting occurs.
-                            // if first note is getting muted, set gain to 0
-                            if (Gain == Volume) Gain = 0;
-                        }
-                    //}
+                        SinWave = new SinWaveGenerator(nSample, Frequency).GetEnumerator();
+                        SinWave.MoveNext();
+
+                        freqChanged = curFreq != Frequency;
+                        Gain = Volume;
+                        if (gainStep != newGainStep) // set new gainstep if volume was changed
+                            gainStep = newGainStep;
+                    }
+                    else
+                    {
+                        Frequency = curFreq; //retain frequency if random/interval muting occurs.
+                        // if first note is getting muted, set gain to 0
+                        if (Gain == Volume) Gain = 0;
+                    }
                 }
 
 
@@ -481,19 +494,18 @@ namespace Pronome
                     }
                     else
                     {
-                        // Sin Generator
-                        if (freqChanged)
-                        {
-                            multiple = TwoPi * Frequency / waveFormat.SampleRate; // reuse this value
-                            freqChanged = false;
-                        }
+                        //// Sin Generator
+                        //if (freqChanged)
+                        //{
+                        //    WaveLength = TwoPi * Frequency / waveFormat.SampleRate; // reuse this value
+                        //    freqChanged = false;
+                        //}
+                        //
+                        //sampleValue = Gain * Math.Sin(nSample * WaveLength);
+                        sampleValue = SinWave.Current * Gain;
+                        SinWave.MoveNext();
 
-                        if (ProduceBytes)
-                        {
-                            sampleValue = Gain * Math.Sin(nSample * multiple);
-
-                            nSample++;
-                        }
+                        nSample++;
 
                     }
                     Gain -= gainStep;
