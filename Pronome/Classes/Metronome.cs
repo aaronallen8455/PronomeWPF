@@ -342,10 +342,19 @@ namespace Pronome
                 }
 
                 // start playing
-                Player.Play();
-                PlayState = State.Playing;
+                try
+                {
+                    Player.Play();
 
-                return true;
+                    PlayState = State.Playing;
+                    return true;
+                }
+                catch (NAudio.MmException e)
+                {
+                    TaskDialog.ShowMessage(Application.Current.MainWindow, "No Device",
+                        $"No audio device found!", "", null, null, null,
+                        TaskDialogCommonButtons.Close, VistaTaskDialogIcon.Error, VistaTaskDialogIcon.None);
+                }
             }
 
             return false;
