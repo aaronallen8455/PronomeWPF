@@ -193,6 +193,11 @@ namespace Pronome.Editor
         /// </summary>
         public string MultFactor;
 
+        /// <summary>
+        /// If this rep group has a break cell, this is a ref to it. Otherwise, it's null.
+        /// </summary>
+        public Cell BreakCell = null;
+
         protected string MultedLtm;
 
         public RepeatGroup()

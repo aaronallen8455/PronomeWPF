@@ -460,7 +460,7 @@ namespace Pronome.Editor
                         // close rep group
 
                         RepeatGroup rg = OpenRepeatGroups.Pop();
-                        rg.Duration = position - rg.Position - OpenRepeatGroups.Select(x => x.Position).Sum();
+                        rg.Duration = position - rg.Position;// - OpenRepeatGroups.Select(x => x.Position).Sum();
                         Match mtch = Regex.Match(chunk, @"](\d+)");
                         if (mtch.Length == 0)
                         {
@@ -506,8 +506,9 @@ namespace Pronome.Editor
                 }
 
                 // check if its a break, |
-                if (chunk.Last() == '|')
+                if (chunk.Last() == '|' && OpenRepeatGroups.Any())
                 {
+                    OpenRepeatGroups.Peek().BreakCell = cell;
                     cell.IsBreak = true;
                 }
             }
@@ -831,18 +832,32 @@ namespace Pronome.Editor
             {
                 rg.Canvas.Children.Add(cell.Rectangle);
             }
+
+            double breakOff = 0;
+            // subtract the break position, if exists
+            if (rg.BreakCell != null)
+            {
+                // find the length of the segment after the break, which needs to be subtracted
+                breakOff = rg.Duration - (rg.BreakCell.Position + rg.BreakCell.Duration - rg.Position);
+            }
+
             // get size of the host rects
             double hostWidth = (rg.Duration - (string.IsNullOrEmpty(cell.Reference) ? cell.ActualDuration : 0)) * EditorWindow.Scale * EditorWindow.BaseFactor;
             if (string.IsNullOrEmpty(cell.Reference))
             {
                 hostWidth += (double)EditorWindow.Instance.Resources["cellWidth"];
             }
+
             // append duplicates of sub-canvas
             for (int i = 0; i < rg.Times - 1; i++)
             {
                 VisualBrush duplicate = new VisualBrush(rg.Canvas);
                 var dupHost = EditorWindow.Instance.Resources["repeatRectangle"] as Rectangle;
                 dupHost.Width = hostWidth;
+                if (i == rg.Times - 1)
+                {
+                    dupHost.Width -= breakOff * EditorWindow.Scale * EditorWindow.BaseFactor;
+                }
                 // fill with dupe content
                 dupHost.Fill = duplicate;
                 // do offsets
@@ -862,6 +877,9 @@ namespace Pronome.Editor
                 position += rg.Duration;
             }
 
+            // account for portion cut off by a break cell
+            position -= breakOff;
+            
             double ltmDur = BeatCell.Parse(rg.LastTermModifier);
 
             if (UserSettings.DrawMultToScaleStatic)
