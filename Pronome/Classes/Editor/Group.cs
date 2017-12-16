@@ -198,6 +198,11 @@ namespace Pronome.Editor
         /// </summary>
         public Cell BreakCell = null;
 
+        /// <summary>
+        /// The duration expanded to include rep times and break point. Does not include the LTM
+        /// </summary>
+        public double FullDuration;
+
         protected string MultedLtm;
 
         public RepeatGroup()

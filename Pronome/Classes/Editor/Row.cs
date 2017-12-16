@@ -505,8 +505,8 @@ namespace Pronome.Editor
                     }
                 }
 
-                // check if its a break, |
-                if (chunk.Last() == '|' && OpenRepeatGroups.Any())
+                // check if its a break, |, and that current rep group doesn't have a break assigned
+                if (chunk.Last() == '|' && OpenRepeatGroups.Any() && OpenRepeatGroups.Peek().BreakCell == null)
                 {
                     OpenRepeatGroups.Peek().BreakCell = cell;
                     cell.IsBreak = true;
@@ -809,8 +809,6 @@ namespace Pronome.Editor
         /// <returns></returns>
         protected double BuildRepeatGroup(Cell cell, RepeatGroup rg, Stack<RepeatGroup> openRepeatGroups, double position, double multGroupFactor, string multGroupFactorValue, bool addToCanvas = true)
         {
-            //double position = 0;
-            RepeatGroups.AddLast(rg);
             // render
             Canvas.Children.Add(rg.Rectangle);
             // add the child canvas
@@ -887,6 +885,8 @@ namespace Pronome.Editor
                 ltmDur *= multGroupFactor;
             }
             rg.MultFactor = multGroupFactorValue;
+            
+            rg.FullDuration = position - rg.Position;
 
             position += ltmDur;
 
