@@ -87,6 +87,7 @@ namespace Pronome.Editor
                     {
                         cell.MultGroups.AddLast(mg);
                         mg.Cells.AddLast(cell);
+                        
                     }
                     else break;
                 }
@@ -101,6 +102,7 @@ namespace Pronome.Editor
                         cell.RepeatGroups.AddLast(rg);
                         //rg.Cells.AddLast(cell);
                         int count = 0;
+
                         foreach (Cell c in rg.Cells)
                         {
                             // add in position if it won't be last
@@ -115,9 +117,13 @@ namespace Pronome.Editor
                         {
                             // need to resize the host rects because the cell we're adding is the last in the rep group
                             // because the size of the host rects does not include the duration of a cell, just the rectangle elements.
-                            foreach (Rectangle rect in rg.HostRects)
+                            if (rg.BreakCell == null)
                             {
-                                rect.Width = rect.Width + (rg.Cells.Last.Value.Duration * EditorWindow.Scale * EditorWindow.BaseFactor);
+                                // if there's a break cell, we don't resize
+                                foreach (Rectangle rect in rg.HostRects)
+                                {
+                                    rect.Width = rect.Width + (rg.Cells.Last.Value.Duration * EditorWindow.Scale * EditorWindow.BaseFactor);
+                                }
                             }
                             rg.Cells.AddLast(cell);
                         }
@@ -133,6 +139,13 @@ namespace Pronome.Editor
 
             if (cell.RepeatGroups.Any())
             {
+                // add the group actions to the cell if applicable
+                foreach (var tuple in below.GroupActions.Where(x => !x.Item1 && x.Item2.Cells.Contains(cell)).ToList())
+                {
+                    below.GroupActions.Remove(tuple);
+                    cell.GroupActions.AddLast(tuple);
+                }
+
                 return true;
             }
 
