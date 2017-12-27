@@ -731,7 +731,14 @@ namespace Pronome.Editor
                             else
                             {
                                 // single cell
-                                result.Append($"({rg.Times.ToString()})");
+                                if (!string.IsNullOrEmpty(rg.LastTermModifier))
+                                {
+                                    result.Append($"({rg.Times.ToString()}){rg.LastTermModifier}");
+                                }
+                                else
+                                {
+                                    result.Append($"({rg.Times.ToString()})");
+                                }
                             }
                         }
                         else

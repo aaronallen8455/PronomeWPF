@@ -349,14 +349,14 @@ namespace Pronome.Editor
 
                     // a running total of the LTM factor (start with innermost nested group)
                     var sequence = Cell.SelectedCells.LastCell.RepeatGroups
-                        .Where(x => !cell.RepeatGroups.Contains(x))
+                        .Where(x => !cell.RepeatGroups.Contains(x) && x.Cells.First.Value != Cell.SelectedCells.LastCell)
                         .Reverse()
                         .Select(x => x.Times);
                     int ltmFactor = sequence.Any() ? sequence.Aggregate((x, y) => x * y) : 1;
 
                     foreach (Cell c in Row.Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != cell).Where(x => string.IsNullOrEmpty(x.Reference)))
                     {
-                        AddCellValueToAccumulator(c, cell, val, ref ltmFactor);
+                        AddCellValueToAccumulator(c, Cell.SelectedCells.LastCell, cell, val, ref ltmFactor);
 
                         // below is not directly included if we are not adding to an LTM
                         //if (repWithLtmToMod == null && c == below) break;
@@ -729,7 +729,16 @@ namespace Pronome.Editor
             }
         }
 
-        protected void AddCellValueToAccumulator(Cell target, Cell newCell, StringBuilder accumulator, ref int ltmFactor)
+        /// <summary>
+        /// Add a cell's value to the accumulator the correct number of times
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="accumulator"></param>
+        /// <param name="ltmFactor"></param>
+        /// <param name="recursing"></param>
+        protected void AddCellValueToAccumulator(Cell target, Cell start, Cell end, StringBuilder accumulator, ref int ltmFactor, bool recursing = false)
         {
             // subtract each value from the total
             if (!target.RepeatGroups.Any())
@@ -738,37 +747,27 @@ namespace Pronome.Editor
                 return;
             }
 
-            foreach ((bool opens, Group rg) in target.GroupActions.Where(x => x.Item2 is RepeatGroup && !newCell.RepeatGroups.Contains(x.Item2)))
-            {
-                if (!opens)
-                {
-                    ltmFactor /= ((RepeatGroup)rg).Times;
-
-                    // subtract out the LTM (if group doesn't contain the end point)
-                    if (!string.IsNullOrEmpty((rg as RepeatGroup).LastTermModifier))
-                    {
-                        accumulator.Append(
-                            BeatCell.MultiplyTerms(
-                                ((RepeatGroup)rg).GetLtmWithMultFactor(), ltmFactor)).Append('+');
-                    }
-
-                }
-                else if (target != Cell.SelectedCells.LastCell && !newCell.RepeatGroups.Contains(rg))
-                {
-                    ltmFactor *= ((RepeatGroup)rg).Times;
-                }
-            }
-
+            int timesDiff = 1;
+            int ltmTimesDiff = 1;
+            bool isBehind = target.RepeatGroups.First.Value.Position + target.RepeatGroups.First.Value.FullDuration < start.Position;
+            bool contains = !isBehind;
             int times = 1;
-            foreach (RepeatGroup rg in target.RepeatGroups.Reverse()) // iterate from innermost group
+            foreach (RepeatGroup rg in target.RepeatGroups.TakeWhile(x => !end.RepeatGroups.Contains(x))) // iterate from innermost group
             {
-
-                // don't include a rep group if the end point is included in it.
-                if (newCell.RepeatGroups.Contains(rg))
+                if (recursing)
                 {
-                    //val.Append("+0").Append(BeatCell.Invert(c.GetValueWithMultFactors()));
-
-                    break;
+                    if (contains && rg.ExclusiveCells.Contains(start))
+                    {
+                        // this is the times to subtract because they occur before the starting point.
+                        timesDiff = times;
+                    }
+                    else if (isBehind && rg.Cells.Contains(start))
+                    {
+                        // subtract a full cycle if this rep group exists all behind the target
+                        ltmTimesDiff = timesDiff = times;
+                        ltmTimesDiff /= target.RepeatGroups.First().Times;
+                        isBehind = false;
+                    }
                 }
 
                 // break cell(s) may decrease the factor
@@ -781,14 +780,47 @@ namespace Pronome.Editor
                     times *= rg.Times;
                 }
 
-                // account for preceding cells if we are starting mid-way throught a rep group
-                if (target == Cell.SelectedCells.LastCell)
+                if (contains && recursing && rg.ExclusiveCells.Contains(start))
                 {
-                    foreach (Cell c in rg.ExclusiveCells.TakeWhile(x => x != target))
+                    ltmTimesDiff = times;
+                    ltmTimesDiff /= target.RepeatGroups.First().Times;
+                }
+            }
+
+            // handle LTMs
+            foreach ((bool opens, Group rg) in target.GroupActions.Where(x => x.Item2 is RepeatGroup && !end.RepeatGroups.Contains(x.Item2)))
+            {
+                if (!opens)
+                {
+                    ltmFactor /= ((RepeatGroup)rg).Times;
+
+                    // subtract out the LTM (if group doesn't contain the end point)
+                    if (!string.IsNullOrEmpty((rg as RepeatGroup).LastTermModifier))
                     {
-                        rg.Times--; // we are only counting the ghosted cells
-                        AddCellValueToAccumulator(c, newCell, accumulator, ref ltmFactor);
-                        rg.Times++;
+                        accumulator.Append(
+                            BeatCell.MultiplyTerms(
+                                ((RepeatGroup)rg).GetLtmWithMultFactor(), ltmFactor - (recursing ? ltmTimesDiff : 0))).Append('+');
+                    }
+                }
+                else if (target != start && !end.RepeatGroups.Contains(rg))
+                {
+                    ltmFactor *= ((RepeatGroup)rg).Times;
+                }
+            }
+
+            // account for preceding cells if we are starting mid-way through a rep group
+            if (recursing) times -= timesDiff;
+            else if (target == start)
+            {
+                // find outermost rep group that doesn't contain the new cell
+                RepeatGroup rg = target.RepeatGroups.Reverse().SkipWhile(x => end.RepeatGroups.Contains(x)).FirstOrDefault();
+
+                if (rg != null)
+                {
+                    int ltmFactorR = 1;//rg.Cells.First.Value == target ? 1 : rg.Times;
+                    foreach (Cell c in rg.Cells.TakeWhile(x => x.Position < target.Position))
+                    {
+                        AddCellValueToAccumulator(c, start, end, accumulator, ref ltmFactorR, true);
                     }
                 }
             }
