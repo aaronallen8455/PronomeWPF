@@ -357,68 +357,6 @@ namespace Pronome.Editor
                     foreach (Cell c in Row.Cells.SkipWhile(x => x != Cell.SelectedCells.LastCell).TakeWhile(x => x != cell).Where(x => string.IsNullOrEmpty(x.Reference)))
                     {
                         AddCellValueToAccumulator(c, Cell.SelectedCells.LastCell, cell, val, ref ltmFactor);
-
-                        // below is not directly included if we are not adding to an LTM
-                        //if (repWithLtmToMod == null && c == below) break;
-
-                        //// subtract each value from the total
-                        //if (!c.RepeatGroups.Any())
-                        //{
-                        //    val.Append(c.GetValueWithMultFactors()).Append('+');
-                        //    continue;
-                        //}
-                        //
-                        //foreach ((bool opens, Group rg) in c.GroupActions.Where(x => x.Item2 is RepeatGroup && !cell.RepeatGroups.Contains(x.Item2)))
-                        //{
-                        //    if (!opens)
-                        //    {
-                        //        ltmFactor /= ((RepeatGroup)rg).Times;
-                        //
-                        //        // subtract out the LTM (if group doesn't contain the end point)
-                        //        if (!string.IsNullOrEmpty((rg as RepeatGroup).LastTermModifier))
-                        //        {
-                        //            val.Append(
-                        //                BeatCell.MultiplyTerms(
-                        //                    ((RepeatGroup)rg).GetLtmWithMultFactor(), ltmFactor)).Append('+');
-                        //        }
-                        //
-                        //    }
-                        //    else if (c != Cell.SelectedCells.LastCell && !cell.RepeatGroups.Contains(rg))
-                        //    {
-                        //        ltmFactor *= ((RepeatGroup)rg).Times;
-                        //    }
-                        //}
-                        //    
-                        //int times = 1;
-                        //foreach (RepeatGroup rg in c.RepeatGroups.Reverse()) // iterate from innermost group
-                        //{
-                        //
-                        //    // don't include a rep group if the end point is included in it.
-                        //    if (cell.RepeatGroups.Contains(rg))
-                        //    {
-                        //        //val.Append("+0").Append(BeatCell.Invert(c.GetValueWithMultFactors()));
-                        //            
-                        //        break;
-                        //    }
-                        //
-                        //    // break cell(s) may decrease the factor
-                        //    if (rg.BreakCell != null)
-                        //    {
-                        //        times *= rg.Times - (c == rg.BreakCell || c.Position < rg.BreakCell.Position ? 0 : 1);
-                        //    }
-                        //    else
-                        //    {
-                        //        times *= rg.Times;
-                        //    }
-                        //       
-                        //    // account for preceding cells if we are starting mid-way throught a rep group
-                        //    if (c == Cell.SelectedCells.LastCell)
-                        //    {
-                        //
-                        //    }
-                        //}
-                        //
-                        //val.Append(BeatCell.MultiplyTerms(c.GetValueWithMultFactors(), times)).Append('+');
                     }
 
                     val.Append("0").Append(BeatCell.MultiplyTerms(BeatCell.Invert(EditorWindow.CurrentIncrement), div));
@@ -432,13 +370,6 @@ namespace Pronome.Editor
                     }
 
                     // assign the new cell's value
-                    //cell.Value =
-                    //    cell.GetValueDividedByMultFactors(
-                    //        BeatCell.Subtract(
-                    //            repWithLtmToMod == null 
-                    //            ? below.GetValueWithMultFactors() 
-                    //            : repWithLtmToMod.GetLtmWithMultFactor(), newVal));
-                    //cell.Value = BeatCell.SimplifyValue(cell.Value);
                     cell.Value = BeatCell.SimplifyValue(cell.GetValueDividedByMultFactors(newVal));
                     
                     // if placing cell on top of another cell, it's not valid.

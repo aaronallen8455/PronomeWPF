@@ -128,7 +128,6 @@ namespace Pronome.Editor
                             rg.Cells.AddLast(cell);
                         }
                     }
-                    else break;
                 }
             }
             else

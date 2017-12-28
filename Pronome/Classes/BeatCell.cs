@@ -283,6 +283,7 @@ namespace Pronome
 
             // simplify all fractions
             var multDiv = Regex.Matches(value, @"(?<!\.\d*)(\d+?[*/](?=\d+))+\d+(?!\d*\.)"); // get just the fractions or whole number multiplication. filter out decimals
+            int indexOffset = 0;
             foreach (Match m in multDiv)
             {
                 int n = 1; // numerator
@@ -301,8 +302,10 @@ namespace Pronome
                 n /= gcf;
                 d /= gcf;
                 // replace with simplified fraction
-                int index = value.IndexOf(m.Value);
-                value = value.Substring(0, index) + n.ToString() + '/' + d.ToString() + value.Substring(index + m.Length);
+                string newVal = n.ToString() + '/' + d.ToString();
+                int index = m.Index + indexOffset;
+                indexOffset += newVal.Length - m.Value.Length;
+                value = value.Substring(0, index) + newVal + value.Substring(index + m.Length);
             }
 
             var denoms = Regex.Matches(value, @"(?<=/)\d+(?!\d*\.)");
