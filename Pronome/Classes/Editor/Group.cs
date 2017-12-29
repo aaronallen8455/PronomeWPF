@@ -88,6 +88,10 @@ namespace Pronome.Editor
                         cell.MultGroups.AddLast(mg);
                         mg.Cells.AddLast(cell);
                         
+                        if (below.MultGroups.First.Value == mg)
+                        {
+                            mg.ExclusiveCells.AddLast(cell);
+                        }
                     }
                     else break;
                 }
@@ -109,6 +113,11 @@ namespace Pronome.Editor
                             if (c.Position > cell.Position)
                             {
                                 rg.Cells.AddBefore(rg.Cells.Find(c), cell);
+
+                                if (below.RepeatGroups.First.Value == rg)
+                                {
+                                    rg.ExclusiveCells.AddBefore(rg.ExclusiveCells.Find(c), cell);
+                                }
                                 break;
                             }
                             count++;
@@ -126,6 +135,11 @@ namespace Pronome.Editor
                                 }
                             }
                             rg.Cells.AddLast(cell);
+
+                            if (below.RepeatGroups.First.Value == rg)
+                            {
+                                rg.ExclusiveCells.AddLast(cell);
+                            }
                         }
                     }
                 }
