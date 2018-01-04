@@ -99,6 +99,7 @@ namespace Pronome.Editor
             if (below.RepeatGroups.Any())
             {
                 //cell.RepeatGroups = new LinkedList<RepeatGroup>(below.RepeatGroups);
+                bool addedToExclusive = false; // track if cell has been added to an rg's exclusive cells
                 foreach (RepeatGroup rg in below.RepeatGroups)
                 {
                     if (cell.Position < rg.Position + rg.Duration)
@@ -114,10 +115,29 @@ namespace Pronome.Editor
                             {
                                 rg.Cells.AddBefore(rg.Cells.Find(c), cell);
 
-                                if (below.RepeatGroups.First.Value == rg)
+                                // add to top level group's exclusive cells
+                                if (!addedToExclusive)
                                 {
-                                    rg.ExclusiveCells.AddBefore(rg.ExclusiveCells.Find(c), cell);
+                                    var exBelow = rg.ExclusiveCells.First;
+                                    while (true)
+                                    {
+                                        if (exBelow.Value.Position > cell.Position) break;
+                                        exBelow = exBelow.Next;
+                                    }
+
+                                    rg.ExclusiveCells.AddAfter(exBelow, cell);
+
+                                    addedToExclusive = true;
                                 }
+
+                                //if (below.RepeatGroups.First.Value == rg)
+                                //{
+                                //    rg.ExclusiveCells.AddAfter(rg.ExclusiveCells.Find(below), cell);
+                                //}
+                                //else if (c.RepeatGroups.First.Value == rg)
+                                //{
+                                //    // if we're inserting into an LTM, we use this above cell as context
+                                //}
                                 break;
                             }
                             count++;
@@ -136,10 +156,16 @@ namespace Pronome.Editor
                             }
                             rg.Cells.AddLast(cell);
 
-                            if (below.RepeatGroups.First.Value == rg)
+                            if (!addedToExclusive)
                             {
                                 rg.ExclusiveCells.AddLast(cell);
+                                addedToExclusive = true;
                             }
+
+                            //if (below.RepeatGroups.First.Value == rg)
+                            //{
+                            //    rg.ExclusiveCells.AddLast(cell);
+                            //}
                         }
                     }
                 }
