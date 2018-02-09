@@ -143,12 +143,12 @@ namespace Pronome.Editor
         public ISoundSource Source = null;
 
         /// <summary>
-        /// Multiplication groups that this cell is a part of
+        /// Multiplication groups that this cell is a part of. Outermost group is first
         /// </summary>
         public LinkedList<MultGroup> MultGroups = new LinkedList<MultGroup>();
 
         /// <summary>
-        /// Repeat groups that this cell is part of
+        /// Repeat groups that this cell is part of. Outermost group is first
         /// </summary>
         public LinkedList<RepeatGroup> RepeatGroups = new LinkedList<RepeatGroup>();
 

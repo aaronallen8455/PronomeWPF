@@ -247,15 +247,13 @@ namespace Pronome
 
                             if (c.RepeatGroups.Any())
                             {
-                                //bool repGroup
-
                                 foreach (RepeatGroup rep in c.RepeatGroups.Where(x => !touchedReps.Contains(x)))
                                 {
 
                                     // see if the total duration of this rep group is shorter than tap position
                                     // then we know that we will be inserting into this rep group at one of it's times. need to know which one.
                                     // rep.Length does not include the times, it's only one cycle
-                                    if (qPos < rep.Position + rep.Duration * rep.Times * (completeReps + 1))
+                                    if (qPos < rep.Position + rep.FullDuration * (completeReps + 1))
                                     {
                                         // find the cycle on which the tap is placed
                                         int times = (int)((qPos - rep.Times * rep.Duration * completeReps) / rep.Duration);
@@ -273,9 +271,22 @@ namespace Pronome
                                     int reps = (repToInsertInto.ContainsKey(rep) ? completeReps : completeReps - 1);// - collateralRuns.Peek();
 
                                     // subtract out all the complete reps of this group, except for very last time, which is covered by the cell iteration
+                                    bool breakFound = false;
+                                    int breakCorrection = 0;
                                     foreach (Cell ce in rep.ExclusiveCells)
                                     {
-                                        qPos -= ce.Duration * reps;
+                                        if (!breakFound) breakFound = ce == rep.BreakCell;
+                                        else if (breakCorrection == 0)
+                                        {
+                                            if (openRepGroups.Any())
+                                            {
+                                                breakCorrection = openRepGroups.Select(x => x.Times).Aggregate((a, b) => a * b);
+                                            }
+                                            else breakCorrection = 1;
+                                        }
+
+                                        // account for break cells
+                                        qPos -= ce.Duration * (reps - (breakFound ? breakCorrection : 0));
                                         belowValue = BeatCell.Subtract(belowValue, BeatCell.MultiplyTerms(ce.GetValueWithMultFactors(), reps));
                                     }
 
@@ -357,7 +368,7 @@ namespace Pronome
                                 before.LastTermModifier = "";
                                 if (after.Times > 0)
                                 {
-                                    pair.Key.LastTermModifier = "";
+                                    actual.LastTermModifier = "";
                                 }
 
                                 // get rid of actual group
@@ -388,6 +399,7 @@ namespace Pronome
                                     }
                                 }
 
+                                double curOffset = before.Duration * before.Times;
                                 // if the before-copy isn't nulled, and the first cell of
                                 // this inner nested rep group is also the first cell of it's
                                 // containing group, then we need to transfer ownership of the
@@ -407,7 +419,28 @@ namespace Pronome
                                     }
                                     // transfer the groups
                                     before.Cells.First().GroupActions = new LinkedList<(bool, Group)>(actionsToPrepend.Concat(before.Cells.First().GroupActions));
+
+                                    // reposition the actual group
+                                    foreach (Cell c in actual.Cells)
+                                    {
+                                        c.Position += curOffset;
+                                        foreach (var action in c.GroupActions)
+                                        {
+                                            if (action.Item1)
+                                                action.Item2.Position += curOffset;
+                                        }
+                                    }
+
+                                    // add the copies to the row
+                                    foreach (Cell c in before.Cells)
+                                    {
+                                        row.Cells.InsertSorted(c);
+                                        // no breaks occur in before
+                                        c.IsBreak = false;
+                                    }
                                 }
+
+                                curOffset += actual.Duration;
                                 // copy actions from last cell of actual group to the after-copy
                                 if (after.Times > 0)
                                 {
@@ -422,49 +455,21 @@ namespace Pronome
                                         lstCell.GroupActions.RemoveLast();
                                     }
                                     after.Cells.Last().GroupActions = new LinkedList<(bool, Group)>(after.Cells.Last().GroupActions.Concat(actionsToAppend));
-                                }
 
-                                // reposition the actual group and the after-copy
-                                double curOffset = before.Duration * before.Times;
-                                if (before.Times > 0)
-                                {
-                                    foreach (Cell c in actual.Cells)
+                                    // remove break from the original group
+                                    foreach (Cell c in actual.Cells) c.IsBreak = false;
+
+                                    foreach (Cell c in after.Cells)
                                     {
+                                        // reposition cells
                                         c.Position += curOffset;
                                         foreach (var action in c.GroupActions)
                                         {
                                             if (action.Item1)
                                                 action.Item2.Position += curOffset;
                                         }
-                                    }
-                                }
 
-                                curOffset += actual.Duration;
-                                if (after.Times > 0)
-                                {
-                                    foreach (Cell c in after.Cells)
-                                    {
-                                        c.Position += curOffset;
-                                        foreach (var action in c.GroupActions)
-                                        {
-                                            if (action.Item1)
-                                                action.Item2.Position += curOffset;
-                                        }
-                                    }
-                                }
-
-                                // add the copies to the row
-                                if (before.Times > 0)
-                                {
-                                    foreach (Cell c in before.Cells)
-                                    {
-                                        row.Cells.InsertSorted(c);
-                                    }
-                                }
-                                if (after.Times > 0)
-                                {
-                                    foreach (Cell c in after.Cells)
-                                    {
+                                        // add cell to the row
                                         row.Cells.InsertSorted(c);
                                     }
                                 }

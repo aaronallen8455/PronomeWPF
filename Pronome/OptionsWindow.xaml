@@ -243,7 +243,7 @@
                                 The number of quarter-notes to show in the queue.
                             </TextBlock>
                             <WrapPanel Orientation="Vertical">
-                                <Label Target="{Binding ElementName=queueSize}">Queue Size</Label>
+                                <Label Target="{Binding ElementName=queueSizeInput}">Queue Size</Label>
                                 <TextBox Name="queueSizeInput" 
                                          LostFocus="queueSizeInput_LostFocus" 
                                          Loaded="queueSizeInput_Loaded"

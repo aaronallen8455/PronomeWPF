@@ -15,6 +15,10 @@ namespace Pronome.Editor
 
         protected HashSet<MultGroup> MultGroups = new HashSet<MultGroup>();
 
+        protected LinkedList<Group> OpenedGroups = new LinkedList<Group>();
+
+        protected LinkedList<Group> ClosedGroups = new LinkedList<Group>();
+
         /// <summary>
         /// Total duration in BPM of the group
         /// </summary>
@@ -39,10 +43,23 @@ namespace Pronome.Editor
             StringBuilder duration = new StringBuilder();
             // find all groups that are encompassed by the selection
             HashSet<Group> touchedGroups = new HashSet<Group>();
-            RepeatGroup groupBeingAppendedTo = null; // a group who's LTM is actively being augemented
+            RepeatGroup groupBeingAppendedTo = null; // a group who's LTM is actively being augmented
             Queue<RepeatGroup> rgToAppendTo = new Queue<RepeatGroup>(); // RGs that may need to have their LTM added to
             foreach (Cell c in Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
             {
+                // accumulate the group openings and closings
+                foreach ((bool open, Group group) in c.GroupActions)
+                {
+                    if (open)
+                    {
+                        OpenedGroups.AddLast(group);
+                    }
+                    else
+                    {
+                        ClosedGroups.AddLast(group);
+                    }
+                }
+
                 // add to the LTM of groups with a previous cell in the selection but not this cell
                 if (rgToAppendTo.Any() && !c.RepeatGroups.Contains(rgToAppendTo.Peek()))
                 {
@@ -67,8 +84,8 @@ namespace Pronome.Editor
                     touchedGroups.Add(rg);
 
                     if (
-                        (Cells[0] == rg.Cells.First?.Value || rg.Position >= Cells[0].Position) 
-                        && (Cells[Cells.Length - 1] == rg.Cells.Last?.Value || rg.Position + rg.Duration <= Cells[Cells.Length - 1].Position))
+                        (Cells[0] == rg.Cells.First?.Value || rg.Position > Cells[0].Position) 
+                        && (Cells[Cells.Length - 1] == rg.Cells.Last?.Value || rg.Position + rg.Duration < Cells[Cells.Length - 1].Position))
                     {
                         RepGroups.Add(rg);
 
@@ -87,6 +104,7 @@ namespace Pronome.Editor
                     //    Duration += rg.Duration * (rg.Times - 1);
                     //}
                 }
+
                 foreach (MultGroup mg in c.MultGroups)
                 {
                     // remove cell from group
@@ -94,8 +112,8 @@ namespace Pronome.Editor
                     if (touchedGroups.Contains(mg)) continue;
                     touchedGroups.Add(mg);
                     if (
-                        (Cells[0] == mg.Cells.First.Value || mg.Position >= Cells[0].Position)
-                        && (Cells[Cells.Length - 1] == mg.Cells.Last.Value || mg.Position + mg.Duration <= Cells[Cells.Length - 1].Position + Cells[Cells.Length - 1].Duration))
+                        (Cells[0] == mg.Cells.First.Value || mg.Position > Cells[0].Position)
+                        && (Cells[Cells.Length - 1] == mg.Cells.Last.Value || mg.Position + mg.Duration < Cells[Cells.Length - 1].Position + Cells[Cells.Length - 1].Duration))
                     {
                         MultGroups.Add(mg);
                     }
@@ -182,13 +200,41 @@ namespace Pronome.Editor
                 {
                     groupToAddTo.LastTermModifier = BeatCell.Add(groupToAddTo.LastTermModifier, BeatCodeDuration);
                 }
-                else if (!firstCell.RepeatGroups.Any() || prevCell.RepeatGroups.Contains(firstCell.RepeatGroups.Last.Value))
+                else if (!firstCell.RepeatGroups.Any() 
+                    || prevCell.RepeatGroups.Contains(firstCell.RepeatGroups.Last.Value))
                 {
                     // otherwise, increase the prev cell's duration
                     // but only if it is not the cell prior to a repgroup for which first cell of select is first cell of the rep group.
                     prevCell.Value = BeatCell.Add(prevCell.Value, BeatCodeDuration);
                 }
 
+                // transfer the closing group actions to prev cell
+                Cell lastCell = Cells.Last();
+                foreach (Group group in ClosedGroups)
+                {
+                    if (RepGroups.Contains(group) || MultGroups.Contains(group)) continue;
+
+                    if (prevCell.RepeatGroups.Contains(group) || prevCell.MultGroups.Contains(group))
+                    {
+                        prevCell.GroupActions.AddLast((false, group));
+                    }
+                }
+            }
+
+            // do the transition of group actions
+            if (Index + Cells.Length < Row.Cells.Count) // if selection doesn't reach the end of the row
+            {
+                Cell nextCell = Row.Cells[Index + Cells.Length - 1];
+                // need to transfer the repeat group creation point to the next cell (if not a 1 cell group)
+                foreach (Group group in OpenedGroups)
+                {
+                    if (RepGroups.Contains(group) || MultGroups.Contains(group)) continue;
+
+                    if (nextCell.RepeatGroups.Contains(group) || nextCell.MultGroups.Contains(group))
+                    {
+                        nextCell.GroupActions.AddFirst((true, group));
+                    }
+                }
             }
 
             // no longer need these

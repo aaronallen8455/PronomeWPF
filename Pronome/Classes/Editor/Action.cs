@@ -42,7 +42,7 @@ namespace Pronome.Editor
                     Row r = EditorWindow.Instance.Rows[rowIndex];
 
                     // deselect if in row
-                    if (Cell.SelectedCells.FirstCell.Row == r)
+                    if (Cell.SelectedCells.FirstCell?.Row == r)
                     {
                         Cell.SelectedCells.DeselectAll();
                     }
