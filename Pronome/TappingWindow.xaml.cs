@@ -143,6 +143,12 @@ namespace Pronome
                 }
                 else if (modeComboBox.SelectedIndex == MODE_INSERT)
                 {
+                    if (Taps.Count == 0)
+                    {
+                        Close();
+                        return;
+                    }
+
                     // how to deal with inserting cells into a rep group?
                     // easy way is to just flatten it out, use raw values from .Beat
                     // ideally we want to insert the cell and retain the original beatCode aspects
@@ -179,6 +185,9 @@ namespace Pronome
 
                     // get the layers total length
                     double bpmLength = Layer.GetTotalBpmValue();
+
+                    // normalize taps against the bpmLength and put them in correct order.
+                    Taps = new LinkedList<double>(Taps.Select(x => x % bpmLength).OrderBy(x => x));
 
                     //string offset = "";
 
@@ -275,7 +284,7 @@ namespace Pronome
                                     int breakCorrection = 0;
                                     foreach (Cell ce in rep.ExclusiveCells)
                                     {
-                                        if (!breakFound) breakFound = ce == rep.BreakCell;
+                                        if (!breakFound) breakFound = rep.BreakCell != null && ce.Position > rep.BreakCell.Position;
                                         else if (breakCorrection == 0)
                                         {
                                             if (openRepGroups.Any())

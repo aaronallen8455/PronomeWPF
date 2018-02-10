@@ -11,12 +11,24 @@ namespace Pronome.Editor
 
         //protected string PreviousCellValue;
 
+        /// <summary>
+        /// Rep groups that will be removed
+        /// </summary>
         protected HashSet<RepeatGroup> RepGroups = new HashSet<RepeatGroup>();
 
+        /// <summary>
+        /// Mult groups that will be removed
+        /// </summary>
         protected HashSet<MultGroup> MultGroups = new HashSet<MultGroup>();
 
+        /// <summary>
+        /// Group opening actions that will be displaced
+        /// </summary>
         protected LinkedList<Group> OpenedGroups = new LinkedList<Group>();
 
+        /// <summary>
+        /// Group closing actions that will be displaced
+        /// </summary>
         protected LinkedList<Group> ClosedGroups = new LinkedList<Group>();
 
         /// <summary>
@@ -45,6 +57,7 @@ namespace Pronome.Editor
             HashSet<Group> touchedGroups = new HashSet<Group>();
             RepeatGroup groupBeingAppendedTo = null; // a group who's LTM is actively being augmented
             Queue<RepeatGroup> rgToAppendTo = new Queue<RepeatGroup>(); // RGs that may need to have their LTM added to
+
             foreach (Cell c in Cells.Where(x => string.IsNullOrEmpty(x.Reference)))
             {
                 // accumulate the group openings and closings
@@ -78,6 +91,9 @@ namespace Pronome.Editor
                 {
                     // remove cell from group
                     rg.Cells.Remove(c);
+                    // remove break cells
+                    if (rg.BreakCell == c) rg.BreakCell = null;
+
                     if (touchedGroups.Contains(rg)) continue;
 
                     rgToAppendTo.Enqueue(rg);
@@ -89,20 +105,19 @@ namespace Pronome.Editor
                     {
                         RepGroups.Add(rg);
 
-                        times *= rg.Times;
+                        bool cellAboveBreak = rg.BreakCell != null && c.Position > rg.BreakCell.Position;
+                        // account for a break
+                        times *= rg.Times - (cellAboveBreak ? 1 : 0);
                         // multiply all nested rgs' LTMs by this groups repeat times.
                         foreach (KeyValuePair<RepeatGroup, int> kv in lcmTimes)
                         {
-                            lcmTimes[kv.Key] *= rg.Times;
+                            // if a group is in the break zone of it's parent group, the LTM will be repeated 1 less
+                            bool aboveBreak = rg.BreakCell != null && kv.Key.Position > rg.BreakCell.Position;
+
+                            lcmTimes[kv.Key] *= rg.Times - (aboveBreak ? 1 : 0);
                         }
                         lcmTimes.Add(rg, 1);
-                        touchedGroups.Add(rg);
                     }
-                    // if a rep group ends on this cell, add it's dupes to the duration
-                    //if (rg.Cells.Last.Value == c)
-                    //{
-                    //    Duration += rg.Duration * (rg.Times - 1);
-                    //}
                 }
 
                 foreach (MultGroup mg in c.MultGroups)
