@@ -165,13 +165,13 @@ namespace Pronome.Editor
         public Cell(Row row)
         {
             Row = row;
-            Rectangle = EditorWindow.Instance.Resources["cellRectangle"] as Rectangle;
+            Rectangle = EditorWindow.Instance != null ? EditorWindow.Instance.Resources["cellRectangle"] as Rectangle : new Rectangle();
             //Rectangle.Height = (double)EditorWindow.Instance.Resources["cellHeight"];
 
             // the ref rect
-            ReferenceRectangle = EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle;
+            ReferenceRectangle = EditorWindow.Instance != null ? EditorWindow.Instance.Resources["referenceRectangle"] as Rectangle : new Rectangle();
             // set Canvas.Top
-            double top = (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2;
+            double top = EditorWindow.Instance == null ? 0 : (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2;
             Canvas.SetTop(Rectangle, top);
             Canvas.SetTop(ReferenceRectangle, top);
 

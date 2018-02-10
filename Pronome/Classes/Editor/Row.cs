@@ -95,11 +95,11 @@ namespace Pronome.Editor
         /// The element added to the layerPanel stackpanel. Contains everything from this row.
         /// </summary>
         public Grid BaseElement;
-        
+
         /// <summary>
         /// Sets the size of the row and supplies background color
         /// </summary>
-        protected Rectangle Sizer = EditorWindow.Instance.Resources["rowSizer"] as Rectangle;
+        protected Rectangle Sizer;
 
         /// <summary>
         /// Shows the cell pattern repeating after the row ends
@@ -133,19 +133,21 @@ namespace Pronome.Editor
             Index = Metronome.GetInstance().Layers.IndexOf(Layer);
             touchedRefs.Add(Index); // current layer ref should recurse only once
 
-            Canvas = EditorWindow.Instance.Resources["rowCanvas"] as Canvas;
+            Canvas = EditorWindow.Instance != null ? EditorWindow.Instance.Resources["rowCanvas"] as Canvas : new Canvas();
             Offset = layer.Offset;
             OffsetValue = layer.GetOffsetValue();
 
-            Background = EditorWindow.Instance.Resources["rowBackgroundRectangle"] as Rectangle;
+            Background = EditorWindow.Instance != null ? EditorWindow.Instance.Resources["rowBackgroundRectangle"] as Rectangle : new Rectangle();
             BackgroundBrush = new VisualBrush(Canvas);
             BackgroundBrush.TileMode = TileMode.Tile;
             Background.Fill = BackgroundBrush;
+
+            Sizer = EditorWindow.Instance != null ? EditorWindow.Instance.Resources["rowSizer"] as Rectangle : new Rectangle();
             Canvas.Children.Add(Sizer);
 
             FillFromBeatCode(layer.ParsedString, ignoreScalingSetting);
 
-            BaseElement = EditorWindow.Instance.Resources["rowBaseElement"] as Grid;
+            BaseElement = EditorWindow.Instance != null ? EditorWindow.Instance.Resources["rowBaseElement"] as Grid : new Grid();
 
             // handler for creating new cells on the grid
             BaseElement.MouseLeftButtonDown += BaseElement_MouseLeftButtonDown;
@@ -848,7 +850,7 @@ namespace Pronome.Editor
 
             // get size of the host rects
             double hostWidth = (rg.Duration - (string.IsNullOrEmpty(cell.Reference) ? cell.ActualDuration : 0)) * EditorWindow.Scale * EditorWindow.BaseFactor;
-            if (string.IsNullOrEmpty(cell.Reference))
+            if (string.IsNullOrEmpty(cell.Reference) && EditorWindow.Instance != null)
             {
                 hostWidth += (double)EditorWindow.Instance.Resources["cellWidth"];
             }
@@ -857,7 +859,7 @@ namespace Pronome.Editor
             for (int i = 0; i < rg.Times - 1; i++)
             {
                 VisualBrush duplicate = new VisualBrush(rg.Canvas);
-                var dupHost = EditorWindow.Instance.Resources["repeatRectangle"] as Rectangle;
+                var dupHost = EditorWindow.Instance != null ? EditorWindow.Instance.Resources["repeatRectangle"] as Rectangle : new Rectangle();
                 dupHost.Width = hostWidth;
                 if (i == rg.Times - 1)
                 {
@@ -867,7 +869,10 @@ namespace Pronome.Editor
                 dupHost.Fill = duplicate;
                 // do offsets
                 Canvas.SetLeft(dupHost, position * EditorWindow.Scale * EditorWindow.BaseFactor);
-                Canvas.SetTop(dupHost, (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2);
+                if (EditorWindow.Instance != null)
+                {
+                    Canvas.SetTop(dupHost, (double)EditorWindow.Instance.Resources["rowHeight"] / 2 - (double)EditorWindow.Instance.Resources["cellHeight"] / 2);
+                }
                 rg.HostRects.AddLast(dupHost);
                 // render it
                 if (openRepeatGroups.Any())
@@ -908,15 +913,16 @@ namespace Pronome.Editor
         {
             Duration = widthBpm;
             // set background tile size
-            double rowHeight = (double)EditorWindow.Instance.Resources["rowHeight"];
-            double width = widthBpm * EditorWindow.Scale * EditorWindow.BaseFactor;
-            double offset = Offset * EditorWindow.Scale * EditorWindow.BaseFactor;
-            BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, width, rowHeight);
-            BackgroundBrush.ViewportUnits = BrushMappingMode.Absolute;
-            Background.Margin = new System.Windows.Thickness(width + offset, 0, 0, 0);
-            Sizer.Width = width;
-            // offset the sizer
-            //Canvas.SetLeft(Sizer, offset);
+            if (EditorWindow.Instance != null)
+            {
+                double rowHeight = (double)EditorWindow.Instance.Resources["rowHeight"];
+                double width = widthBpm * EditorWindow.Scale * EditorWindow.BaseFactor;
+                double offset = Offset * EditorWindow.Scale * EditorWindow.BaseFactor;
+                BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, width, rowHeight);
+                BackgroundBrush.ViewportUnits = BrushMappingMode.Absolute;
+                Background.Margin = new System.Windows.Thickness(width + offset, 0, 0, 0);
+                Sizer.Width = width;
+            }
         }
 
         /// <summary>
@@ -925,13 +931,16 @@ namespace Pronome.Editor
         /// <param name="diff"></param>
         public void ChangeSizerWidthByAmount(double diff)
         {
-            double change = diff * EditorWindow.Scale * EditorWindow.BaseFactor;
-            double offset = Offset * EditorWindow.Scale * EditorWindow.BaseFactor;
-            double rowHeight = (double)EditorWindow.Instance.Resources["rowHeight"];
-            Sizer.Width += change;
-            // reposition background
-            BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, Sizer.Width, rowHeight);
-            Background.Margin = new System.Windows.Thickness(Background.Margin.Left + change, 0, 0, 0);
+            if (EditorWindow.Instance != null)
+            {
+                double change = diff * EditorWindow.Scale * EditorWindow.BaseFactor;
+                double offset = Offset * EditorWindow.Scale * EditorWindow.BaseFactor;
+                double rowHeight = (double)EditorWindow.Instance.Resources["rowHeight"];
+                Sizer.Width += change;
+                // reposition background
+                BackgroundBrush.Viewport = new System.Windows.Rect(0, rowHeight, Sizer.Width, rowHeight);
+                Background.Margin = new System.Windows.Thickness(Background.Margin.Left + change, 0, 0, 0);
+            }
         }
 
         /// <summary>
@@ -940,6 +949,8 @@ namespace Pronome.Editor
         /// <param name="intervalCode"></param>
         public void DrawGridLines(string intervalCode)
         {
+            if (EditorWindow.Instance == null) return;
+
             double gridCellSize;
             if (BeatCell.TryParse(intervalCode, out gridCellSize))
             {

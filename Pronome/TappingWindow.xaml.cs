@@ -187,11 +187,11 @@ namespace Pronome
                     double bpmLength = Layer.GetTotalBpmValue();
 
                     // normalize taps against the bpmLength and put them in correct order.
-                    Taps = new LinkedList<double>(Taps.Select(x => x % bpmLength).OrderBy(x => x));
+                    //Taps = new LinkedList<double>(Taps.Select(x => x % bpmLength).OrderBy(x => x));
 
                     //string offset = "";
 
-                    foreach (double t in Taps)
+                    foreach (double t in Taps.Select(x => x % bpmLength).OrderBy(x => x))
                     {
                         // check if tap was done in the offset area
                         if (t <= Layer.Offset)
@@ -227,10 +227,10 @@ namespace Pronome
                         }
 
                         // get the number of elapsed cycles
-                        int cycles = (int)((t - Layer.Offset) / bpmLength);
+                        //int cycles = (int)((t - Layer.Offset) / bpmLength);
 
                         // subtract the elapsed cycles
-                        double pos = (t - Layer.Offset) - cycles * bpmLength;
+                        double pos = t - Layer.Offset;// - cycles * bpmLength;
                         string belowValue = Quantize(pos);
                         double qPos = BeatCell.Parse(belowValue); // quantized BPM position double
                         double newCellPosition = qPos;
@@ -271,31 +271,37 @@ namespace Pronome
 
                                         completeReps *= rep.Times;
                                         completeReps += times;
+
+                                        if (rep.BreakCell != null && rep.BreakCell.Position < c.Position)
+                                        {
+                                            completeReps--;
+                                        }
                                     }
                                     else
                                     {
+                                        // this rg doesn't contain the tap, so it's counted in full
                                         completeReps *= rep.Times;
                                     }
 
                                     int reps = (repToInsertInto.ContainsKey(rep) ? completeReps : completeReps - 1);// - collateralRuns.Peek();
 
                                     // subtract out all the complete reps of this group, except for very last time, which is covered by the cell iteration
-                                    bool breakFound = false;
-                                    int breakCorrection = 0;
+                                    //bool breakFound = false;
+                                    //int breakCorrection = 0;
                                     foreach (Cell ce in rep.ExclusiveCells)
                                     {
-                                        if (!breakFound) breakFound = rep.BreakCell != null && ce.Position > rep.BreakCell.Position;
-                                        else if (breakCorrection == 0)
-                                        {
-                                            if (openRepGroups.Any())
-                                            {
-                                                breakCorrection = openRepGroups.Select(x => x.Times).Aggregate((a, b) => a * b);
-                                            }
-                                            else breakCorrection = 1;
-                                        }
+                                        //if (!breakFound) breakFound = rep.BreakCell != null && ce.Position > rep.BreakCell.Position;
+                                        //else if (breakCorrection == 0)
+                                        //{
+                                        //    if (openRepGroups.Any())
+                                        //    {
+                                        //        breakCorrection = openRepGroups.Select(x => x.Times).Aggregate((a, b) => a * b);
+                                        //    }
+                                        //    else breakCorrection = 1;
+                                        //}
 
                                         // account for break cells
-                                        qPos -= ce.Duration * (reps - (breakFound ? breakCorrection : 0));
+                                        qPos -= ce.Duration * reps;// - (breakFound ? breakCorrection : 0));
                                         belowValue = BeatCell.Subtract(belowValue, BeatCell.MultiplyTerms(ce.GetValueWithMultFactors(), reps));
                                     }
 
@@ -402,9 +408,17 @@ namespace Pronome
                                 {
                                     after.Cells.First().GroupActions.RemoveFirst();
                                     after.Cells.Last().GroupActions.RemoveLast();
+                                    
+                                    // remove the cells in the break zone
+                                    if (after.BreakCell != null)
+                                    {
+                                        while (!after.Cells.Last.Value.IsBreak) after.Cells.RemoveLast();
+                                    }
+
                                     foreach (Cell c in after.Cells)
                                     {
                                         c.RepeatGroups.Remove(after);
+                                        c.IsBreak = false;
                                     }
                                 }
 
@@ -447,6 +461,7 @@ namespace Pronome
                                         // no breaks occur in before
                                         c.IsBreak = false;
                                     }
+                                    before.BreakCell = null;
                                 }
 
                                 curOffset += actual.Duration;
@@ -466,7 +481,11 @@ namespace Pronome
                                     after.Cells.Last().GroupActions = new LinkedList<(bool, Group)>(after.Cells.Last().GroupActions.Concat(actionsToAppend));
 
                                     // remove break from the original group
-                                    foreach (Cell c in actual.Cells) c.IsBreak = false;
+                                    foreach (Cell c in actual.Cells)
+                                    {
+                                        c.IsBreak = false;
+                                        actual.BreakCell = null;
+                                    }
 
                                     foreach (Cell c in after.Cells)
                                     {
@@ -481,6 +500,16 @@ namespace Pronome
                                         // add cell to the row
                                         row.Cells.InsertSorted(c);
                                     }
+                                }
+                                else
+                                {
+                                    // need to delete the break zone of actual
+                                    if (actual.BreakCell != null)
+                                    {
+                                        while (!actual.Cells.Last.Value.IsBreak) actual.Cells.RemoveLast();
+                                    }
+
+                                    actual.Cells.Last.Value.IsBreak = false;
                                 }
                             }
 

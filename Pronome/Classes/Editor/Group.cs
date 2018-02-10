@@ -259,7 +259,10 @@ namespace Pronome.Editor
 
         public RepeatGroup()
         {
-            Rectangle.Style = EditorWindow.Instance.Resources["repeatRectStyle"] as System.Windows.Style;
+            if (EditorWindow.Instance != null)
+            {
+                Rectangle.Style = EditorWindow.Instance.Resources["repeatRectStyle"] as System.Windows.Style;
+            }
             Panel.SetZIndex(Rectangle, 5);
             Panel.SetZIndex(Canvas, 10);
         }
@@ -357,7 +360,8 @@ namespace Pronome.Editor
                     MultFactor = r.MultFactor,
                     Position = r.Position,
                     Row = r.Row,
-                    Times = r.Times
+                    Times = r.Times,
+                    BreakCell = r.BreakCell
                 };
             }
             else if (group is MultGroup)
