@@ -487,6 +487,26 @@ namespace Pronome
                 SaveFileHelper.LoadFileUri(item.ToolTip.ToString());
             }
         }
+
+        private void UndoTapCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            TappingWindow.Undo();
+        }
+
+        private void RedoTapCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            TappingWindow.Redo();
+        }
+
+        private void UndoTapCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = TappingWindow.UndoStack.Count > 0;
+        }
+
+        private void RedoTapCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = TappingWindow.RedoStack.Count > 0;
+        }
     }
 
     [ValueConversion(typeof(bool), typeof(bool))]

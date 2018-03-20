@@ -91,6 +91,7 @@ namespace Pronome.Editor
                 {
                     // remove cell from group
                     rg.Cells.Remove(c);
+                    rg.ExclusiveCells.Remove(c);
                     // remove break cells
                     if (rg.BreakCell == c) rg.BreakCell = null;
 
@@ -224,7 +225,7 @@ namespace Pronome.Editor
                 }
 
                 // transfer the closing group actions to prev cell
-                Cell lastCell = Cells.Last();
+                //Cell lastCell = Cells.Last();
                 foreach (Group group in ClosedGroups)
                 {
                     if (RepGroups.Contains(group) || MultGroups.Contains(group)) continue;

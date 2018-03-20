@@ -397,8 +397,6 @@ namespace Pronome.Editor
             {
                 // get the value string
                 StringBuilder val = new StringBuilder();
-                // value of grid lines, the 
-                //val.Append(BeatCell.MultiplyTerms(EditorWindow.CurrentIncrement, div));
 
                 // a running tally of the factor for LTMs
                 int ltmFactor = 1;
@@ -477,7 +475,7 @@ namespace Pronome.Editor
                         .Select(x => x.Times);
                     int ltmFactor = sequence.Any() ? sequence.Aggregate((x, y) => x * y) : 1;
 
-                    foreach (Cell c in Row.Cells.SkipWhile(x => x != below).Skip(1).TakeWhile(x => x != Cell.SelectedCells.FirstCell))
+                    foreach (Cell c in Row.Cells.SkipWhile(x => x != below).Skip(1).TakeWhile(x => x != Cell.SelectedCells.FirstCell).Where(x => string.IsNullOrEmpty(x.Reference)))
                     {
                         AddCellValueToAccumulator(c, cell, Cell.SelectedCells.FirstCell, val, ref ltmFactor);
                     }

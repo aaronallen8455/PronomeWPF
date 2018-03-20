@@ -31,6 +31,8 @@
         <CommandBinding Command="{StaticResource revertToSaveCommand}" Executed="RevertToSaveCommand_Executed" CanExecute="RevertToSaveCommand_CanExecute"/>
         <CommandBinding Command="{StaticResource saveCommand}" Executed="SaveFileCommand_Executed"/>
         <CommandBinding Command="{StaticResource saveAsCommand}" Executed="SaveAsCommand_Executed"/>
+        <CommandBinding Command="{StaticResource undoTapCommand}" Executed="UndoTapCommand_Executed" CanExecute="UndoTapCommand_CanExecute"/>
+        <CommandBinding Command="{StaticResource redoTapCommand}" Executed="RedoTapCommand_Executed" CanExecute="RedoTapCommand_CanExecute"/>
     </Window.CommandBindings>
     
     <Window.InputBindings>
@@ -77,8 +79,8 @@
                         <MenuItem Header="Edit">
                             <MenuItem Header="Beat _Editor" Command="{StaticResource openEditorCommand}" InputGestureText="Ctrl+E"/>
                             <MenuItem Header="_Tapping" Command="{StaticResource openTapCommand}" InputGestureText="Ctrl+T"/>
-                            <MenuItem Header="Undo Tapping"/>
-                            <MenuItem Header="Redo Tapping"/>
+                            <MenuItem Header="Undo Tapping" Command="{StaticResource undoTapCommand}"/>
+                            <MenuItem Header="Redo Tapping" Command="{StaticResource redoTapCommand}"/>
                             <Separator/>
                             <MenuItem Header="Options" Command="{StaticResource openOptionsCommand}"/>
                         </MenuItem>

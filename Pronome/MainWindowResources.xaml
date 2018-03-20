@@ -402,5 +402,7 @@
     <RoutedCommand x:Key="openEditorCommand"/>
     <RoutedCommand x:Key="openTapCommand"/>
     <RoutedCommand x:Key="openOptionsCommand"/>
+    <RoutedCommand x:Key="undoTapCommand"/>
+    <RoutedCommand x:Key="redoTapCommand"/>
 
 </ResourceDictionary>

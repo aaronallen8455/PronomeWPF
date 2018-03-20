@@ -48,9 +48,28 @@ namespace Pronome
         const Byte MODE_OVERWRITE = 0;
         const Byte MODE_INSERT = 1;
 
+        /// <summary>
+        /// Used to make beat changes not clear the undo stack if change is coming from tapper.
+        /// </summary>
+        private static bool IsChanging;
+
         public TappingWindow()
         {
             InitializeComponent();
+        }
+
+        static TappingWindow()
+        {
+            Metronome.AfterBeatParsed += (sender, args) =>
+            {
+                if (!IsChanging)
+                {
+                    UndoStack.Clear();
+                    RedoStack.Clear();
+                }
+
+                IsChanging = false;
+            };
         }
 
         private void StartCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -290,17 +309,6 @@ namespace Pronome
                                     //int breakCorrection = 0;
                                     foreach (Cell ce in rep.ExclusiveCells)
                                     {
-                                        //if (!breakFound) breakFound = rep.BreakCell != null && ce.Position > rep.BreakCell.Position;
-                                        //else if (breakCorrection == 0)
-                                        //{
-                                        //    if (openRepGroups.Any())
-                                        //    {
-                                        //        breakCorrection = openRepGroups.Select(x => x.Times).Aggregate((a, b) => a * b);
-                                        //    }
-                                        //    else breakCorrection = 1;
-                                        //}
-
-                                        // account for break cells
                                         qPos -= ce.Duration * reps;// - (breakFound ? breakCorrection : 0));
                                         belowValue = BeatCell.Subtract(belowValue, BeatCell.MultiplyTerms(ce.GetValueWithMultFactors(), reps));
                                     }
@@ -484,8 +492,8 @@ namespace Pronome
                                     foreach (Cell c in actual.Cells)
                                     {
                                         c.IsBreak = false;
-                                        actual.BreakCell = null;
                                     }
+                                    actual.BreakCell = null;
 
                                     foreach (Cell c in after.Cells)
                                     {
@@ -615,6 +623,11 @@ namespace Pronome
 
                 if (beatCode != Layer.ParsedString || Layer.ParsedOffset != offset)
                 {
+                    IsChanging = true;
+
+                    UndoStack.Push((Layer.ParsedString, Layer.ParsedOffset, Layer));
+                    RedoStack.Clear();
+
                     Layer.UI.textEditor.Text = beatCode;
                     Layer.ParsedOffset = offset;
                     Layer.UI.SetOffsetValue(offset);
@@ -641,6 +654,70 @@ namespace Pronome
             IsListening = false;
 
             Close();
+        }
+
+        public static void Undo()
+        {
+            if (UndoStack.Count > 0)
+            {
+                IsChanging = true;
+
+                (string beatCode, string offset, Layer layer) = UndoStack.Pop();
+
+                RedoStack.Push((layer.ParsedString, layer.ParsedOffset, layer));
+                
+                layer.UI.textEditor.Text = beatCode;
+                layer.ParsedOffset = offset;
+                layer.UI.SetOffsetValue(offset);
+                layer.Offset = BeatCell.Parse(offset);
+                if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                {
+                    layer.ProcessBeatCode(beatCode);
+                }
+                else
+                {
+                    // make change while playing
+                    layer.ParsedString = beatCode;
+                    Metronome.GetInstance().ExecuteLayerChange(layer);
+                }
+
+                if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                {
+                    Metronome.GetInstance().TriggerAfterBeatParsed(); // redraw beat graph / bounce if necessary
+                }
+            }
+        }
+
+        public static void Redo()
+        {
+            if (RedoStack.Count > 0)
+            {
+                IsChanging = true;
+
+                (string beatCode, string offset, Layer layer) = RedoStack.Pop();
+
+                UndoStack.Push((layer.ParsedString, layer.ParsedOffset, layer));
+
+                layer.UI.textEditor.Text = beatCode;
+                layer.ParsedOffset = offset;
+                layer.UI.SetOffsetValue(offset);
+                layer.Offset = BeatCell.Parse(offset);
+                if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                {
+                    layer.ProcessBeatCode(beatCode);
+                }
+                else
+                {
+                    // make change while playing
+                    layer.ParsedString = beatCode;
+                    Metronome.GetInstance().ExecuteLayerChange(layer);
+                }
+
+                if (Metronome.GetInstance().PlayState == Metronome.State.Stopped)
+                {
+                    Metronome.GetInstance().TriggerAfterBeatParsed(); // redraw beat graph / bounce if necessary
+                }
+            }
         }
 
         private void ComboBox_Loaded(object sender, RoutedEventArgs e)
